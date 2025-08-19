@@ -22,4 +22,4 @@ Create `.env.local` as features are enabled:
 - `NEXT_PUBLIC_ANALYTICS_KEY` (tracking, planned)
 
 ---
-_Last updated: {{DATE}}_
+_Last updated: 2025-08-19_
