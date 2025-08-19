@@ -1,0 +1,48 @@
+---
+title: Build Your First Pipeline
+description: Minimal CI pipeline from zero to green build
+---
+
+# Build Your First Pipeline
+
+Goal: validate every push builds & tests in under 5 minutes.
+
+## Prereqs
+- Git repo with a small app
+- Basic test command
+
+## Steps
+1. Add workflow file (.github/workflows/ci.yml)
+2. Install dependencies
+3. Run tests
+4. Cache dependencies for speed
+5. Surface status badge
+
+## Example (GitHub Actions)
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test --if-present
+```
+
+## Extend
+- Add lint + type check
+- Add security scan (e.g. Trivy, CodeQL)
+- Add artifact packaging
+
+## Success Criteria
+- Green build on main
+- Failing tests block merges
+- Duration < 5m
+
+> Ship the simple pipeline first; optimize after reliability.

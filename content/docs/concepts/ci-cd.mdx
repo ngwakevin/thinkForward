@@ -1,0 +1,44 @@
+---
+title: CI/CD Fundamentals
+description: Continuous Integration and Delivery core ideas
+---
+
+# CI/CD Fundamentals
+
+Continuous Integration (CI) ensures every change integrates cleanly. Continuous Delivery / Deployment (CD) moves integrated changes to environments quickly and safely.
+
+## Objectives
+- Reduce integration risk
+- Shorten feedback loops
+- Increase deploy confidence & frequency
+
+## Core Stages
+1. **Source** – Code + config + infrastructure definitions
+2. **Build** – Compile / package / containerize
+3. **Test** – Unit, integration, security, smoke
+4. **Artifact** – Immutable image or package
+5. **Deploy** – Push to target environment
+6. **Verify** – Health checks, synthetic tests, metrics
+
+## Key Practices
+| Practice | Why |
+| -------- | --- |
+| Small commits | Easier isolate failures |
+| Automated tests | Fast safety net |
+| Immutable artifacts | Promote same build across envs |
+| Trunk-based dev | Reduces merge drift |
+| Shift-left security | Catch issues early |
+
+## Metrics
+- Lead time for change
+- Deployment frequency
+- Change failure rate
+- MTTR (Mean time to restore)
+
+## Anti‑Patterns
+- Long‑lived feature branches
+- Manual test gate without automation
+- Rebuilding artifact per environment
+- Hidden deployment scripts
+
+> Start simple: one trunk, one pipeline, one artifact, visible metrics.
