@@ -32,9 +32,16 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const analyticsKey = process.env.NEXT_PUBLIC_ANALYTICS_KEY;
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-bg text-fg antialiased`}>
+        {/* Simple lightweight analytics hook */}
+        {analyticsKey && (
+          <script
+            // Basic inline script to capture clicks on data-analytics elements and beacon them.
+            dangerouslySetInnerHTML={{ __html: `(()=>{const k='${analyticsKey}';function send(ev,detail){try{navigator.sendBeacon&&navigator.sendBeacon('/__a',JSON.stringify({k,ev,detail,t:Date.now()}));}catch(_){} }document.addEventListener('click',e=>{const el=e.target.closest('[data-analytics]');if(!el) return;send(el.getAttribute('data-analytics'),{href:el.getAttribute('href')});});})();` }} />
+        )}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] rounded-md bg-accent px-4 py-2 text-white text-sm shadow-lg">Skip to content</a>
         <ThemeProvider>
           <Header />

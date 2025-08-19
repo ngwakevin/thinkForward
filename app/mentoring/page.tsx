@@ -5,6 +5,8 @@ import { siteConfig } from '../../config/site';
 
 export default function MentoringPage() {
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL || siteConfig.calendly; // optional direct scheduling
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/[^+\d]/g,'');
+  const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/^\+/, '')}?text=${encodeURIComponent('Hi – interested in 1-on-1 mentoring.')} ` : undefined;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-28 space-y-28">
@@ -40,10 +42,11 @@ export default function MentoringPage() {
             </span>
           </a>
           <a
-            href="#" /* Replace with wa.me link */
-            data-placeholder="whatsapp-booking"
-            aria-disabled="true"
-            title="WhatsApp booking coming soon"
+            href={whatsappHref || '#'} /* Replace with wa.me link */
+            data-placeholder={!whatsappHref ? 'whatsapp-booking' : undefined}
+            aria-disabled={!whatsappHref}
+            title={whatsappHref ? 'Start WhatsApp chat' : 'WhatsApp booking coming soon'}
+            data-analytics="click_whatsapp_cta"
             className="group relative inline-flex items-center gap-3 rounded-xl px-7 py-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-warning focus:outline-none focus-visible:ring-4 focus-visible:ring-warning/30 transition
             border border-warning/40 bg-[radial-gradient(circle_at_30%_30%,rgba(234,179,8,0.18),rgba(234,179,8,0)_70%)]
             hover:bg-[radial-gradient(circle_at_30%_30%,rgba(234,179,8,0.26),rgba(234,179,8,0)_72%)] shadow-[0_4px_18px_-4px_rgba(234,179,8,0.25)] hover:shadow-[0_6px_24px_-4px_rgba(234,179,8,0.35)] backdrop-blur-sm aria-disabled:opacity-60"
@@ -89,19 +92,19 @@ export default function MentoringPage() {
             <div className="group relative rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/10 p-5 flex flex-col">
               <h3 className="font-semibold tracking-tight mb-2 flex items-center gap-2 text-sm"><span className="i-lucide-form-input" /> Form Request</h3>
               <p className="text-xs text-fg-muted leading-relaxed">Share detailed context and goals; receive tailored follow‑up within 24h.</p>
-              <a href="#book" className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-accent hover:underline">Open Form →</a>
+              <a href="#book" data-analytics="open_form_from_cards" className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-accent hover:underline">Open Form →</a>
               <span className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-accent/30 transition" />
             </div>
             <div className="group relative rounded-2xl border border-warning/40 bg-gradient-to-br from-warning/15 via-warning/10 to-warning/5 p-5 flex flex-col">
               <h3 className="font-semibold tracking-tight mb-2 flex items-center gap-2 text-sm text-warning"><span className="i-lucide-phone" /> WhatsApp</h3>
               <p className="text-xs text-warning/90 leading-relaxed">Rapid back‑and‑forth for quick clarification and lightweight guidance.</p>
-              <a href="#" data-placeholder="whatsapp-booking" aria-disabled="true" className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-warning/90 hover:text-warning">Coming Soon</a>
+              <a href={whatsappHref || '#'} data-placeholder={!whatsappHref ? 'whatsapp-booking' : undefined} aria-disabled={!whatsappHref} data-analytics="open_whatsapp_from_cards" className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-warning/90 hover:text-warning">{whatsappHref ? 'Open Chat' : 'Coming Soon'}</a>
               <span className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-warning/40 transition" />
             </div>
             <div className="group relative rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/15 via-accent/10 to-accent/5 p-5 flex flex-col">
               <h3 className="font-semibold tracking-tight mb-2 flex items-center gap-2 text-sm text-accent"><span className="i-lucide-bolt" /> Calendly (Direct)</h3>
               <p className="text-xs text-accent/90 leading-relaxed">Skip the form—lock a time instantly. Provide details in the booking notes.</p>
-              <a href="#schedule" className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-accent hover:underline">Open Scheduler →</a>
+              <a href="#schedule" data-analytics="open_calendly_from_cards" className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-accent hover:underline">Open Scheduler →</a>
               <span className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-accent/40 transition" />
             </div>
           </div>
@@ -198,15 +201,15 @@ export default function MentoringPage() {
           <div className="md:col-span-2 flex items-center justify-between pt-2 gap-4 flex-wrap">
             <p className="text-[11px] text-fg-muted">You will receive a scheduling link if accepted. We respect your inbox.</p>
             <div className="flex gap-3">
-              <button type="submit" className="group relative inline-flex items-center gap-2 rounded-lg px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white bg-gradient-to-r from-accent to-accent-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow hover:shadow-md transition">
+              <button type="submit" data-analytics="submit_mentoring_request" className="group relative inline-flex items-center gap-2 rounded-lg px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white bg-gradient-to-r from-accent to-accent-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow hover:shadow-md transition">
                 <span className="i-lucide-send" />
                 Submit Request
                 <span className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-white/10 group-hover:ring-white/20" aria-hidden />
               </button>
               <a
-                href="#" /* Replace with wa.me link */
+                href={whatsappHref || '#'} /* Replace with wa.me link */
                 data-placeholder="whatsapp-booking"
-                aria-disabled="true"
+                aria-disabled={!whatsappHref}
                 title="WhatsApp booking coming soon"
                 className="group relative inline-flex items-center gap-2 rounded-lg px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-warning border border-warning/40 bg-warning/5 hover:bg-warning/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-warning/30 aria-disabled:opacity-60 transition"
               >
@@ -267,9 +270,9 @@ export default function MentoringPage() {
           <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-warning/30 group-hover:ring-warning/50" aria-hidden />
         </a>
         <a
-          href="#" /* Replace with wa.me link */
+          href={whatsappHref || '#'} /* Replace with wa.me link */
           data-placeholder="whatsapp-booking"
-          aria-disabled="true"
+          aria-disabled={!whatsappHref}
           className="flex-1 group relative inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-warning border border-warning/40 bg-warning/10 backdrop-blur-sm shadow shadow-warning/20 hover:bg-warning/15 transition"
         >
           <span className="i-lucide-phone" /> WA
