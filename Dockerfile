@@ -1,13 +1,9 @@
 # Multi-stage production build for Next.js 14 app (standalone output)
 FROM node:20-alpine AS deps
 WORKDIR /app
-# Install system deps if needed (e.g., sharp). Not required here by default.
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
-# Use npm ci if lockfile present
-RUN if [ -f package-lock.json ]; then npm ci; \
-    elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-    elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install --frozen-lockfile; \
-    else npm install; fi
+# Copy only package manifest (no optional lockfiles to avoid COPY failure)
+COPY package.json ./
+RUN npm install
 
 FROM node:20-alpine AS builder
 WORKDIR /app
