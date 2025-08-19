@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #071621;
+  --color-bg-alt: #0E2533;
+  --color-fg: #F5FAFC;
+  --color-fg-muted: #B5C9D3;
+  --color-accent: #00C48C;
+  --color-accent-alt: #00A977;
+  --color-accent-soft: #E0FFF6;
+  --color-border: #163544;
+  --color-warning: #FFB347;
+  --color-danger: #FF5F56;
+}
+
+.dark {
+  --color-bg: #030d14;
+  --color-bg-alt: #0a1a24;
+  --color-fg: #E8F2F6;
+  --color-fg-muted: #8DA3AE;
+  --color-accent: #00C48C;
+  --color-accent-alt: #00B07F;
+  --color-accent-soft: #113f33;
+  --color-border: #123040;
+  --color-warning: #FFB347;
+  --color-danger: #FF665E;
+}
+
+html, body { height: 100%; }
+body { font-feature-settings: 'rlig' 1, 'calt' 1; }
+
+::selection { background: var(--color-accent); color: #fff; }
+
+a { text-decoration: none; }
+
+/* Form control visibility adjustments */
+@layer base {
+  input, textarea, select {
+    background-color: var(--color-bg-alt);
+    color: var(--color-fg);
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--color-fg-muted);
+    opacity: .65;
+  }
+  /* Autofill override (Safari/Chrome) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-fg) !important;
+    box-shadow: 0 0 0 1000px var(--color-bg-alt) inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+/* Keyword cycle (global so SSR style tags inside component not needed) */
+@layer utilities {
+  .kw-cycle { animation: kwCycle 9s linear infinite; }
+}
+@keyframes kwCycle { 0%,33% {transform: translateY(0);} 34%,66% {transform: translateY(-100%);} 67%,100% {transform: translateY(-200%);} }
+@media (prefers-reduced-motion: reduce) { .kw-cycle { animation: none; } }
