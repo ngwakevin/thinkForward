@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "postbuild": "node scripts/postbuild.js"
+    "postbuild": "node scripts/postbuild.js",
+    "docker:build": "docker build -t thinkforward .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env.local thinkforward"
   },
   "dependencies": {
     "next": "14.2.5",
