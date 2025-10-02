@@ -15,10 +15,6 @@ env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
   NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-  SMTP_HOST: ${{ secrets.SMTP_HOST }}
-  SMTP_PORT: ${{ secrets.SMTP_PORT }}
-  SMTP_USER: ${{ secrets.SMTP_USER }}
-  SMTP_PASS: ${{ secrets.SMTP_PASS }}
   NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
 jobs:
@@ -36,6 +32,21 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify required secrets present
+        run: |
+          missing=()
+          for v in DATABASE_URL NEXTAUTH_URL NEXTAUTH_SECRET NEXT_PUBLIC_SITE_URL; do
+            if [ -z "${!v}" ]; then
+              echo "Missing required secret: $v" >&2
+              missing+=("$v")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Required secrets missing: ${missing[*]}" >&2
+            exit 1
+          fi
+          echo "All required secrets present." 
 
       - name: Build (Prisma generate + Next build)
         run: npm run build:ci
