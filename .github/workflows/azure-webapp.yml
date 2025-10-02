@@ -11,6 +11,8 @@ permissions:
 
 env:
   NEXT_TELEMETRY_DISABLED: 1
+  # Base URL of the deployed Azure Web App (update if custom domain is added)
+  APP_BASE_URL: https://learnapp-fpgsf8drg5hegphu.westeurope-01.azurewebsites.net
   # Runtime env vars pulled from GitHub secrets (add them in repo settings)
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
@@ -73,5 +75,24 @@ jobs:
 
       - name: Post-deploy smoke test
         run: |
-          echo "Waiting 15s for app warmup..."; sleep 15
-          curl -I https://learnapp.azurewebsites.net || true
+          echo "Waiting 20s for app warmup..."; sleep 20
+          echo "Smoke test HEAD $APP_BASE_URL";
+          curl -I "$APP_BASE_URL" || true
+
+      - name: Health check (retry)
+        run: |
+          attempts=0
+          max=6
+          until [ $attempts -ge $max ]; do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' "$APP_BASE_URL/api/health" || echo 000)
+            echo "Attempt $((attempts+1)) -> HTTP $code"
+            if [ "$code" = "200" ]; then
+              cat /tmp/health.json | jq '.' || cat /tmp/health.json
+              echo "Health check passed"; exit 0
+            fi
+            sleep 10
+            attempts=$((attempts+1))
+          done
+          echo "Health check failed after $max attempts" >&2
+          echo "Last response:"; cat /tmp/health.json || true
+          exit 1
