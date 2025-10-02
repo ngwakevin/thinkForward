@@ -21,16 +21,16 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:dev": "prisma migrate dev --name init",
     "db:seed": "tsx prisma/seed.ts",
-    "deploy:remote": "npm run zip:source && az webapp config appsettings set -g rg-thinkforward-prod -n thinkforwardcloud --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true PORT=8080 && az webapp deployment source config-zip -g rg-thinkforward-prod -n thinkforwardcloud --src source.zip",
-    "deploy:prebuild": "npm run zip:prebuild && az webapp config appsettings set -g rg-thinkforward-prod -n thinkforwardcloud --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false PORT=8080 && az webapp deployment source config-zip -g rg-thinkforward-prod -n thinkforwardcloud --src deploy.zip && az webapp restart -g rg-thinkforward-prod -n thinkforwardcloud",
+  "build:ci": "prisma generate && next build",
     "card:png": "node scripts/export-cards.mjs",
     "backfill:identity": "tsx scripts/backfill-identity.ts",
-    "postinstall": "if [ \"$SCM_DO_BUILD_DURING_DEPLOYMENT\" = \"true\" ]; then echo 'Remote build detected: prisma generate + next build'; npx prisma generate && npm run build; fi"
+    "postinstall": "echo 'Postinstall: no build (handled in CI). Set SCM_DO_BUILD_DURING_DEPLOYMENT=true only if forcing legacy remote build.'"
   },
   "engines": {
     "node": ">=20 <21"
   },
   "dependencies": {
+    "@prisma/client": "5.18.0",
     "bcryptjs": "^3.0.2",
     "clsx": "2.1.1",
     "fuse.js": "7.0.0",
@@ -41,13 +41,12 @@
     "next-auth": "^4.24.11",
     "next-mdx-remote": "5.0.0",
     "nodemailer": "6.9.14",
+    "prisma": "5.18.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "reading-time": "1.5.0",
     "rehype-pretty-code": "0.13.1",
     "remark-directive": "2.0.1",
-    "@prisma/client": "5.18.0",
-    "prisma": "5.18.0",
     "zod": "3.23.8"
   },
   "devDependencies": {
