@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Dark Minimal Business Card (single face) 3.75in x 2.25in incl. bleed => 1125 x 675 @300dpi -->
+<svg width="1125" height="675" viewBox="0 0 1125 675" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <title>Cloudegree Minimal Dark Business Card</title>
+  <defs>
+    <linearGradient id="cardBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071621"/>
+      <stop offset="100%" stop-color="#0E2533"/>
+    </linearGradient>
+    <!-- Gradients mirroring site wordmark (think: accent->accent-alt, Forward: accent-alt->accent->accent-alt) -->
+    <linearGradient id="gradThink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00C48C"/>
+      <stop offset="100%" stop-color="#00A977"/>
+    </linearGradient>
+    <linearGradient id="gradForward" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00A977"/>
+      <stop offset="50%" stop-color="#00C48C"/>
+      <stop offset="100%" stop-color="#00A977"/>
+    </linearGradient>
+    <style>
+      .bg { fill:url(#cardBg); }
+      .outer { stroke:#163544; stroke-width:6; }
+      .logo-block { fill:#030d14; stroke:#163544; stroke-width:4; }
+      .wordmark { font-family:'Space Grotesk', Inter, sans-serif; font-weight:600; letter-spacing:1px; }
+      .tagline { font-family:'Space Grotesk', Inter, sans-serif; font-weight:600; letter-spacing:0.5px; }
+      .meta { font-family:Inter,'Helvetica Neue',Arial,sans-serif; font-weight:500; letter-spacing:0.5px; }
+      .accent { fill:#00C48C; }
+      .accent-alt { fill:#00A977; }
+      .muted { fill:#B5C9D3; }
+    </style>
+  </defs>
+  <!-- Background -->
+  <rect class="bg" x="0" y="0" width="1125" height="675" rx="48"/>
+  <!-- Inner border -->
+  <rect x="12" y="12" width="1101" height="651" rx="40" fill="none" class="outer"/>
+  <g>
+    <!-- Wordmark without background block -->
+    <text x="100" y="132" class="wordmark" font-size="54" fill="#F5FAFC">
+      <tspan fill="url(#gradThink)">Go</tspan><tspan fill="url(#gradForward)">Uply</tspan><tspan dx="5" fill="#FFB347">›</tspan>
+    </text>
+  </g>
+
+  <!-- Tagline centered (reverted size) -->
+  <text x="562.5" y="352" text-anchor="middle" class="tagline" font-size="52" fill="#F5FAFC">Train. Build. <tspan class="accent">Elevate.</tspan></text>
+
+  <!-- Bottom contact left (reverted layout) -->
+  <text x="80" y="575" class="meta" font-size="36" fill="#F5FAFC">+32 471 83 42 45</text>
+  <!-- Bottom contact right (email) -->
+  <text x="1045" y="575" class="meta" font-size="34" text-anchor="end" fill="#B5C9D3">ngwakevin@outlook.com</text>
+
+  
+</svg>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Minimal Business Card (single face) 3.75in x 2.25in incl. bleed => 1125 x 675 @300dpi -->
+<svg width="1125" height="675" viewBox="0 0 1125 675" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <title>Cloudegree Minimal Business Card</title>
+  <defs>
+    <style>
+      .bg { fill:#F5FAFC; }
+      .border { stroke:#163544; stroke-width:6; }
+      .pill { fill:#F5FAFC; stroke:#163544; stroke-width:4; }
+      .wordmark { font-family:'Space Grotesk', Inter, sans-serif; font-weight:600; letter-spacing:1px; }
+      .tagline { font-family:'Space Grotesk', Inter, sans-serif; font-weight:500; letter-spacing:0.5px; }
+      .meta { font-family:Inter, 'Helvetica Neue', Arial, sans-serif; font-weight:500; letter-spacing:0.5px; }
+    </style>
+  </defs>
+  <!-- Card background & border (bleed safe: outer shape includes live area, printer can trim 0.125 in) -->
+  <rect class="bg" x="0" y="0" width="1125" height="675" rx="48"/>
+  <rect class="bg border" x="12" y="12" width="1101" height="651" rx="40" fill="none"/>
+
+  <!-- Wordmark pill (top right) -->
+  <g>
+    <rect class="pill" x="770" y="70" width="300" height="100" rx="28"/>
+  <text x="920" y="135" text-anchor="middle" class="wordmark" font-size="54" fill="#071621">Go<tspan fill="#00C48C">Uply</tspan></text>
+  </g>
+
+  <!-- Tagline pill (center) -->
+  <g>
+    <rect class="pill" x="325" y="285" width="475" height="120" rx="34"/>
+    <text x="562.5" y="355" text-anchor="middle" class="tagline" font-size="56" fill="#071621">Train. Build. <tspan fill="#00C48C">Elevate.</tspan></text>
+  </g>
+
+  <!-- Phone pill (bottom left) -->
+  <g>
+    <rect class="pill" x="90" y="510" width="430" height="125" rx="34"/>
+    <text x="305" y="590" text-anchor="middle" class="meta" font-size="50" fill="#071621">+1 (555) 123-4567</text>
+  </g>
+
+  <!-- QR pill (bottom right) -->
+  <g>
+    <rect class="pill" x="900" y="515" width="140" height="120" rx="30"/>
+    <text x="970" y="590" text-anchor="middle" class="meta" font-size="44" fill="#071621">QR</text>
+  </g>
+</svg>

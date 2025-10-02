@@ -1,0 +1,94 @@
+# CI/CD for ThinkForward (Next.js) -> Azure Web App (Zip Deploy)
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  # Set in pipeline variables or replace with your values
+  azureServiceConnection: 'Azure-Subscription-Connection' # Service connection to your Azure subscription
+  webAppName: 'thinkforwardcloud'                         # Azure Web App name
+  nodeVersion: '20.x'
+
+stages:
+  - stage: Build
+    displayName: Build (prepack) and create deploy.zip
+    jobs:
+      - job: build_zip
+        displayName: Build Next.js and zip artifact
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: NodeTool@0
+            displayName: Use Node $(nodeVersion)
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          # Use the existing helper which runs `npm ci && npm run build && npm prune --production` and zips
+          - script: |
+              chmod +x scripts/zip-prebuild.sh
+              ./scripts/zip-prebuild.sh
+            displayName: Build and package (deploy.zip)
+
+          - publish: $(Build.SourcesDirectory)/deploy.zip
+            artifact: drop
+            displayName: Publish deploy.zip artifact
+
+  - stage: Deploy
+    displayName: Deploy to Azure Web App (Zip Deploy)
+    dependsOn: Build
+    jobs:
+      - deployment: deploy_zip
+        displayName: Zip Deploy to $(webAppName)
+        environment: 'prod'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
+
+                # Ensure required app settings (no build on server, listen on 8080)
+                - task: AzureAppServiceSettings@1
+                  displayName: Configure App Settings
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    appName: '$(webAppName)'
+                    appSettings: |
+                      - name: SCM_DO_BUILD_DURING_DEPLOYMENT
+                        value: false
+                      - name: PORT
+                        value: 8080
+
+                - task: AzureWebApp@1
+                  displayName: Deploy deploy.zip
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    appType: 'webAppLinux'
+                    appName: '$(webAppName)'
+                    package: '$(Pipeline.Workspace)/drop/deploy.zip'
+                    deploymentMethod: 'zipDeploy'
+
+                - task: AzureAppServiceManage@0
+                  displayName: Restart Web App
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    Action: 'Restart Azure App Service'
+                    WebAppName: '$(webAppName)'
+
+# Notes:
+# - Create one service connection in Azure DevOps:
+#   azureServiceConnection: Azure Resource Manager connection with access to the Web App resource
+# - This pipeline mirrors your local deploy script (scripts/zip-prebuild.sh) to build Next.js and zip server-ready files.
+# - Zip Deploy uploads the prebuilt app; SCM_DO_BUILD_DURING_DEPLOYMENT=false avoids on-server builds.

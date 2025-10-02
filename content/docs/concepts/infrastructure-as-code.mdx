@@ -1,0 +1,45 @@
+---
+title: Infrastructure as Code
+description: Codifying environments for consistency & repeatability
+---
+
+# Infrastructure as Code
+
+Infrastructure as Code (IaC) defines and provisions infrastructure through declarative or imperative code instead of manual console actions.
+
+## Benefits
+- Reproducibility & drift reduction
+- Version control & audit trail
+- Reviewable / testable changes
+- Faster environment cloning
+
+## Core Concepts
+| Concept | Summary |
+| ------- | ------- |
+| Declarative | Describe end state (Terraform, Bicep) |
+| Imperative | Step by step (scripts, SDK) |
+| Idempotency | Safe re-apply without side effects |
+| State | Source of truth for deployed resources |
+| Modules | Reusable abstractions for patterns |
+
+## Lifecycle
+1. Author / update definitions
+2. Plan (preview changes)
+3. Apply (create/update/delete)
+4. Validate (tests / policies)
+5. Monitor & drift detect
+
+## Good Practices
+- Minimal manual console edits
+- Separate state backends per environment
+- Explicit versions for providers/modules
+- Tagging strategy (owner, env, cost center)
+- Policy as code (guardrails)
+
+## Pitfalls
+- Storing secrets in plain text
+- Over-abstracting early
+- Large unreviewed plans
+- Mixing imperative tweaks with declarative base
+
+> Start with a small module (network + compute) and iterate.

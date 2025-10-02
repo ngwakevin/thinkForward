@@ -1,0 +1,314 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #071621;
+  --color-bg-alt: #0E2533;
+  --color-fg: #F5FAFC;
+  --color-fg-muted: #B5C9D3;
+  --color-accent: #00C48C;
+  --color-accent-alt: #00A977;
+  --color-accent-soft: #E0FFF6;
+  --color-border: #163544;
+  --color-warning: #FFB347;
+  --color-danger: #FF5F56;
+}
+
+.dark {
+  --color-bg: #030d14;
+  --color-bg-alt: #0a1a24;
+  --color-fg: #E8F2F6;
+  --color-fg-muted: #8DA3AE;
+  --color-accent: #00C48C;
+  --color-accent-alt: #00B07F;
+  --color-accent-soft: #113f33;
+  --color-border: #123040;
+  --color-warning: #FFB347;
+  --color-danger: #FF665E;
+}
+
+html, body { height: 100%; }
+body { font-feature-settings: 'rlig' 1, 'calt' 1; }
+
+::selection { background: var(--color-accent); color: #fff; }
+
+a { text-decoration: none; }
+
+/* Smooth scrolling with reduced-motion respect */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* Prevent sticky header from covering in-page anchors */
+:where([id]) { scroll-margin-top: 96px; }
+
+/* Form control visibility adjustments */
+@layer base {
+  input, textarea, select {
+    background-color: var(--color-bg-alt);
+    color: var(--color-fg);
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--color-fg-muted);
+    opacity: .65;
+  }
+  /* Autofill override (Safari/Chrome) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-fg) !important;
+    box-shadow: 0 0 0 1000px var(--color-bg-alt) inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+/* Keyword cycle (global so SSR style tags inside component not needed) */
+@layer utilities {
+  .kw-cycle { animation: kwCycle 9s linear infinite; }
+}
+@keyframes kwCycle { 0%,33% {transform: translateY(0);} 34%,66% {transform: translateY(-100%);} 67%,100% {transform: translateY(-200%);} }
+@media (prefers-reduced-motion: reduce) { .kw-cycle { animation: none; } }
+
+/* Floating orb animation for decorative elements */
+@layer utilities {
+  .animate-float-slow { animation: floatY 9s ease-in-out infinite; }
+  .animate-float-slower { animation: floatY 11s ease-in-out infinite; }
+  .animate-float-slowest { animation: floatY 18s ease-in-out infinite; }
+}
+@keyframes floatY {
+  0% { transform: translateY(0); opacity: 0.9; }
+  50% { transform: translateY(-10px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow, .animate-float-slower { animation: none; }
+}
+
+/* New design animations: morphing blobs + one-time sheen sweep */
+@layer utilities {
+  .animate-blob-morph-slow { animation: blobMorph 14s ease-in-out infinite; }
+  .animate-blob-morph-slower { animation: blobMorph 18s ease-in-out infinite; }
+  .animate-sheen-once { animation: sheenSweep 900ms ease-out 120ms 1 forwards; }
+}
+@keyframes blobMorph {
+  0% { border-radius: 46% 54% 48% 52% / 50% 44% 56% 50%; transform: rotate(0deg) scale(1); }
+  33% { border-radius: 52% 48% 44% 56% / 46% 58% 42% 54%; transform: rotate(1deg) scale(1.02); }
+  66% { border-radius: 44% 56% 52% 48% / 58% 42% 54% 46%; transform: rotate(-1deg) scale(0.99); }
+  100% { border-radius: 46% 54% 48% 52% / 50% 44% 56% 50%; transform: rotate(0deg) scale(1); }
+}
+@keyframes sheenSweep {
+  0% { transform: translateX(-120%); opacity: 0; }
+  10% { opacity: .6; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob-morph-slow, .animate-blob-morph-slower, .animate-sheen-once { animation: none; }
+}
+
+/* New dashed path flow + soft pulse */
+@layer utilities {
+  .animate-dash-slow { animation: dashFlow 16s linear infinite; }
+  .animate-pulse-soft { animation: pulseSoft 2200ms ease-in-out infinite; }
+}
+@keyframes dashFlow { to { stroke-dashoffset: -240; } }
+@keyframes pulseSoft {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-dash-slow, .animate-pulse-soft { animation: none; }
+}
+
+/* (reverted) Removed edge-to-edge overrides */
+
+/* Constellation animations */
+@layer utilities {
+  .animate-twinkle-slow { animation: twinkle 2400ms ease-in-out infinite; }
+  .animate-orbit-slow { animation: orbit 22s linear infinite; }
+}
+@keyframes twinkle {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+@keyframes orbit {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-twinkle-slow, .animate-orbit-slow { animation: none; }
+}
+
+/* Capability rings rotation + sparkle */
+@layer utilities {
+  .animate-ring-rotate-slow { animation: ringRotate 28s linear infinite; }
+  .animate-ring-rotate-rev-slow { animation: ringRotateReverse 32s linear infinite; }
+  .animate-sparkle-slow { animation: sparkle 2100ms ease-in-out infinite; }
+}
+@keyframes ringRotate { to { transform: rotate(360deg); } }
+@keyframes ringRotateReverse { to { transform: rotate(-360deg); } }
+@keyframes sparkle {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-ring-rotate-slow, .animate-ring-rotate-rev-slow, .animate-sparkle-slow { animation: none; }
+}
+
+/* Path-following utility for long loop animations (~16s) */
+@layer utilities {
+  .animate-offset-16 { animation: offsetMove16 16s ease-in-out infinite; }
+}
+@keyframes offsetMove16 {
+  0% { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-offset-16 { animation: none; }
+}
+
+/* HumanUpskill sequential segment glow */
+@layer utilities {
+  .animate-seg-1 { animation: segGlow 2400ms ease-in-out infinite; }
+  .animate-seg-2 { animation: segGlow 2400ms ease-in-out infinite 400ms; }
+  .animate-seg-3 { animation: segGlow 2400ms ease-in-out infinite 800ms; }
+}
+@keyframes segGlow {
+  0%, 100% { opacity: .35; filter: drop-shadow(0 0 0px transparent); }
+  50% { opacity: .9; filter: drop-shadow(0 0 10px var(--color-accent-soft)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-seg-1, .animate-seg-2, .animate-seg-3 { animation: none; }
+}
+
+/* SkillMosaic animations */
+@layer utilities {
+  .animate-tile-pop { animation: tilePop 700ms ease-out both; }
+  .animate-tile-pulse { animation: tilePulse 2400ms ease-in-out infinite; }
+  .animate-scan-sweep { animation: scanSweep 6s linear infinite; }
+}
+@keyframes tilePop {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes tilePulse {
+  0%,100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.08); }
+}
+@keyframes scanSweep {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(1120px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-tile-pop, .animate-tile-pulse, .animate-scan-sweep { animation: none; }
+}
+
+/* MinimalLearn sheen */
+@layer utilities {
+  .animate-sheen-slow { animation: sheenSlow 8s linear infinite; }
+}
+@keyframes sheenSlow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(1120px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheen-slow { animation: none; }
+}
+
+/* First Impression hero helpers */
+@layer utilities {
+  .animate-gradient-slow { background-size: 200% 200%; animation: gradientShift 18s ease-in-out infinite; }
+  .animate-fade-up { animation: fadeUp 900ms ease-out both; }
+  .animate-fade-up-delay { animation: fadeUp 1000ms ease-out 140ms both; }
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient-slow, .animate-fade-up, .animate-fade-up-delay { animation: none; }
+}
+
+/* Minimal decorative accents */
+@layer components {
+  /* Corner notches: subtle L-shaped accents on top corners */
+  .corner-notches { position: relative; }
+  .corner-notches::before,
+  .corner-notches::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: .35;
+    pointer-events: none;
+  }
+  .corner-notches::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid var(--color-accent);
+    border-left: 1px solid var(--color-accent);
+    border-top-left-radius: 6px;
+  }
+  .corner-notches::after {
+    top: -1px;
+    right: -1px;
+    border-top: 1px solid var(--color-accent-alt);
+    border-right: 1px solid var(--color-accent-alt);
+    border-top-right-radius: 6px;
+  }
+}
+
+@layer components {
+  /* Dotted divider for headings */
+  .dotted-divider {
+    height: 1px;
+    background-image: radial-gradient(circle at 1px 1px, var(--color-border) 1px, transparent 1px);
+    background-size: 8px 2px;
+    background-repeat: repeat-x;
+    opacity: .6;
+  }
+}
+
+/* Reveal-on-scroll utilities (configurable distance + direction) */
+@layer components {
+  /* Base reveal: use CSS vars for distance and delay. */
+  .reveal {
+    --reveal-x: 0px;
+    --reveal-y: 32px; /* default 32px vertical distance (30–40px range) */
+    --reveal-delay: 0ms;
+    opacity: 0;
+    transform: translate3d(var(--reveal-x), var(--reveal-y), 0);
+    transition-property: opacity, transform;
+    transition-duration: 600ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out expo-ish */
+    transition-delay: var(--reveal-delay);
+    will-change: opacity, transform;
+  }
+  .reveal-visible { opacity: 1; transform: translate3d(0, 0, 0); }
+  /* Directional helpers */
+  .reveal-up { --reveal-x: 0px; --reveal-y: 32px; }
+  .reveal-down { --reveal-x: 0px; --reveal-y: -32px; }
+  .reveal-left { --reveal-x: -32px; --reveal-y: 0px; }
+  .reveal-right { --reveal-x: 32px; --reveal-y: 0px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* Accent color for specific headings requested to be green */
+h2.font-display.text-2xl.font-bold.tracking-tight,
+h2.font-display.text-2xl.font-semibold.tracking-tight,
+h3.font-semibold.tracking-tight {
+  color: var(--color-accent);
+}
+
+/* h5 headings used across cards/sections */
+h5.font-semibold.tracking-tight.text-lg {
+  color: var(--color-accent);
+}

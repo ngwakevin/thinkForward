@@ -1,0 +1,22 @@
+
+> cloudacers@0.1.0 predev
+> node scripts/check-env.js
+
+[32m[env-check][0m All optional client vars present
+
+> cloudacers@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+  - Experiments (use with caution):
+    · typedRoutes
+
+ ✓ Starting...
+ ✓ Ready in 1300ms
+ ○ Compiling / ...
+ ✓ Compiled / in 958ms (541 modules)
+ GET / 200 in 232ms
+ ✓ Compiled in 122ms (273 modules)
+ GET / 200 in 1149ms
+ GET / 200 in 109ms

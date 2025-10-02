@@ -1,0 +1,9 @@
+node_modules
+.next
+.env.local
+.env
+.DS_Store
+out
+tsconfig.tsbuildinfo
+deploy.zip
+source.zip

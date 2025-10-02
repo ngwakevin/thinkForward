@@ -1,0 +1,26 @@
+
+> gouply@0.1.0 dev
+> next dev -p 3006
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3006
+  - Environments: .env.local, .env
+  - Experiments (use with caution):
+    · typedRoutes
+
+ ✓ Starting...
+ ✓ Ready in 1200ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1677ms (646 modules)
+ ✓ Compiled in 102ms (315 modules)
+ GET / 200 in 1834ms
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 708ms (552 modules)
+ GET /api/auth/session 200 in 987ms
+ GET /api/auth/session 200 in 6ms
+ GET / 200 in 64ms
+ GET /api/auth/session 200 in 14ms
+ GET /api/auth/session 200 in 3ms
+ GET / 200 in 32ms
+ GET /api/auth/session 200 in 9ms
+ GET /api/auth/session 200 in 5ms
