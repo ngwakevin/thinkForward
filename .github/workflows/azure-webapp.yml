@@ -12,7 +12,7 @@ permissions:
 env:
   NEXT_TELEMETRY_DISABLED: 1
   # Base URL of the deployed Azure Web App (update if custom domain is added)
-  APP_BASE_URL: https://learnapp-fpgsf8drg5hegphu.westeurope-01.azurewebsites.net
+  APP_BASE_URL: https://learnapp.azurewebsites.net
   # Runtime env vars pulled from GitHub secrets (add them in repo settings)
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
@@ -44,11 +44,26 @@ jobs:
               missing+=("$v")
             fi
           done
+          # Azure OIDC IDs must also exist
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${!v}" ]; then
+              echo "Missing Azure OIDC secret: $v" >&2
+              missing+=("$v")
+            fi
+          done
           if [ ${#missing[@]} -gt 0 ]; then
             echo "Required secrets missing: ${missing[*]}" >&2
             exit 1
           fi
           echo "All required secrets present." 
+
+      - name: Run Prisma migrations (deploy)
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Export build metadata
+        run: echo "BUILD_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
 
       - name: Build (Prisma generate + Next build)
         run: npm run build:ci
@@ -66,6 +81,13 @@ jobs:
           if [ -d prisma ]; then cp -R prisma deploy/prisma; fi
           # Ensure package.json & lock file for runtime (for next start script if needed)
           cp package.json package-lock.json deploy/ 2>/dev/null || true
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
