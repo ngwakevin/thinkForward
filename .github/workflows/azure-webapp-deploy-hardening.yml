@@ -16,6 +16,8 @@ env:
   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
   NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
   NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+  AZURE_SUBSCRIPTION_ID: ba0cdaec-11b4-48fc-8941-0930ab748543
+  AZURE_TENANT_ID: 438537ce-67d5-4799-837e-aa8ba4ed01eb
 
 jobs:
   build-and-deploy:
@@ -30,9 +32,7 @@ jobs:
           for v in DATABASE_URL NEXTAUTH_URL NEXTAUTH_SECRET NEXT_PUBLIC_SITE_URL; do
             if [ -z "${!v}" ]; then echo "Missing required secret: $v" >&2; missing+=("$v"); fi
           done
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
-            if [ -z "${!v}" ]; then echo "Missing Azure OIDC secret: $v" >&2; missing+=("$v"); fi
-          done
+          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then echo "Missing Azure OIDC secret: AZURE_CLIENT_ID" >&2; missing+=("AZURE_CLIENT_ID"); fi
           if [ ${#missing[@]} -gt 0 ]; then echo "Missing: ${missing[*]}" >&2; exit 1; fi
           echo "All secrets present."
 
@@ -70,8 +70,8 @@ jobs:
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3

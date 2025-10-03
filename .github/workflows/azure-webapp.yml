@@ -18,6 +18,10 @@ env:
   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
   NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
   NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+  # Embedded (non-secret) Azure identifiers (user requested these be hard-coded)
+  # NOTE: Subscription ID and Tenant ID are generally safe to expose; the Client ID still comes from a secret.
+  AZURE_SUBSCRIPTION_ID: ba0cdaec-11b4-48fc-8941-0930ab748543
+  AZURE_TENANT_ID: 438537ce-67d5-4799-837e-aa8ba4ed01eb
 
 jobs:
   build-and-deploy:
@@ -44,13 +48,11 @@ jobs:
               missing+=("$v")
             fi
           done
-          # Azure OIDC IDs must also exist
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
-            if [ -z "${!v}" ]; then
-              echo "Missing Azure OIDC secret: $v" >&2
-              missing+=("$v")
-            fi
-          done
+          # Only the Azure Client ID must be provided as a secret; subscription & tenant IDs are embedded above.
+          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then
+            echo "Missing Azure OIDC secret: AZURE_CLIENT_ID" >&2
+            missing+=("AZURE_CLIENT_ID")
+          fi
           if [ ${#missing[@]} -gt 0 ]; then
             echo "Required secrets missing: ${missing[*]}" >&2
             exit 1
@@ -86,8 +88,8 @@ jobs:
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
