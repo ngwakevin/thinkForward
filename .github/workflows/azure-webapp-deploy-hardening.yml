@@ -17,7 +17,8 @@ env:
   NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
   NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
   AZURE_SUBSCRIPTION_ID: ba0cdaec-11b4-48fc-8941-0930ab748543
-  AZURE_TENANT_ID: 438537ce-67d5-4799-837e-aa8ba4ed01eb
+  # Updated tenant ID (previous value 438537ce-67d5-4799-837e-aa8ba4ed01eb replaced at user request)
+  AZURE_TENANT_ID: 91347cb6-c2b2-44ed-bc6d-9d72e3337f8b
 
 jobs:
   build-and-deploy:
