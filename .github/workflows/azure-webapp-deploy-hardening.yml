@@ -1,0 +1,96 @@
+name: Deploy (deploy-hardening) Next.js to Azure Web App
+
+on:
+  push:
+    branches: [ deploy-hardening ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+  APP_BASE_URL: https://learnapp.azurewebsites.net
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+  NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+  NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets present
+        run: |
+          missing=()
+          for v in DATABASE_URL NEXTAUTH_URL NEXTAUTH_SECRET NEXT_PUBLIC_SITE_URL; do
+            if [ -z "${!v}" ]; then echo "Missing required secret: $v" >&2; missing+=("$v"); fi
+          done
+          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${!v}" ]; then echo "Missing Azure OIDC secret: $v" >&2; missing+=("$v"); fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then echo "Missing: ${missing[*]}" >&2; exit 1; fi
+          echo "All secrets present."
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Export build metadata
+        run: echo "BUILD_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - name: Build
+        run: npm run build:ci
+
+      - name: Prepare deployment package (standalone)
+        run: |
+          mkdir -p deploy
+          cp -R .next/standalone/* deploy/
+          mkdir -p deploy/.next/static
+          cp -R .next/static/* deploy/.next/static/
+          cp -R public deploy/public
+          if [ -d prisma ]; then cp -R prisma deploy/prisma; fi
+          cp package.json package-lock.json deploy/ 2>/dev/null || true
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: learnapp
+          package: deploy
+
+      - name: Smoke test
+        run: |
+          echo "Warmup 20s..."; sleep 20
+          curl -I "$APP_BASE_URL" || true
+
+      - name: Health check
+        run: |
+          attempts=0; max=6
+          while [ $attempts -lt $max ]; do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' "$APP_BASE_URL/api/health" || echo 000)
+            echo "Attempt $((attempts+1)) -> $code"
+            if [ "$code" = "200" ]; then cat /tmp/health.json; exit 0; fi
+            attempts=$((attempts+1)); sleep 10
+          done
+          echo "Health check failed" >&2; cat /tmp/health.json || true; exit 1
