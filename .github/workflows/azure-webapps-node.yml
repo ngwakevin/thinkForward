@@ -7,7 +7,7 @@ on:
 
 env:
   NODE_VERSION: '18.x'
-  AZURE_WEBAPP_NAME: 'thinkForward'
+  AZURE_WEBAPP_NAME: 'thinkforward-dev'
   AZURE_WEBAPP_PACKAGE_PATH: '.'
 
 jobs:
