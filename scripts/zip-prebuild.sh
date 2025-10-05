@@ -8,13 +8,16 @@ set -euo pipefail
 rm -f deploy.zip
 rm -f startup.sh
 
-# Use npm ci for consistent installs when running in GitHub Actions
-# Otherwise use npm install for local development
+# In CI environments or when package-lock.json is out of sync, we need to ensure they're in sync
+# before proceeding with the build process
 if [ "${CI:-false}" = "true" ]; then
-  echo "Running in CI environment, using npm ci..."
+  echo "Running in CI environment, ensuring package-lock.json is in sync..."
+  # First update package-lock.json to match package.json
+  npm install --package-lock-only --no-audit
+  # Then install all dependencies using the updated lock file
   npm ci
 else
-  echo "Running in local environment, using npm install..."
+  echo "Installing dependencies and updating package-lock.json if needed..."
   npm install
 fi
 
