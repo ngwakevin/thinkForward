@@ -6,3 +6,4 @@ out
 tsconfig.tsbuildinfo
 deploy.zip
 source.zip
+startup.sh

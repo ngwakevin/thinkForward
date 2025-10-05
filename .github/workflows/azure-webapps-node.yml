@@ -22,10 +22,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: npm install and build
+      - name: Build and prepare deployment package
         run: |
-          npm install
-          npm run zip:prebuild
+          # Build and package application for Azure deployment
+          npm run prepare:github-actions
         env:
           CI: true
 
