@@ -1,0 +1,10 @@
+{
+  "order": [
+    "overview",
+    "quick-start",
+    "concepts/ci-cd",
+    "concepts/infrastructure-as-code",
+    "guides/build-first-pipeline",
+    "faq"
+  ]
+}

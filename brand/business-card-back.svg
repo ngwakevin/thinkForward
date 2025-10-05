@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Business Card BACK (Option A) 3.75in x 2.25in including bleed @300dpi => 1125 x 675px -->
+<svg width="1125" height="675" viewBox="0 0 1125 675" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <title>GoUply Business Card Back</title>
+  <defs>
+    <style>
+      .label { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; font-size: 36px; fill: #B5C9D3; letter-spacing: 2px; font-weight:500; }
+      .value { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; font-size: 42px; fill: #F5FAFC; font-weight:500; }
+    </style>
+  </defs>
+  <rect width="1125" height="675" fill="#071621"/>
+  <!-- Safe area guide (remove before print) -->
+  <rect x="45" y="45" width="1035" height="585" fill="none" stroke="#163544" stroke-width="2" stroke-dasharray="8 10" opacity="0.35"/>
+  <!-- Accent bar top right pill -->
+  <rect x="860" y="70" width="220" height="80" rx="20" fill="#00C48C"/>
+  <text x="970" y="125" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="38" font-weight="600" fill="#071621" text-anchor="middle">Platform</text>
+  <!-- Name -->
+  <text x="70" y="190" font-family="'Space Grotesk','Inter',sans-serif" font-size="118" font-weight="600" fill="#F5FAFC">Your Name</text>
+  <!-- Title -->
+  <text x="70" y="250" font-family="Inter, sans-serif" font-size="44" font-weight="500" fill="#B5C9D3" letter-spacing="2">Role / Title</text>
+  <!-- Divider -->
+  <line x1="70" y1="275" x2="1055" y2="275" stroke="#163544" stroke-width="3" />
+  <!-- Contact info -->
+  <text class="value" x="70" y="345">E: you@example.com</text>
+  <text class="value" x="70" y="405">T: +1 (555) 123-4567</text>
+  <text class="value" x="70" y="465">W: gouply.dev</text>
+  <text class="value" x="70" y="525">L: linkedin.com/in/you</text>
+  <!-- QR placeholder -->
+  <rect x="880" y="330" width="170" height="170" rx="18" fill="#0E2533" stroke="#163544" stroke-width="5" />
+  <text x="965" y="420" font-family="Inter,sans-serif" font-size="40" fill="#B5C9D3" text-anchor="middle">QR</text>
+</svg>

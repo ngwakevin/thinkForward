@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Business Card FRONT (Option A) 3.75in x 2.25in including 0.125in bleed each side @300dpi => 1125 x 675px -->
+<svg width="1125" height="675" viewBox="0 0 1125 675" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <title>GoUply Business Card Front</title>
+  <!-- Bleed background -->
+  <rect width="1125" height="675" fill="#071621"/>
+  <!-- Safe area (visual guide only - remove before print) -->
+  <rect x="45" y="45" width="1035" height="585" fill="none" stroke="#163544" stroke-width="2" stroke-dasharray="8 10" opacity="0.35"/>
+  <!-- Accent vertical bar (bleeds) -->
+  <rect x="0" y="0" width="44" height="675" fill="#00C48C"/>
+  <!-- Wordmark placeholder -->
+  <text x="110" y="360" font-family="'Space Grotesk','Inter','Helvetica Neue',Arial,sans-serif" font-size="180" font-weight="600" letter-spacing="1" fill="#F5FAFC">
+    Go<tspan fill="#00C48C">Uply</tspan>
+  </text>
+  <!-- Tagline (optional) -->
+  <text x="110" y="440" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="400" fill="#B5C9D3" letter-spacing="1">
+    Train • Build • Elevate
+  </text>
+</svg>

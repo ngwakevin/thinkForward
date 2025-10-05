@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+  <title>CloudAcers Blog</title>
+    <link>https://example.com</link>
+    <description>Structured cloud & DevOps momentum: tracks, mentorship, events, and practical guides.</description>
+    <item>
+      <title><![CDATA[First Post]]></title>
+      <link>https://example.com/blog/first-post</link>
+      <guid>https://example.com/blog/first-post</guid>
+      <pubDate>Wed, 13 Aug 2025 00:00:00 GMT</pubDate>
+      <description><![CDATA[]]></description>
+    </item>
+  </channel>
+</rss>
