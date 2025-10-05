@@ -25,7 +25,8 @@ jobs:
       - name: Build and prepare deployment package
         run: |
           # Build and package application for Azure deployment
-          npm run prepare:github-actions
+          # Using the script directly to avoid NPM_CONFIG_YES issues
+          bash scripts/zip-prebuild.sh
         env:
           CI: true
 
