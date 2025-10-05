@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION: '20.x'
   AZURE_WEBAPP_NAME: 'thinkforward-dev'
   AZURE_WEBAPP_PACKAGE_PATH: '.'
 
@@ -24,7 +24,7 @@ jobs:
 
       - name: npm install and build
         run: |
-          npm ci
+          npm install
           npm run zip:prebuild
         env:
           CI: true
