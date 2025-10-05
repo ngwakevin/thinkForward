@@ -21,15 +21,20 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:dev": "prisma migrate dev --name init",
     "db:seed": "tsx prisma/seed.ts",
-  "build:ci": "prisma generate && next build",
+    "build:ci": "prisma generate && next build",
     "card:png": "node scripts/export-cards.mjs",
     "backfill:identity": "tsx scripts/backfill-identity.ts",
-    "postinstall": "echo 'Postinstall: no build (handled in CI). Set SCM_DO_BUILD_DURING_DEPLOYMENT=true only if forcing legacy remote build.'"
-  },
+    "security:check": "tsx scripts/security-check.ts",
+    "security:headers": "npx --yes check-headers@latest http://localhost:3006",
+    "security:lint": "npx --yes eslint --config .eslintrc.json --ext .js,.jsx,.ts,.tsx . --max-warnings 0",
+    "security:audit": "npm audit --production",
+    "security": "npm run security:check && npm run security:audit",
+    "postinstall": "echo 'Postinstall: no build (handled in CI). Set SCM_DO_BUILD_DURING_DEPLOYMENT=true only if forcing legacy remote build.'"",
   "engines": {
     "node": ">=20 <21"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.0.0",
     "@prisma/client": "5.18.0",
     "bcryptjs": "^3.0.2",
     "clsx": "2.1.1",

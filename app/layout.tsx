@@ -7,6 +7,7 @@ import { Footer } from '../components/layout/Footer';
 import { ThemeProvider } from '../components/theme/ThemeProvider';
 import { AuthProvider } from '../components/auth/AuthProvider';
 import { siteConfig } from '../config/site';
+import { initializeDatabase } from '../lib/db/init';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' });
@@ -33,8 +34,19 @@ export const metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
   const analyticsKey = process.env.NEXT_PUBLIC_ANALYTICS_KEY;
+  
+  // Initialize the database connection on server render
+  if (process.env.COSMOS_ENDPOINT && process.env.COSMOS_KEY) {
+    try {
+      await initializeDatabase();
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
+      // Proceed with rendering even if DB init fails
+    }
+  }
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
