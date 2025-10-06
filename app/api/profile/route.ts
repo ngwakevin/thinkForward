@@ -131,7 +131,6 @@ async function handler(req: NextRequest) {
 
 // Export the GET handler wrapped with telemetry
 export const GET = withTelemetry(handler);
-}
 
 export async function PATCH(req: NextRequest) {
   try {
