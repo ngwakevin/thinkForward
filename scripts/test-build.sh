@@ -42,7 +42,7 @@ fi
 echo "#!/bin/sh
 export NODE_ENV=production
 export PORT=3000
-node server.js" > test-startup.sh
+node --experimental-specifier-resolution=node server.js" > test-startup.sh
 chmod +x test-startup.sh
 
 echo "=== Build verification completed successfully ==="

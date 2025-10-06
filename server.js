@@ -1,7 +1,15 @@
-// Custom Next.js server for Azure App Service
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
+// Custom Next.js server for Azure App Service using ES modules
+import { createServer } from 'http';
+import { parse } from 'url';
+import next from 'next';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
+
+// Get package.json for version info
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
 
 // Determine environment and port
 const dev = process.env.NODE_ENV !== 'production';
@@ -24,7 +32,7 @@ app.prepare()
       if (err) throw err;
       console.log(`> Ready on http://localhost:${port}`);
       console.log(`> Environment: ${process.env.NODE_ENV}`);
-      console.log(`> Next.js version: ${require('next/package.json').version}`);
+      console.log(`> Next.js version: ${packageJson.dependencies.next}`);
       console.log(`> Node.js version: ${process.version}`);
     });
   })

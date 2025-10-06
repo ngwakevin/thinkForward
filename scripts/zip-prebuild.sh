@@ -45,9 +45,9 @@ echo \"- Node version: \$(node -v)\"
 echo \"- Next.js version: \$(cat package.json | grep \\\"next\\\":)\"
 echo \"- Files in .next/server: \$(ls -la .next/server 2>/dev/null || echo '.next/server not found')\"
 
-# Use the custom server.js instead of the next binary
+# Use the custom server.js instead of the next binary with ESM support
 echo \"Starting with custom server: node server.js\"
-node server.js" > startup.sh
+node --experimental-specifier-resolution=node server.js" > startup.sh
 chmod +x startup.sh
 
 # Create deployment package including all necessary files
