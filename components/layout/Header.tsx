@@ -1,256 +1,180 @@
 'use client';
 import Link from 'next/link';
-import { ThemeToggle } from '../theme/ThemeToggle';
-import { useState, useEffect, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
-import { events } from '../../data/events'; // added for bootcamp highlighting logic
-import AttachedLogo from '../brand/AttachedLogo';
+import Image from 'next/image';
 import React from 'react';
-
-// Inline icons (avoid reliance on external icon font in production)
-const IconMenu: React.FC<{className?: string}> = ({ className = 'h-5 w-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <line x1="3" x2="21" y1="6" y2="6" />
-    <line x1="3" x2="21" y1="12" y2="12" />
-    <line x1="3" x2="21" y1="18" y2="18" />
-  </svg>
-);
-const IconClose: React.FC<{className?: string}> = ({ className = 'h-5 w-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
+import AttachedLogo from '../brand/AttachedLogo';
+import { useSession, signOut } from 'next-auth/react';
 
 export function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
+  const { status, data: session } = useSession();
+  const aboutMenuRef = React.useRef<HTMLDetailsElement | null>(null);
+  const closeAboutMenu = () => aboutMenuRef.current?.removeAttribute('open');
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => {
-    if (mobileOpen) {
-      document.documentElement.classList.add('overflow-hidden');
-    } else {
-      document.documentElement.classList.remove('overflow-hidden');
-    }
-    return () => document.documentElement.classList.remove('overflow-hidden');
-  }, [mobileOpen]);
-
-  useEffect(() => { if (mobileOpen) { const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMobileOpen(false); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); } }, [mobileOpen]);
-  useEffect(() => { // close on route change
-    setMobileOpen(false);
-  }, [pathname]);
-
-  // Determine bootcamp urgency state (dynamic label + style)
-  const bootcampMeta = useMemo(() => {
-    const upcoming = events
-      .filter(e => e.type === 'bootcamp' && new Date(e.startDate).getTime() > Date.now())
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    if (!upcoming.length) return null;
-    const next = upcoming[0];
-    const capacity = next.capacity || 0;
-    const registered = next.registered || 0;
-    const fill = capacity ? registered / capacity : 0;
-    const ms = new Date(next.startDate).getTime() - Date.now();
-    const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
-    let label = 'New';
-    if (fill >= 1) label = 'Waitlist';
-    else if (fill >= 0.85) label = 'Last Seats';
-    else if (days <= 7) label = 'Starting Soon';
-    else if (days <= 14) label = 'Cohort Soon';
-    return { label, fill, days, capacity, registered };
-  }, []);
-
+  // Preview-style nav (to match app/preview/header)
   const nav = [
-  { href: '/courses', label: 'Courses' },
+    { href: '/courses', label: 'Courses' },
     { href: '/solutions', label: 'Solutions' },
     { href: '/docs', label: 'Resources' },
-    { href: '/bootcamps', label: 'Live Bootcamps', highlight: true },
+    { href: '/community', label: 'Community', badge: 'New' },
+    { href: '/bootcamps', label: 'Bootcamps', badge: 'Live' },
   ];
 
   return (
-    <header className={`sticky top-0 z-50 border-b border-border/60 bg-bg/90 backdrop-blur transition-shadow ${scrolled ? 'shadow-sm' : ''}`}>
-      <div className="mx-auto max-w-7xl px-6 py-4 flex items-center gap-6">
-  <Link href="/" aria-label="CloudAcers home" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-md inline-flex items-center">
-          {/* Desktop: AttachedLogo in CloudAcers style */}
-          <span className="hidden md:inline-flex items-center">
-            <AttachedLogo className="text-2xl" text="CloudAcers" />
+    // BEGIN preview header parity (revert tag)
+  <header className="sticky top-0 z-40 backdrop-blur-md bg-bg/85">
+      <div className="mx-auto max-w-7xl px-6 h-16 md:h-20 flex items-center gap-8">
+        {/* Brand (matches main site logo + preview chips) */}
+  <Link href={'/' as any} aria-label="Cloudegree home" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-md inline-flex items-center">
+          {/* Desktop */}
+          <span className="hidden md:flex flex-col items-start">
+            <div className="flex items-center">
+              <AttachedLogo className="text-xl font-semibold tracking-tight" text="Cloudegree" />
+            </div>
+            {/* BEGIN variant: colored dots only, muted labels (revert tag) */}
+            <div className="mt-0.5 flex items-center gap-1.5" aria-label="Focus areas">
+              {/* Cloud Training */}
+              <span className="group relative inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-fg-muted ring-[0.5px] ring-border/50 bg-bg/40">
+                <span className="relative mr-1 inline-flex items-center justify-center" aria-hidden="true">
+                  <span className="h-1 w-1 rounded-full bg-amber-500 ring-[1.5px] ring-amber-500/25" />
+                  <span className="absolute inset-0 rounded-full ring-2 ring-amber-500/25 scale-100 opacity-0 transition-all duration-300 delay-200 ease-out group-hover:opacity-100 group-hover:scale-110 motion-reduce:transition-none motion-reduce:opacity-0" />
+                </span>
+                <span className="relative">
+                  Cloud Training
+                  <span aria-hidden="true" className="pointer-events-none absolute -bottom-0.5 left-0 right-0 h-px bg-border/50 origin-left scale-x-0 transition-transform duration-300 delay-200 ease-out group-hover:scale-x-100 motion-reduce:transition-none motion-reduce:scale-x-100" />
+                </span>
+              </span>
+              {/* Mentoring */}
+              <span className="group relative inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-fg-muted ring-[0.5px] ring-border/50 bg-bg/40">
+                <span className="relative mr-1 inline-flex items-center justify-center" aria-hidden="true">
+                  <span className="h-1 w-1 rounded-full bg-amber-500 ring-[1.5px] ring-amber-500/25" />
+                  <span className="absolute inset-0 rounded-full ring-2 ring-amber-500/25 scale-100 opacity-0 transition-all duration-300 delay-200 ease-out group-hover:opacity-100 group-hover:scale-110 motion-reduce:transition-none motion-reduce:opacity-0" />
+                </span>
+                <span className="relative">
+                  Mentoring
+                  <span aria-hidden="true" className="pointer-events-none absolute -bottom-0.5 left-0 right-0 h-px bg-border/50 origin-left scale-x-0 transition-transform duration-300 delay-200 ease-out group-hover:scale-x-100 motion-reduce:transition-none motion-reduce:scale-x-100" />
+                </span>
+              </span>
+            </div>
+            {/* END variant: colored dots only, muted labels (revert tag) */}
           </span>
-          {/* Mobile: smaller AttachedLogo */}
+          {/* Mobile */}
           <span className="md:hidden inline-flex items-center gap-2">
-            <AttachedLogo className="text-xl" text="CloudAcers" />
+            <div className="flex flex-col items-start">
+              <AttachedLogo className="text-lg font-semibold tracking-tight" text="Cloudegree" />
+              {/* BEGIN variant: colored dots only, muted labels (revert tag) */}
+              <div className="hidden" aria-label="Focus areas">
+                <span className="group relative inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-fg-muted ring-[0.5px] ring-border/50 bg-bg/40">
+                  <span className="relative mr-1 inline-flex items-center justify-center" aria-hidden="true">
+                    <span className="h-1 w-1 rounded-full bg-amber-500 ring-[1.5px] ring-amber-500/25" />
+                    <span className="absolute inset-0 rounded-full ring-2 ring-amber-500/25 scale-100 opacity-0 transition-all duration-300 delay-200 ease-out group-hover:opacity-100 group-hover:scale-110 motion-reduce:transition-none motion-reduce:opacity-0" />
+                  </span>
+                  <span className="relative">
+                    Cloud Training
+                    <span aria-hidden="true" className="pointer-events-none absolute -bottom-0.5 left-0 right-0 h-px bg-border/50 origin-left scale-x-0 transition-transform duration-300 delay-200 ease-out group-hover:scale-x-100 motion-reduce:transition-none motion-reduce:scale-x-100" />
+                  </span>
+                </span>
+                <span className="group relative inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-fg-muted ring-[0.5px] ring-border/50 bg-bg/40">
+                  <span className="relative mr-1 inline-flex items-center justify-center" aria-hidden="true">
+                    <span className="h-1 w-1 rounded-full bg-amber-500 ring-[1.5px] ring-amber-500/25" />
+                    <span className="absolute inset-0 rounded-full ring-2 ring-amber-500/25 scale-100 opacity-0 transition-all duration-300 delay-200 ease-out group-hover:opacity-100 group-hover:scale-110 motion-reduce:transition-none motion-reduce:opacity-0" />
+                  </span>
+                  <span className="relative">
+                    Mentoring
+                    <span aria-hidden="true" className="pointer-events-none absolute -bottom-0.5 left-0 right-0 h-px bg-border/50 origin-left scale-x-0 transition-transform duration-300 delay-200 ease-out group-hover:scale-x-100 motion-reduce:transition-none motion-reduce:scale-x-100" />
+                  </span>
+                </span>
+              </div>
+              {/* END variant: colored dots only, muted labels (revert tag) */}
+            </div>
           </span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm flex-1" aria-label="Primary">
-          {nav.map(item => {
-            const active = pathname.startsWith(item.href);
-            if (!item.highlight) {
-              return (
-                <Link key={item.href} href={item.href as any} className={`relative font-medium transition ${active ? 'text-fg' : 'text-fg-muted hover:text-fg'}`}>
-                  {item.label}
-                  {active && <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-gradient-to-r from-accent to-accent-alt" />}
-                </Link>
-              );
-            }
-            // Highlighted Live Bootcamps nav item (combines effects 1-5)
-            return (
-              <Link
-                key={item.href}
-                href={item.href as any}
-                className={`group relative inline-flex items-center gap-2 font-semibold transition rounded-full px-4 py-2 ring-1 ${active ? 'ring-accent/60 bg-accent/10' : 'ring-border/70 hover:ring-accent/50 hover:bg-accent/5'} overflow-hidden`}
-                aria-label={item.label}
-              >
-                {/* Pulse dot */}
-                <span className="relative inline-flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/40" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
-                </span>
-                {/* Gradient text */}
-                <span className="bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent">{item.label}</span>
-                {/* Dynamic badge */}
-                {bootcampMeta && (
-                  <span
-                    className={`text-[10px] font-bold tracking-wide uppercase rounded-full px-2 py-0.5 ring-1 ${
-                      bootcampMeta.label === 'Last Seats'
-                        ? 'bg-warning/15 text-warning ring-warning/40'
-                        : bootcampMeta.label === 'Waitlist'
-                        ? 'bg-fg-muted/15 text-fg-muted ring-fg-muted/30'
-                        : bootcampMeta.label === 'Starting Soon'
-                        ? 'bg-accent-alt/15 text-accent-alt ring-accent-alt/40'
-                        : 'bg-accent/15 text-accent ring-accent/30'
-                    }`}
-                  >
-                    {bootcampMeta.label}
-                  </span>
-                )}
-                {/* Capacity bar (thin) */}
-                {bootcampMeta && bootcampMeta.capacity > 0 && (
-                  <span className="absolute -bottom-0.5 left-2 right-2 h-0.5 rounded-full bg-border/50 overflow-hidden">
-                    <span
-                      className={`h-full block transition-all duration-700 ${
-                        bootcampMeta.fill >= 1
-                          ? 'bg-fg-muted'
-                          : bootcampMeta.fill >= 0.85
-                          ? 'bg-warning'
-                          : 'bg-accent'
-                      }`}
-                      style={{ width: `${Math.min(bootcampMeta.fill * 100, 100)}%` }}
-                    />
-                  </span>
-                )}
-                {active && <span className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-accent/40" />}
-              </Link>
-            );
-          })}
+
+        {/* Nav (preview style) */}
+        <nav className="flex-1 flex items-center gap-7" aria-label="Preview main">
+          {nav.map(item => (
+            <Link
+              key={item.href}
+              href={item.href as any}
+              className="relative text-sm font-medium text-fg-muted hover:text-fg transition-colors inline-flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-md"
+            >
+              <span className="after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:scale-x-0 after:origin-left after:bg-accent/50 after:transition-transform group-hover:after:scale-x-100">{item.label}</span>
+              {item.badge && (
+                <span className="text-[10px] font-semibold rounded-full bg-amber-500/15 text-amber-600 px-2 py-0.5 leading-none">{item.badge}</span>
+              )}
+            </Link>
+          ))}
         </nav>
-        <div className="hidden md:flex items-center gap-5">
+
+        {/* Actions cluster (preview style) */}
+        <div className="flex items-center gap-4">
+          {/* About us dropdown */}
+          <details ref={aboutMenuRef} className="relative group">
+            <summary className="inline-flex items-center gap-2 rounded-md border border-border px-3 h-9 text-sm font-medium text-fg-muted hover:text-fg hover:bg-bg-alt transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              About us
+              <svg viewBox="0 0 20 20" className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+            </summary>
+            <div className="absolute right-0 mt-2 w-44 rounded-md border border-border/60 bg-bg shadow-lg p-1 z-50">
+              <Link onClick={closeAboutMenu} href={'/about' as any} className="block rounded-[6px] px-3 py-2 text-sm text-fg-muted hover:text-fg hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40">About us</Link>
+              <Link onClick={closeAboutMenu} href={'/contact' as any} className="block rounded-[6px] px-3 py-2 text-sm text-fg-muted hover:text-fg hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40">Contact us</Link>
+              <Link onClick={closeAboutMenu} href={'/careers' as any} className="block rounded-[6px] px-3 py-2 text-sm text-fg-muted hover:text-fg hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40">Careers</Link>
+            </div>
+          </details>
+          {status === 'unauthenticated' && (
+            <Link
+              href={'/auth/signin' as any}
+              className="inline-flex items-center gap-2 rounded-md border border-border px-4 h-9 text-sm font-medium text-fg hover:bg-bg-alt transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 21v-6"/><path d="M8 21h8"/><path d="M5 10a7 7 0 0 1 14 0v4c0 3-2 5-5 5h-4c-3 0-5-2-5-5v-4Z"/></svg>
+              Log In
+            </Link>
+          )}
+          {status === 'authenticated' && (
+            <details className="relative group">
+              <summary className="inline-flex items-center gap-2 rounded-md border border-border px-3 h-9 text-sm font-medium text-fg hover:bg-bg-alt transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                {/* Avatar or initials */}
+                {((session?.user as any)?.avatarUrl || (session?.user as any)?.image) ? (
+                  // Using next/image for automatic optimization. Width/height match Tailwind sizing (h-7 w-7 => 28px)
+                  <Image
+                    src={(session?.user as any)?.avatarUrl || (session?.user as any)?.image}
+                    alt="User avatar"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 rounded-full object-cover border border-border bg-bg"
+                    unoptimized={Boolean(((session?.user as any)?.avatarUrl || (session?.user as any)?.image)?.startsWith('http'))}
+                  />
+                ) : (
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/15 text-teal-700 font-semibold text-xs">
+                    {(session?.user as any)?.displayName?.[0] || session?.user?.name?.[0] || session?.user?.email?.[0] || 'U'}
+                  </span>
+                )}
+                <span className="max-w-[140px] truncate text-fg-muted group-hover:text-fg">{(session?.user as any)?.displayName || session?.user?.name || session?.user?.email}</span>
+                <svg viewBox="0 0 20 20" className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+              </summary>
+              <div className="absolute right-0 mt-2 w-48 rounded-md border border-border/60 bg-bg shadow-lg p-1 z-50">
+                <Link href={'/profile' as any} className="block rounded-[6px] px-3 py-2 text-sm text-fg-muted hover:text-fg hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40">View profile</Link>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="w-full text-left rounded-[6px] px-3 py-2 text-sm text-fg-muted hover:text-fg hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                >Sign out</button>
+              </div>
+            </details>
+          )}
           <Link
-            href={'/contact' as any}
-            className="group relative inline-flex items-center gap-2 rounded-full border border-accent/40 px-6 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent/60 hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-            aria-label="Contact CloudAcers team"
+            href={'/bootcamps' as any}
+            className="inline-flex items-center gap-2 rounded-md bg-teal-600 px-5 h-9 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 transition"
           >
-            <span className="i-lucide-message-circle text-accent group-hover:text-accent" />
-            Let’s Chat
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-accent/30 motion-reduce:hidden"
-              style={{ animation: 'pulse 5s ease-in-out infinite' }}
-            />
-            <span className="pointer-events-none absolute -inset-1 rounded-full bg-accent/10 opacity-0 blur-lg transition-opacity group-hover:opacity-70 motion-reduce:hidden" aria-hidden />
+            Apply Now
           </Link>
-          <Link
-            href={'/mentoring' as any}
-            className="group relative inline-flex items-center gap-2 rounded-full border border-accent-alt/40 px-6 py-2 text-sm font-semibold text-accent-alt transition-colors hover:border-accent-alt/60 hover:bg-accent-alt/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-alt/40"
-            aria-label="Book 1-on-1 mentoring"
-          >
-            <span className="i-lucide-user-round text-accent-alt group-hover:text-accent-alt" />
-            Book 1‑on‑1 Mentoring
-            <span className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-accent-alt/30" />
-          </Link>
-          <ThemeToggle />
-        </div>
-        <div className="flex items-center gap-3 md:hidden ml-auto">
+          {/* Theme toggle (icon-only style to match preview) */}
           <button
-            onClick={() => setMobileOpen(o => !o)}
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border/70 bg-bg-alt/70 backdrop-blur-sm hover:bg-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-            aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav-panel"
+            aria-label="Toggle theme"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border hover:bg-bg-alt text-fg-muted hover:text-fg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
-            {mobileOpen ? <IconClose className="h-4 w-4" /> : <IconMenu className="h-4 w-4" />}
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
           </button>
-          <ThemeToggle />
         </div>
       </div>
-      {mobileOpen && (
-        <>
-          {/* Overlay captures outside clicks */}
-          <button
-            aria-label="Close menu"
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div
-            id="mobile-nav-panel"
-            className="md:hidden absolute left-0 right-0 top-full z-50 mx-4 mt-2 rounded-2xl border border-border bg-bg-alt shadow-xl ring-1 ring-black/30 p-4 space-y-3 animate-scale-in origin-top"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mobile navigation"
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <span className="text-xs font-semibold tracking-wide uppercase text-fg-muted">Menu</span>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border/60 hover:bg-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                aria-label="Close navigation menu"
-              >
-                <IconClose className="h-4 w-4" />
-              </button>
-            </div>
-            <nav className="flex flex-col gap-2 text-sm" aria-label="Mobile primary">
-              {nav.map(item => (
-                <Link
-                  key={item.href}
-                  href={item.href as any}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-2 rounded-md px-2 py-2 transition-colors ${pathname.startsWith(item.href) ? 'bg-accent/10 text-fg' : 'hover:bg-bg'} ${item.highlight ? 'font-semibold' : ''}`}
-                >
-                  {item.highlight && <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />}
-                  <span>{item.label}</span>
-                  {item.highlight && bootcampMeta && (
-                    <span className="ml-2 text-[10px] rounded-full bg-accent/15 px-2 py-0.5 font-bold uppercase tracking-wide text-accent">{bootcampMeta.label}</span>
-                  )}
-                </Link>
-              ))}
-            </nav>
-            <div className="pt-1 flex flex-col gap-2">
-              <Link
-                href={'/contact' as any}
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/40 px-4 py-2 text-sm font-medium text-accent hover:border-accent/60 hover:bg-accent/5"
-              >
-                <span className="i-lucide-message-circle text-accent" />
-                <span>Let’s Chat</span>
-              </Link>
-              <Link
-                href={'/mentoring' as any}
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-accent-alt/40 px-4 py-2 text-sm font-medium text-accent-alt hover:border-accent-alt/60 hover:bg-accent-alt/5"
-              >
-                <span className="i-lucide-user-round text-accent-alt" />
-                <span>Book 1‑on‑1 Mentoring</span>
-              </Link>
-            </div>
-          </div>
-        </>
-      )}
     </header>
+    // END preview header parity (revert tag)
   );
 }

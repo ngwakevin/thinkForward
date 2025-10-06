@@ -30,6 +30,7 @@
     "node": ">=20 <21"
   },
   "dependencies": {
+    "@prisma/client": "^5.18.0",
     "bcryptjs": "^3.0.2",
     "clsx": "2.1.1",
     "fuse.js": "7.0.0",
@@ -40,13 +41,12 @@
     "next-auth": "^4.24.11",
     "next-mdx-remote": "5.0.0",
     "nodemailer": "6.9.14",
+    "prisma": "^5.18.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "reading-time": "1.5.0",
     "rehype-pretty-code": "0.13.1",
     "remark-directive": "2.0.1",
-    "@prisma/client": "5.18.0",
-    "prisma": "5.18.0",
     "zod": "3.23.8"
   },
   "devDependencies": {
