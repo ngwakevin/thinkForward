@@ -38,24 +38,31 @@ jobs:
 
       - name: Build and prepare deployment package
         run: |
-          # Install dependencies
-          npm ci
+          # Fix npm issues and prepare environment
+          bash scripts/fix-npm-issues.sh
           
           # Create production .env file
-          cp .env.production.template .env.production
+          if [ -f ".env.production.template" ]; then
+            cp .env.production.template .env.production
+          else
+            # Create .env.production if template doesn't exist
+            echo "# Production environment settings" > .env.production
+            echo "NODE_ENV=production" >> .env.production
+            echo "NEXTAUTH_URL=https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" >> .env.production
+          fi
           
           # Add Azure resource configurations
           echo "COSMOS_DB_ENDPOINT=${{ secrets.COSMOS_DB_ENDPOINT }}" >> .env.production
           echo "COSMOS_DB_KEY=${{ secrets.COSMOS_DB_KEY }}" >> .env.production
           echo "KEY_VAULT_URI=${{ secrets.KEY_VAULT_URI }}" >> .env.production
           echo "APP_INSIGHTS_CONNECTION_STRING=${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" >> .env.production
-          echo "NODE_ENV=production" >> .env.production
           
           # Build and zip the application
           npm run build
           bash scripts/zip-prebuild.sh
         env:
           CI: true
+          NODE_OPTIONS: "--max_old_space_size=4096"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
