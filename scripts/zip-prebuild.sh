@@ -30,7 +30,11 @@ npm prune --production
 # Create startup command file for Azure App Service
 echo "#!/bin/sh
 cd /home/site/wwwroot
-NODE_ENV=production node_modules/.bin/next start -p \${PORT:-8080}" > startup.sh
+export NODE_ENV=production
+# Default to port 8080 if PORT is not set by Azure
+export PORT=\${PORT:-8080}
+# Use the npm start script which now uses the PORT environment variable
+npm start" > startup.sh
 chmod +x startup.sh
 
 # Create deployment package including all necessary files
