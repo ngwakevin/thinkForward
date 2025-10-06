@@ -1,10 +1,13 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth';
 import prisma from '../../../lib/prisma';
 import { ensureUserFromOidc } from '../../../lib/db/users';
+import { cosmosService } from '../../../lib/azure/cosmos-service';
+import { withTelemetry } from '../../../lib/azure/with-telemetry';
 
-export async function GET() {
+// Original GET function with Prisma
+async function getWithPrisma() {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -28,48 +31,106 @@ export async function GET() {
     if (!user && (sess as any)?.oid) {
       user = await prisma.user.findFirst({ where: ({ objectId: (sess as any).oid } as any), include: { profile: true } });
     }
-    if (!user && sess.provider === 'azure-ad' && session.user.email) {
-      // Attempt auto-provision then re-fetch by providerAccountId (azure ad only)
-      await ensureUserFromOidc({
-        sub: sess.oid,
-        email: session.user.email,
-        name: session.user.name,
-        provider: 'azure-ad',
-        providerAccountId: sess.providerAccountId,
-      });
-      if (sess.providerAccountId) {
-        user = await prisma.user.findUnique({
-          where: { providerAccountId: sess.providerAccountId },
-          include: { profile: true },
-        });
+    return { user, session, sess };
+  } catch (error) {
+    console.error('Error in getWithPrisma:', error);
+    throw error;
+  }
+}
+
+// New GET function using Cosmos DB with Prisma fallback
+async function handler(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const sess: any = session.user;
+    let user = null;
+    let useCosmosDB = true;
+    
+    try {
+      // Try to get user from Cosmos DB first
+      // Highest priority: internal user id if present
+      if (sess.id) {
+        user = await cosmosService.getUserById(sess.id);
+      }
+      // Next: email
+      if (!user && session.user.email) {
+        user = await cosmosService.getUserByEmail(session.user.email.toLowerCase());
+      }
+      // Next: provider account id
+      if (!user && sess.providerAccountId) {
+        user = await cosmosService.getUserByProviderAccountId('azure-ad', sess.providerAccountId);
+      }
+    } catch (error) {
+      console.error('Cosmos DB error, falling back to Prisma:', error);
+      useCosmosDB = false;
+    }
+    
+    // If Cosmos DB failed or user not found, fall back to Prisma
+    if (!user || !useCosmosDB) {
+      console.log('Falling back to Prisma for user data');
+      const prismaResult = await getWithPrisma();
+      if ('user' in prismaResult) {
+        user = prismaResult.user;
+      
+        // If we found a user with Prisma but not with Cosmos, we should migrate this user
+        if (user && useCosmosDB) {
+          try {
+            console.log('Migrating user to Cosmos DB:', user.id);
+            // You would call a migration function here
+            // await migrateUserToCosmos(user);
+          } catch (migrateError) {
+            console.error('Failed to migrate user to Cosmos DB:', migrateError);
+          }
+        }
+      } else {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
     }
-    if (!user) return Response.json({ error: 'User not found' }, { status: 404 });
-    const u: any = user;
-    return Response.json({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      objectId: u.objectId,
-      upn: u.upn,
-      signInIdentity: u.signInIdentity,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      phoneNumber: u.phoneNumber,
-      emailVerifiedAt: u.emailVerifiedAt,
-      phoneVerifiedAt: u.phoneVerifiedAt,
-      isDisabled: u.isDisabled,
-      lastSignInAt: u.lastSignInAt,
-      loyaltyNumber: u.loyaltyNumber,
-      preferredLanguage: u.preferredLanguage,
-      customerTier: u.customerTier,
-      createdAt: u.createdAt,
-      profile: u.profile,
+    
+    // Return user data
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    
+    // Remove sensitive fields
+    const { passwordHash, ...userData } = user;
+    return NextResponse.json({
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+      objectId: userData.objectId,
+      upn: userData.upn,
+      signInIdentity: userData.signInIdentity,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      phoneNumber: userData.phoneNumber,
+      emailVerifiedAt: userData.emailVerifiedAt,
+      phoneVerifiedAt: userData.phoneVerifiedAt,
+      isDisabled: userData.isDisabled,
+      lastSignInAt: userData.lastSignInAt,
+      loyaltyNumber: userData.loyaltyNumber,
+      preferredLanguage: userData.preferredLanguage,
+      customerTier: userData.customerTier,
+      createdAt: userData.createdAt,
+      profile: userData.profile,
     });
-  } catch (e: any) {
-    const message = e?.code === 'P1001' ? 'Database unreachable' : 'Internal error';
-    return Response.json({ error: message, detail: process.env.NODE_ENV === 'development' ? String(e) : undefined }, { status: 500 });
+    
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    const message = (error as any)?.code === 'P1001' ? 'Database unreachable' : 'Internal error';
+    return NextResponse.json({ 
+      error: message, 
+      detail: process.env.NODE_ENV === 'development' ? String(error) : undefined 
+    }, { status: 500 });
   }
+}
+
+// Export the GET handler wrapped with telemetry
+export const GET = withTelemetry(handler);
 }
 
 export async function PATCH(req: NextRequest) {

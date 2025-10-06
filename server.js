@@ -5,6 +5,7 @@ import next from 'next';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import './lib/azure/appinsights-config.js'; // Initialize Application Insights first for monitoring server startup
 
 // Get package.json for version info
 const __filename = fileURLToPath(import.meta.url);
@@ -15,12 +16,38 @@ const packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 
 const dev = process.env.NODE_ENV !== 'production';
 const port = parseInt(process.env.PORT, 10) || 3000;
 
+// Import the Azure services initialization function
+// Note: Using dynamic import because this is an ESM file and our Azure services use TypeScript
+let initializeAzureServices;
+try {
+  const module = await import('./lib/azure/initialize-services.js');
+  initializeAzureServices = module.default.initializeAzureServices;
+} catch (error) {
+  console.error('Failed to import Azure services initialization:', error);
+}
+
 // Initialize Next.js
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
+// Initialize Azure services
+const initializeServices = async () => {
+  if (initializeAzureServices) {
+    try {
+      console.log('Initializing Azure services...');
+      const result = await initializeAzureServices();
+      console.log('Azure services initialization complete:', result);
+    } catch (error) {
+      console.error('Failed to initialize Azure services:', error);
+    }
+  }
+};
+
 app.prepare()
-  .then(() => {
+  .then(async () => {
+    // Initialize Azure services before starting the server
+    await initializeServices();
+    
     createServer((req, res) => {
       // Parse the request URL
       const parsedUrl = parse(req.url, true);

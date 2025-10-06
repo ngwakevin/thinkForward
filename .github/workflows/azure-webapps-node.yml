@@ -2,13 +2,27 @@ name: Azure Web App Deployment
 
 on:
   push:
-    branches: [ "main", "azure-deploy-clean" ]
+    branches: [ "main", "azure-deploy-clean", "newImplement-hardening" ]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - production
 
 env:
   NODE_VERSION: '20.x'
-  AZURE_WEBAPP_NAME: 'thinkforward-dev'
+  AZURE_WEBAPP_NAME: ${{ github.event.inputs.environment == 'production' && 'thinkforward' || 'thinkforward-dev' }}
   AZURE_WEBAPP_PACKAGE_PATH: '.'
+  # Azure Resources
+  COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
+  COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
+  KEY_VAULT_URI: ${{ secrets.KEY_VAULT_URI }}
+  APP_INSIGHTS_CONNECTION_STRING: ${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}
 
 jobs:
   build:
@@ -24,8 +38,21 @@ jobs:
 
       - name: Build and prepare deployment package
         run: |
-          # Build and package application for Azure deployment
-          # Using the script directly to avoid NPM_CONFIG_YES issues
+          # Install dependencies
+          npm ci
+          
+          # Create production .env file
+          cp .env.production.template .env.production
+          
+          # Add Azure resource configurations
+          echo "COSMOS_DB_ENDPOINT=${{ secrets.COSMOS_DB_ENDPOINT }}" >> .env.production
+          echo "COSMOS_DB_KEY=${{ secrets.COSMOS_DB_KEY }}" >> .env.production
+          echo "KEY_VAULT_URI=${{ secrets.KEY_VAULT_URI }}" >> .env.production
+          echo "APP_INSIGHTS_CONNECTION_STRING=${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" >> .env.production
+          echo "NODE_ENV=production" >> .env.production
+          
+          # Build and zip the application
+          npm run build
           bash scripts/zip-prebuild.sh
         env:
           CI: true
@@ -48,6 +75,26 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set App Settings for Azure Web App
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            # Set app settings for the web app
+            az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --settings \
+                COSMOS_DB_ENDPOINT="${{ secrets.COSMOS_DB_ENDPOINT }}" \
+                COSMOS_DB_KEY="${{ secrets.COSMOS_DB_KEY }}" \
+                KEY_VAULT_URI="${{ secrets.KEY_VAULT_URI }}" \
+                APP_INSIGHTS_CONNECTION_STRING="${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" \
+                NODE_ENV="production" \
+                NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
