@@ -71,11 +71,13 @@ export class TelemetryService {
    * @param request Next.js request object
    * @param response Next.js response object
    * @param startTime Timestamp when request started
+   * @param additionalProperties Optional additional properties to include
    */
   trackApiRequest(
     request: NextRequest, 
     response: NextResponse, 
-    startTime: number
+    startTime: number,
+    additionalProperties?: CustomProperties
   ): void {
     if (!appInsightsClient) return;
 
@@ -95,7 +97,8 @@ export class TelemetryService {
         method,
         status: status.toString(),
         duration: duration.toFixed(2),
-        success: (status < 400).toString()
+        success: (status < 400).toString(),
+        ...additionalProperties
       });
     } catch (error) {
       console.error('Failed to track API request:', error);
