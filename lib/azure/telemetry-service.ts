@@ -1,4 +1,4 @@
-// Azure Application Insights telemetry service
+// Azure Application Insights telemetry service - Next.js compatible
 import { appInsightsClient } from './appinsights-config';
 import type { NextRequest, NextResponse } from 'next/server';
 
@@ -6,6 +6,7 @@ export interface CustomProperties {
   [key: string]: string | number | boolean | undefined;
 }
 
+// Simplified telemetry service compatible with Next.js
 export class TelemetryService {
   /**
    * Track a custom event
@@ -52,112 +53,56 @@ export class TelemetryService {
   }
 
   /**
-   * Track a dependency call
-   * @param name Dependency name
-   * @param data Command or query executed
-   * @param duration Duration in milliseconds
-   * @param success Whether the call was successful
-   * @param dependencyType Type of dependency (e.g., 'HTTP', 'SQL', etc.)
+   * Track a trace message
+   * @param message Trace message
    * @param properties Custom properties
    */
-  trackDependency(
-    name: string,
-    data: string,
-    duration: number,
-    success: boolean,
-    dependencyType: string = 'Other',
-    properties?: CustomProperties
-  ): void {
+  trackTrace(message: string, properties?: CustomProperties): void {
     if (!appInsightsClient) return;
     
-    appInsightsClient.trackDependency({
-      name,
-      data,
-      duration,
-      success,
-      dependencyTypeName: dependencyType,
+    appInsightsClient.trackTrace({
+      message,
       properties
     });
   }
 
   /**
-   * Track an API route request timing
-   * @param request The Next.js request object
-   * @param response The Next.js response object
-   * @param startTime The request start time
-   * @param additionalProperties Additional custom properties
+   * Track an API request
+   * @param request Next.js request object
+   * @param response Next.js response object
+   * @param startTime Process hrtime when request started
    */
   trackApiRequest(
-    request: NextRequest,
-    response: NextResponse,
-    startTime: [number, number], // hrtime tuple
-    additionalProperties?: CustomProperties
+    request: NextRequest, 
+    response: NextResponse, 
+    startTime: [number, number]
   ): void {
     if (!appInsightsClient) return;
-    
-    const endTime = process.hrtime(startTime);
-    const duration = endTime[0] * 1000 + endTime[1] / 1000000; // Convert to milliseconds
-    
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const method = request.method;
-    const statusCode = response.status;
-    
-    this.trackEvent('ApiRequest', {
-      path,
-      method,
-      statusCode,
-      duration,
-      ...additionalProperties
-    });
-    
-    // Track as a request for proper display in Application Insights
-    appInsightsClient.trackRequest({
-      name: `${method} ${path}`,
-      url: request.url,
-      duration,
-      resultCode: statusCode.toString(),
-      success: statusCode >= 200 && statusCode < 400,
-      properties: additionalProperties
-    });
-  }
 
-  /**
-   * Track server-side rendering (SSR) timing
-   * @param pagePath The page path being rendered
-   * @param duration Duration in milliseconds
-   * @param success Whether rendering was successful
-   * @param properties Custom properties
-   */
-  trackSsrTiming(
-    pagePath: string,
-    duration: number,
-    success: boolean = true,
-    properties?: CustomProperties
-  ): void {
-    if (!appInsightsClient) return;
-    
-    appInsightsClient.trackMetric({
-      name: 'SSR_Timing',
-      value: duration,
-      properties: {
-        pagePath,
-        success: success.toString(),
-        ...properties
-      }
-    });
-  }
-
-  /**
-   * Flush telemetry immediately
-   * Useful before process exits to ensure data is sent
-   */
-  flush(): void {
-    if (!appInsightsClient) return;
-    appInsightsClient.flush();
+    try {
+      // Calculate duration in milliseconds
+      const [seconds, nanoseconds] = process.hrtime(startTime);
+      const duration = seconds * 1000 + nanoseconds / 1000000;
+      
+      // Get request details
+      const url = new URL(request.url);
+      const path = url.pathname;
+      const method = request.method;
+      const status = response.status;
+      
+      // Log simplified request info instead of using trackRequest
+      this.trackEvent('ApiRequest', {
+        path,
+        method,
+        status: status.toString(),
+        duration: duration.toFixed(2),
+        success: (status < 400).toString()
+      });
+    } catch (error) {
+      console.error('Failed to track API request:', error);
+    }
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const telemetry = new TelemetryService();
-export default telemetry;
