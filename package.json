@@ -23,7 +23,7 @@
     "prepare:github-actions": "bash scripts/zip-prebuild.sh",
     "card:png": "node scripts/export-cards.mjs",
     "backfill:identity": "tsx scripts/backfill-identity.ts",
-    "postinstall": "if [ \"$SCM_DO_BUILD_DURING_DEPLOYMENT\" = \"true\" ]; then echo 'Remote build detected: prisma generate + next build'; npx prisma generate && npm run build; fi"
+    "postinstall": "if [ \"$SCM_DO_BUILD_DURING_DEPLOYMENT\" = \"true\" ] || [ \"$WEBSITE_RUN_FROM_PACKAGE\" = \"1\" ]; then echo 'Remote build detected: prisma generate + next build'; npx prisma generate && npm run build; fi"
   },
   "engines": {
     "node": ">=20 <21"

@@ -8,21 +8,23 @@ set -euo pipefail
 rm -f deploy.zip
 rm -f startup.sh
 
-# In CI environments or when package-lock.json is out of sync, we need to ensure they're in sync
-# before proceeding with the build process
-if [ "${CI:-false}" = "true" ]; then
-  echo "Running in CI environment, ensuring package-lock.json is in sync..."
-  # First update package-lock.json to match package.json
-  npm install --package-lock-only --no-audit
-  # Then install all dependencies using the updated lock file
-  npm ci
-else
-  echo "Installing dependencies and updating package-lock.json if needed..."
-  npm install
-fi
+# Clean installation to avoid any corrupted modules
+echo "Cleaning node_modules and package-lock.json..."
+rm -rf node_modules package-lock.json
+
+# Fresh install of dependencies
+echo "Installing dependencies with a clean npm install..."
+npm install
 
 # Build the application
+echo "Building the application..."
 npm run build
+
+# Verify that critical Next.js files exist
+if [ ! -d "node_modules/next/dist/server" ]; then
+  echo "ERROR: Next.js server directory is missing. Build may be corrupted."
+  exit 1
+fi
 
 # Remove dev dependencies to reduce package size
 npm prune --production
@@ -33,8 +35,24 @@ cd /home/site/wwwroot
 export NODE_ENV=production
 # Default to port 8080 if PORT is not set by Azure
 export PORT=\${PORT:-8080}
-# Use the npm start script which now uses the PORT environment variable
-npm start" > startup.sh
+
+# Debug information to help troubleshoot
+echo \"Starting app with:\"
+echo \"- NODE_ENV: \$NODE_ENV\"
+echo \"- PORT: \$PORT\"
+echo \"- PWD: \$(pwd)\"
+echo \"- Node version: \$(node -v)\"
+echo \"- Next.js version: \$(cat package.json | grep \\\"next\\\":)\"
+echo \"- Files in .next/server: \$(ls -la .next/server 2>/dev/null || echo '.next/server not found')\"
+
+# Use direct path to next start command to avoid any path issues
+if [ -f \"node_modules/.bin/next\" ]; then
+  echo \"Starting with: node_modules/.bin/next start -p \$PORT\"
+  node_modules/.bin/next start -p \$PORT
+else
+  echo \"next command not found in node_modules/.bin, falling back to npm start\"
+  npm start
+fi" > startup.sh
 chmod +x startup.sh
 
 # Create deployment package including all necessary files
