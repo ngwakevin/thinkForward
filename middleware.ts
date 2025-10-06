@@ -10,7 +10,7 @@ import { telemetry } from './lib/azure/telemetry-service';
 export default withAuth(
   // `withAuth` augments your Request with the user's token
   function middleware(request) {
-    const startTime = process.hrtime();
+    const startTime = Date.now(); // Edge Runtime compatible timestamp
     const path = request.nextUrl.pathname;
     
     // Record telemetry for the request
@@ -42,8 +42,7 @@ export default withAuth(
     
     // Record the timing in telemetry
     if (telemetry) {
-      const endTime = process.hrtime(startTime);
-      const duration = endTime[0] * 1000 + endTime[1] / 1000000; // Convert to milliseconds
+      const duration = Date.now() - startTime; // Calculate duration in milliseconds
       
       telemetry.trackMetric('MiddlewareResponseTime', duration, {
         path,

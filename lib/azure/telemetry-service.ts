@@ -70,19 +70,18 @@ export class TelemetryService {
    * Track an API request
    * @param request Next.js request object
    * @param response Next.js response object
-   * @param startTime Process hrtime when request started
+   * @param startTime Timestamp when request started
    */
   trackApiRequest(
     request: NextRequest, 
     response: NextResponse, 
-    startTime: [number, number]
+    startTime: number
   ): void {
     if (!appInsightsClient) return;
 
     try {
-      // Calculate duration in milliseconds
-      const [seconds, nanoseconds] = process.hrtime(startTime);
-      const duration = seconds * 1000 + nanoseconds / 1000000;
+      // Calculate duration in milliseconds using Date.now() which is Edge compatible
+      const duration = Date.now() - startTime;
       
       // Get request details
       const url = new URL(request.url);

@@ -10,7 +10,7 @@ export function withTelemetry(
   handler: (req: NextRequest) => Promise<NextResponse> | NextResponse
 ) {
   return async (request: NextRequest) => {
-    const startTime = process.hrtime();
+    const startTime = Date.now(); // Edge Runtime compatible timestamp
     let response: NextResponse;
     
     try {

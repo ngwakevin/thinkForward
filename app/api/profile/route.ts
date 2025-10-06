@@ -98,6 +98,12 @@ async function handler(req: NextRequest) {
     
     // Remove sensitive fields
     const { passwordHash, ...userData } = user;
+    
+    // Extract first and last name from the name field if available
+    const nameParts = userData.name?.split(' ') || ['', ''];
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+    
     return NextResponse.json({
       id: userData.id,
       email: userData.email,
@@ -105,14 +111,14 @@ async function handler(req: NextRequest) {
       objectId: userData.objectId,
       upn: userData.upn,
       signInIdentity: userData.signInIdentity,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
+      firstName: firstName,
+      lastName: lastName,
       phoneNumber: userData.phoneNumber,
       emailVerifiedAt: userData.emailVerifiedAt,
       phoneVerifiedAt: userData.phoneVerifiedAt,
-      isDisabled: userData.isDisabled,
+      isDisabled: userData.isDisabled || false,
       lastSignInAt: userData.lastSignInAt,
-      loyaltyNumber: userData.loyaltyNumber,
+      badges: userData.badges,
       preferredLanguage: userData.preferredLanguage,
       customerTier: userData.customerTier,
       createdAt: userData.createdAt,

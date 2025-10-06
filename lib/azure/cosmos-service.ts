@@ -18,6 +18,9 @@ export interface User {
   pendingPhoneNumber?: string | null;
   phoneVerifiedAt?: Date | null;
   emailVerifiedAt?: Date | null;
+  isDisabled?: boolean;
+  lastSignInAt?: Date | null;
+  loyaltyNumber?: string | null;
 }
 
 // Define interfaces to match our database schema
