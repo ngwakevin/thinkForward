@@ -99,10 +99,9 @@ async function handler(req: NextRequest) {
     // Remove sensitive fields
     const { passwordHash, ...userData } = user;
     
-    // Extract first and last name from the name field if available
-    const nameParts = userData.name?.split(' ') || ['', ''];
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ');
+    // Extract first and last name from the name field if no firstName/lastName provided
+    const firstName = userData.firstName || userData.name?.split(' ')?.[0] || '';
+    const lastName = userData.lastName || (userData.name?.split(' ')?.slice(1)?.join(' ') || '');
     
     return NextResponse.json({
       id: userData.id,

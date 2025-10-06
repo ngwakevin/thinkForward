@@ -21,6 +21,31 @@ export interface User {
   isDisabled?: boolean;
   lastSignInAt?: Date | null;
   loyaltyNumber?: string | null;
+  preferredLanguage?: string | null;
+  customerTier?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profile?: {
+    displayName?: string | null;
+    bio?: string | null;
+    avatarUrl?: string | null;
+    headline?: string | null;
+    location?: string | null;
+    timezone?: string | null;
+    githubUrl?: string | null;
+    linkedinUrl?: string | null;
+    portfolioUrl?: string | null;
+    accentColor?: string | null;
+    coverImageUrl?: string | null;
+    galleryImages?: string[] | null;
+    learningGoals?: string | null;
+    skills?: string[] | null;
+    currentTitle?: string | null;
+    currentCompany?: string | null;
+    education?: any | null;
+    experience?: any | null;
+    showProfilePublic?: boolean | null;
+  } | null;
 }
 
 // Define interfaces to match our database schema
