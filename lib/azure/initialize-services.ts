@@ -18,7 +18,8 @@ export async function initializeAzureServices() {
   };
 
   // Initialize Application Insights first for proper monitoring
-  results.appInsights = initializeAppInsights();
+  const appInsightsClient = initializeAppInsights();
+  results.appInsights = !!appInsightsClient; // Convert to boolean for results object
 
   // Initialize Key Vault (needed for other services that might use secrets)
   try {
