@@ -8,6 +8,7 @@
     "dev:auto": "bash scripts/dev-env.sh",
     "build": "next build",
     "start": "next start -p $PORT",
+    "start:custom": "node server.js",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "postbuild": "node scripts/postbuild.cjs",

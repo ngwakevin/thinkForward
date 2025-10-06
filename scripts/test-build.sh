@@ -42,7 +42,7 @@ fi
 echo "#!/bin/sh
 export NODE_ENV=production
 export PORT=3000
-node_modules/.bin/next start -p \$PORT" > test-startup.sh
+node server.js" > test-startup.sh
 chmod +x test-startup.sh
 
 echo "=== Build verification completed successfully ==="

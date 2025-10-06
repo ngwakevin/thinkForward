@@ -45,18 +45,13 @@ echo \"- Node version: \$(node -v)\"
 echo \"- Next.js version: \$(cat package.json | grep \\\"next\\\":)\"
 echo \"- Files in .next/server: \$(ls -la .next/server 2>/dev/null || echo '.next/server not found')\"
 
-# Use direct path to next start command to avoid any path issues
-if [ -f \"node_modules/.bin/next\" ]; then
-  echo \"Starting with: node_modules/.bin/next start -p \$PORT\"
-  node_modules/.bin/next start -p \$PORT
-else
-  echo \"next command not found in node_modules/.bin, falling back to npm start\"
-  npm start
-fi" > startup.sh
+# Use the custom server.js instead of the next binary
+echo \"Starting with custom server: node server.js\"
+node server.js" > startup.sh
 chmod +x startup.sh
 
 # Create deployment package including all necessary files
-# Make sure to include next.js specific directories (.next, public)
-zip -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh
+# Make sure to include next.js specific directories (.next, public) and our custom server
+zip -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js
 
 echo "Created deploy.zip for GitHub Actions deployment"
