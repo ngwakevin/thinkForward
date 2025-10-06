@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(uuid())
+  provider          String
+  providerAccountId String         @unique
+  email             String?        @unique
+  name              String?
+  passwordHash      String?
+  // Community attributes
+  isMentor          Boolean        @default(false)
+  badges            String?        // JSON string array for MVP; later can normalize
+  // Identity & directory attributes
+  objectId          String?        // Azure AD object ID (oid)
+  upn               String?        // User Principal Name (preferred_username)
+  signInIdentity    String?        // Actual sign-in identifier used (could be email/username)
+
+  // Contact
+  phoneNumber       String?        
+  pendingPhoneNumber String?       
+  phoneVerifiedAt   DateTime?
+  emailVerifiedAt   DateTime?
+
+  // Account status & auditing
+  isDisabled        Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  lastSignInAt      DateTime?
+  // Failed sign-in tracking
+  failedSignInCount Int            @default(0)
+  lastFailedSignInAt DateTime?
+
+  // Custom attributes
+  loyaltyNumber     String?        
+  preferredLanguage String?        
+  customerTier      String?        
+  // Personal name parts (optional separate fields)
+  firstName         String?
+  lastName          String?
+  profile           Profile?
+  activities        UserActivity[]
+  verificationCodes VerificationCode[]
+  // Community relations
+  threads           Thread[]
+  posts             Post[]
+  postLikes         PostLike[]
+  notifications     Notification[]
+}
+
+model VerificationCode {
+  id          String   @id @default(uuid())
+  userId      String
+  channel     String   // 'email' | 'phone'
+  // Legacy 'code' field kept for backward compatibility (unused after refactor)
+  code        String   
+  salt        String   
+  codeHash    String   
+  attempts    Int      @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, channel])
+  @@index([expiresAt])
+}
+
+model Profile {
+  userId       String   @id
+  displayName  String?
+  avatarUrl    String?
+  bio          String?
+  // Summary / headline
+  headline     String?        
+  // Contact & basic
+  location     String?        
+  timezone     String?        
+  githubUrl    String?        
+  linkedinUrl  String?        
+  portfolioUrl String?        
+  // Branding & theme
+  accentColor     String?     
+  coverImageUrl   String?     
+  galleryImages   String?     // JSON stringified array of image URLs
+  // Learning goals & interests
+  learningGoals String?
+  skills        String?       // JSON stringified string[] for now
+  // Progress / achievements (placeholders until separate subsystem)
+  points        Int           @default(0)
+  streakDays    Int           @default(0)
+  // Professional background
+  currentTitle   String?       
+  currentCompany String?       
+  education      String?       // JSON string (array of entries)
+  experience     String?       // JSON string (array of entries)
+  // Preferences & privacy
+  accessibilityPrefs String?   // JSON blob
+  showProfilePublic Boolean    @default(false)
+  // Address / location (existing + kept)
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+  latitude     Decimal? 
+  longitude    Decimal? 
+  // Future extensible JSON blob for misc preferences (optional)
+  // preferences Json?
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id          String         @id @default(uuid())
+  slug        String         @unique
+  name        String
+  description String?
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  users       UserActivity[]
+}
+
+model UserActivity {
+  userId     String
+  activityId String
+  createdAt  DateTime @default(now())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, activityId])
+}
+
+// --- Community models ---
+
+model Category {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  threads     Thread[]
+}
+
+model Thread {
+  id          String    @id @default(uuid())
+  categoryId  String
+  userId      String
+  title       String
+  content     String
+  acceptedPostId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  posts       Post[]
+
+  @@index([categoryId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Post {
+  id           String    @id @default(uuid())
+  threadId     String
+  userId       String
+  content      String
+  parentPostId String?
+  isAccepted   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  thread       Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent       Post?     @relation("PostChildren", fields: [parentPostId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children     Post[]    @relation("PostChildren")
+  likes        PostLike[]
+
+  @@index([threadId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([postId, userId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // 'reply' | 'mentor_answer' | 'category_new_thread'
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
