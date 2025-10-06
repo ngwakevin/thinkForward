@@ -86,9 +86,8 @@ export class TelemetryService {
       const duration = Date.now() - startTime;
       
       // Get request details
-      const url = new URL(request.url);
-      const path = url.pathname;
-      const method = request.method;
+      const path = request.url ? new URL(request.url).pathname : 'unknown';
+      const method = request.method || 'unknown';
       const status = response.status;
       
       // Log simplified request info instead of using trackRequest

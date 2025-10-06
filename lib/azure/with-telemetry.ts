@@ -30,8 +30,8 @@ export function withTelemetry(
       
       // Track the exception
       telemetry.trackException(error as Error, {
-        path: new URL(request.url).pathname,
-        method: request.method
+        path: request.url ? new URL(request.url).pathname : 'unknown',
+        method: request.method || 'unknown'
       });
       
       // Track the API request (failed)
