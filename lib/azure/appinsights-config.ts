@@ -16,12 +16,12 @@ export const appInsightsConfig = {
 
 // This is a dummy client that will be used in development or when App Insights is not configured
 const dummyClient = {
-  trackEvent: () => {},
-  trackException: () => {},
-  trackMetric: () => {},
-  trackTrace: () => {},
-  trackRequest: () => {},
-  trackDependency: () => {},
+  trackEvent: (event: any) => {},
+  trackException: (exception: any) => {},
+  trackMetric: (metric: any) => {},
+  trackTrace: (trace: any) => {},
+  trackRequest: (request: any) => {},
+  trackDependency: (dependency: any) => {},
   flush: () => {}
 };
 
