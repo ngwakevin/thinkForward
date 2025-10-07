@@ -29,6 +29,12 @@ fi
 # Remove dev dependencies to reduce package size
 npm prune --production
 
+# Remove unnecessary files to reduce zip size
+echo "Removing unnecessary files to reduce package size..."
+find ./node_modules -type d -name "test" -o -name "tests" | xargs rm -rf
+find ./node_modules -type d -name ".git" | xargs rm -rf
+find ./node_modules -type f -name ".gitignore" -o -name "*.md" -o -name "LICENSE" | xargs rm -f
+
 # Create startup command file for Azure App Service
 echo "#!/bin/sh
 cd /home/site/wwwroot
@@ -47,11 +53,22 @@ echo \"- Files in .next/server: \$(ls -la .next/server 2>/dev/null || echo '.nex
 
 # Use the custom server.js instead of the next binary with ESM support
 echo \"Starting with custom server: node server.js\"
-node --experimental-specifier-resolution=node server.js" > startup.sh
+node --experimental-specifier-resolution=node server.js
+
+# Log successful startup
+echo \"App started successfully at: \$(date)\"
+echo \"Health check available at: http://localhost:\$PORT/api/health\"" > startup.sh
 chmod +x startup.sh
 
-# Create deployment package including all necessary files
-# Make sure to include next.js specific directories (.next, public) and our custom server
-zip -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js
+# Add a note about the deployment package
+echo "Creating deployment zip..."
+chmod +x startup.sh
 
-echo "Created deploy.zip for GitHub Actions deployment"
+# Create deployment package including all necessary files with maximum compression
+# Make sure to include next.js specific directories (.next, public) and our custom server
+echo "Creating optimized deployment package with maximum compression..."
+zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js
+
+# Check the size of the deployment package
+PACKAGE_SIZE=$(du -h deploy.zip | cut -f1)
+echo "Created deploy.zip (${PACKAGE_SIZE}) for GitHub Actions deployment"

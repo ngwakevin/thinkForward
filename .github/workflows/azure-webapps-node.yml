@@ -57,8 +57,18 @@ jobs:
           echo "KEY_VAULT_URI=${{ secrets.KEY_VAULT_URI }}" >> .env.production
           echo "APP_INSIGHTS_CONNECTION_STRING=${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" >> .env.production
           
+          # Install production dependencies only
+          npm ci --production
+          
           # Build and zip the application
           npm run build
+          
+          # Clean up node_modules to make the package smaller
+          rm -rf node_modules/.cache
+          rm -rf node_modules/@next/swc-*
+          rm -rf node_modules/.bin
+          
+          # Create a leaner package
           bash scripts/zip-prebuild.sh
         env:
           CI: true
@@ -109,13 +119,32 @@ jobs:
                 NODE_ENV="production" \
                 NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
 
+      - name: Wait for SCM to be ready
+        run: sleep 60
+        
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: deploy.zip
+          package: ./deploy.zip
+      
+      - name: Wait for deployment to propagate
+        run: sleep 30
+          
+      - name: Restart Azure Web App
+        run: |
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
+          
+      - name: Verify deployment
+        run: |
+          echo "Waiting for app to fully initialize..."
+          sleep 60
+          # Check if the webapp is responding
+          curl -s -o /dev/null -w "%{http_code}" https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health || echo "App still initializing, continue anyway"
 # Make sure the following secrets are set in your GitHub repository:
 # - AZURE_CLIENT_ID: Service principal client ID
 # - AZURE_CLIENT_SECRET: Service principal secret
