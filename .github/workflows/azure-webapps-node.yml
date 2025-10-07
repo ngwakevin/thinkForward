@@ -103,13 +103,9 @@ jobs:
           chmod 700 ~/.azure
       
       - name: Azure CLI Login
-        uses: azure/login@v2
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          enable-AzPSSession: false
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Set App Settings for Azure Web App
         run: |
@@ -151,8 +147,18 @@ jobs:
           # Check if the webapp is responding
           curl -s -o /dev/null -w "%{http_code}" https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health || echo "App still initializing, continue anyway"
 # Make sure the following secrets are set in your GitHub repository:
-# - AZURE_CLIENT_ID: Service principal client ID
-# - AZURE_CLIENT_SECRET: Service principal secret
-# - AZURE_TENANT_ID: Azure tenant ID
-# - AZURE_SUBSCRIPTION_ID: Azure subscription ID
+# - AZURE_CREDENTIALS: JSON object with service principal credentials in the format:
+#   {
+#     "clientId": "<GUID>",
+#     "clientSecret": "<STRING>",
+#     "subscriptionId": "<GUID>",
+#     "tenantId": "<GUID>"
+#   }
+# 
+# To generate AZURE_CREDENTIALS, run:
+# az ad sp create-for-rbac --name "myAppDeploymentSP" --role contributor \
+#                          --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
+#                          --sdk-auth
 # - AZURE_RESOURCE_GROUP: 'thinkforward-dev-rg'
+# - AZURE_SUBSCRIPTION_ID: For use in commands after login
+# - AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID: Still needed for other resources
