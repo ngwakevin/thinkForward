@@ -37,11 +37,28 @@ echo \"- PORT: \$PORT\"
 echo \"- PWD: \$(pwd)\"
 echo \"- Node version: \$(node -v)\"
 echo \"- Next.js version: \$(cat package.json | grep \\\"next\\\":)\"
+echo \"- NPM version: \$(npm -v)\"
+echo \"- Memory info: \$(free -m || echo 'free command not available')\"
+echo \"- Disk space: \$(df -h / || echo 'df command not available')\"
 echo \"- Files in .next/server: \$(ls -la .next/server 2>/dev/null || echo '.next/server not found')\"
+
+# Create temp directories if they don't exist (with error handling)
+echo \"Creating temp directories if needed...\"
+mkdir -p /tmp/nextjs-cache 2>/dev/null || echo \"Warning: Could not create /tmp/nextjs-cache. Using default temp directory.\"
+mkdir -p /tmp/nextjs-server 2>/dev/null || echo \"Warning: Could not create /tmp/nextjs-server. Using default temp directory.\"
+
+# Set Node.js options for better performance in containerized environment
+export NODE_OPTIONS=\"\${NODE_OPTIONS:---max_old_space_size=512 --expose-gc}\"
+echo \"- NODE_OPTIONS: \$NODE_OPTIONS\"
 
 # Use the custom server.js instead of the next binary with ESM support
 echo \"Starting with custom server: node server.js\"
-node --experimental-specifier-resolution=node server.js
+node --experimental-specifier-resolution=node server.js || {
+    echo \"ERROR: Failed to start server. Retrying in 5 seconds...\"
+    sleep 5
+    echo \"Retrying server start...\"
+    node --experimental-specifier-resolution=node server.js
+}
 
 # Log successful startup
 echo \"App started successfully at: \$(date)\"
@@ -50,6 +67,45 @@ chmod +x startup.sh
 
 # Add a note about the deployment package
 echo "Creating deployment zip..."
+
+# Ensure Azure placeholder files exist
+echo "Ensuring Azure placeholder files exist..."
+mkdir -p lib/azure
+if [ ! -f "lib/azure/appinsights-config.js" ]; then
+  echo "Creating placeholder for appinsights-config.js"
+  cat > lib/azure/appinsights-config.js << EOL
+// This is a placeholder for Application Insights configuration
+// It ensures the server can start even if the actual configuration is missing
+console.log('Using placeholder Application Insights configuration');
+
+// Export an empty configuration
+export const appInsightsClient = null;
+export const setup = () => console.log('Application Insights setup skipped (placeholder)');
+export default { 
+  appInsightsClient: null,
+  setup: () => console.log('Application Insights setup skipped (placeholder)')
+};
+EOL
+fi
+
+if [ ! -f "lib/azure/initialize-services.js" ]; then
+  echo "Creating placeholder for initialize-services.js"
+  cat > lib/azure/initialize-services.js << EOL
+// This is a placeholder for Azure services initialization
+// It ensures the server can start even if the actual implementation is missing
+console.log('Using placeholder Azure services initialization');
+
+// Export an empty initialization function
+export const initializeAzureServices = async () => {
+  console.log('Azure services initialization skipped (placeholder)');
+  return { status: 'skipped', message: 'Using placeholder implementation' };
+};
+
+export default { 
+  initializeAzureServices 
+};
+EOL
+fi
 
 # Create deployment package including all necessary files with maximum compression
 # Make sure to include next.js specific directories (.next, public) and our custom server
