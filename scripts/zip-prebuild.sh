@@ -8,26 +8,14 @@ set -euo pipefail
 rm -f deploy.zip
 rm -f startup.sh
 
-# Clean installation to avoid any corrupted modules
-echo "Cleaning node_modules and package-lock.json..."
-rm -rf node_modules package-lock.json
-
-# Fresh install of dependencies
-echo "Installing dependencies with a clean npm install..."
-npm install
-
-# Build the application
-echo "Building the application..."
-npm run build
+# When running in GitHub Actions, we don't need these steps as they're already done in the workflow
+# But we'll keep checking for critical files
 
 # Verify that critical Next.js files exist
 if [ ! -d "node_modules/next/dist/server" ]; then
   echo "ERROR: Next.js server directory is missing. Build may be corrupted."
   exit 1
 fi
-
-# Remove dev dependencies to reduce package size
-npm prune --production
 
 # Remove unnecessary files to reduce zip size
 echo "Removing unnecessary files to reduce package size..."
@@ -62,12 +50,15 @@ chmod +x startup.sh
 
 # Add a note about the deployment package
 echo "Creating deployment zip..."
-chmod +x startup.sh
 
 # Create deployment package including all necessary files with maximum compression
 # Make sure to include next.js specific directories (.next, public) and our custom server
 echo "Creating optimized deployment package with maximum compression..."
-zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js
+zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js tailwind.config.mjs postcss.config.mjs
+
+# Check the size of the deployment package
+PACKAGE_SIZE=$(du -h deploy.zip | cut -f1)
+echo "Created deploy.zip (${PACKAGE_SIZE}) for GitHub Actions deployment"
 
 # Check the size of the deployment package
 PACKAGE_SIZE=$(du -h deploy.zip | cut -f1)

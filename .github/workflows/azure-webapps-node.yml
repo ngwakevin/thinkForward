@@ -57,11 +57,15 @@ jobs:
           echo "KEY_VAULT_URI=${{ secrets.KEY_VAULT_URI }}" >> .env.production
           echo "APP_INSIGHTS_CONNECTION_STRING=${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" >> .env.production
           
-          # Install production dependencies only
-          npm ci --production
+          # Install ALL dependencies including dev dependencies needed for build
+          npm ci
           
-          # Build and zip the application
+          # Build the application with all required dependencies
           npm run build
+          
+          # Now that build is complete, prune dev dependencies
+          echo "Removing dev dependencies to reduce package size..."
+          npm prune --production
           
           # Clean up node_modules to make the package smaller
           rm -rf node_modules/.cache

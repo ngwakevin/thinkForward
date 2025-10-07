@@ -21,6 +21,10 @@ rm -rf node_modules package-lock.json
 echo -e "${YELLOW}Installing dependencies with latest compatible versions...${NC}"
 npm install --no-fund --no-audit
 
+# Explicitly install TailwindCSS and other critical build dependencies
+echo -e "${YELLOW}Ensuring critical build dependencies are installed...${NC}"
+npm install --no-fund --no-audit tailwindcss postcss autoprefixer
+
 # Create template files if they don't exist
 echo -e "${YELLOW}Checking for template files...${NC}"
 
