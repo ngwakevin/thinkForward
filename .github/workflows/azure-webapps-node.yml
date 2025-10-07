@@ -97,31 +97,32 @@ jobs:
         with:
           name: node-app
 
+      - name: Create Azure config directory with proper permissions
+        run: |
+          mkdir -p ~/.azure
+          chmod 700 ~/.azure
+      
       - name: Azure CLI Login
-        uses: azure/CLI@v1
+        uses: azure/login@v2
         with:
-          azcliversion: latest
-          inlineScript: |
-            az login --service-principal \
-              --username ${{ secrets.AZURE_CLIENT_ID }} \
-              --password ${{ secrets.AZURE_CLIENT_SECRET }} \
-              --tenant ${{ secrets.AZURE_TENANT_ID }}
-            az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Set App Settings for Azure Web App
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            # Set app settings for the web app
-            az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --settings \
-                COSMOS_DB_ENDPOINT="${{ secrets.COSMOS_DB_ENDPOINT }}" \
-                COSMOS_DB_KEY="${{ secrets.COSMOS_DB_KEY }}" \
-                KEY_VAULT_URI="${{ secrets.KEY_VAULT_URI }}" \
-                APP_INSIGHTS_CONNECTION_STRING="${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" \
-                NODE_ENV="production" \
-                NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+        run: |
+          # Set app settings for the web app
+          az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --settings \
+              COSMOS_DB_ENDPOINT="${{ secrets.COSMOS_DB_ENDPOINT }}" \
+              COSMOS_DB_KEY="${{ secrets.COSMOS_DB_KEY }}" \
+              KEY_VAULT_URI="${{ secrets.KEY_VAULT_URI }}" \
+              APP_INSIGHTS_CONNECTION_STRING="${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" \
+              NODE_ENV="production" \
+              NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
 
       - name: Wait for SCM to be ready
         run: sleep 60
@@ -140,7 +141,7 @@ jobs:
           
       - name: Restart Azure Web App
         run: |
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # The subscription is already set by azure/login@v2
           az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
           
       - name: Verify deployment
