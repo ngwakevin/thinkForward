@@ -83,10 +83,16 @@ jobs:
         with:
           name: node-app
 
-      - name: Login to Azure
-        uses: azure/login@v1
+      - name: Azure CLI Login
+        uses: azure/CLI@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          azcliversion: latest
+          inlineScript: |
+            az login --service-principal \
+              --username ${{ secrets.AZURE_CLIENT_ID }} \
+              --password ${{ secrets.AZURE_CLIENT_SECRET }} \
+              --tenant ${{ secrets.AZURE_TENANT_ID }}
+            az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Set App Settings for Azure Web App
         uses: azure/CLI@v1
@@ -111,11 +117,8 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy.zip
 # Make sure the following secrets are set in your GitHub repository:
-# - AZURE_CREDENTIALS: A JSON object with the following format:
-#   {
-#     "clientId": "...",
-#     "clientSecret": "...",
-#     "subscriptionId": "...",
-#     "tenantId": "..."
-#   }
+# - AZURE_CLIENT_ID: Service principal client ID
+# - AZURE_CLIENT_SECRET: Service principal secret
+# - AZURE_TENANT_ID: Azure tenant ID
+# - AZURE_SUBSCRIPTION_ID: Azure subscription ID
 # - AZURE_RESOURCE_GROUP: 'thinkforward-dev-rg'
