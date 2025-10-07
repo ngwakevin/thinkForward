@@ -6,51 +6,29 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 
-// Initialize Application Insights if available
-try {
-  // Try to dynamically import Application Insights config
-  await import('./lib/azure/appinsights-config.js')
-    .then(() => console.log('Application Insights initialized successfully'))
-    .catch(err => console.log('Application Insights not available, continuing without monitoring:', err.message));
-} catch (error) {
-  console.log('Application Insights configuration skipped:', error.message);
-}
+// Start with some basic server information logging
+console.log(`Starting Next.js server in ${process.env.NODE_ENV || 'development'} mode`);
+console.log(`Node.js version: ${process.version}`);
+console.log(`Server process ID: ${process.pid}`);
 
 // Get package.json for version info
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
+let packageJson = { dependencies: { next: 'unknown' } };
+try {
+  packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
+  console.log(`Loaded package.json: Next.js version ${packageJson.dependencies.next}`);
+} catch (error) {
+  console.warn('Could not load package.json:', error.message);
+}
 
 // Determine environment and port
 const dev = process.env.NODE_ENV !== 'production';
 const port = parseInt(process.env.PORT, 10) || 3000;
 
-// Import the Azure services initialization function
-// Note: Using dynamic import because this is an ESM file and our Azure services use TypeScript
-let initializeAzureServices;
-try {
-  const module = await import('./lib/azure/initialize-services.js');
-  initializeAzureServices = module.default.initializeAzureServices;
-} catch (error) {
-  console.error('Failed to import Azure services initialization:', error);
-}
-
 // Initialize Next.js
 const app = next({ dev });
 const handle = app.getRequestHandler();
-
-// Initialize Azure services
-const initializeServices = async () => {
-  if (initializeAzureServices) {
-    try {
-      console.log('Initializing Azure services...');
-      const result = await initializeAzureServices();
-      console.log('Azure services initialization complete:', result);
-    } catch (error) {
-      console.error('Failed to initialize Azure services:', error);
-    }
-  }
-};
 
 // Log start time for tracking server startup duration
 const startTime = Date.now();
@@ -83,69 +61,56 @@ const memoryMonitor = setInterval(() => {
 }, 60000); // Check every minute
 
 app.prepare()
-  .then(async () => {
+  .then(() => {
     console.log(`Next.js app prepared in ${(Date.now() - startTime)/1000} seconds`);
     
-    try {
-      // Initialize Azure services before starting the server
-      await initializeServices();
+    const server = createServer((req, res) => {
+      // Add basic request logging for diagnostics
+      const start = Date.now();
+      const { method, url } = req;
       
-      const server = createServer((req, res) => {
-        // Add basic request logging for diagnostics
-        const start = Date.now();
-        const { method, url } = req;
-        
-        res.on('finish', () => {
-          const duration = Date.now() - start;
-          if (duration > 1000) { // Log slow requests (over 1 second)
-            console.warn(`Slow request: ${method} ${url} - ${duration}ms`);
-          }
-        });
-        
-        // Parse the request URL
-        const parsedUrl = parse(req.url, true);
-        
-        // Let Next.js handle the request
-        handle(req, res, parsedUrl);
+      res.on('finish', () => {
+        const duration = Date.now() - start;
+        if (duration > 1000) { // Log slow requests (over 1 second)
+          console.warn(`Slow request: ${method} ${url} - ${duration}ms`);
+        }
       });
       
-      // Add graceful shutdown handling
-      const gracefulShutdown = () => {
-        console.log('Received shutdown signal, closing HTTP server...');
-        server.close(() => {
-          console.log('HTTP server closed');
-          clearInterval(memoryMonitor);
-          process.exit(0);
-        });
-        
-        // Force close if it takes too long
-        setTimeout(() => {
-          console.error('Could not close connections in time, forcefully shutting down');
-          process.exit(1);
-        }, 10000);
-      };
+      // Parse the request URL
+      const parsedUrl = parse(req.url, true);
       
-      process.on('SIGTERM', gracefulShutdown);
-      process.on('SIGINT', gracefulShutdown);
-      
-      server.listen(port, (err) => {
-        if (err) throw err;
-        const startupTime = (Date.now() - startTime)/1000;
-        console.log(`> Ready on http://localhost:${port} - startup took ${startupTime} seconds`);
-        console.log(`> Environment: ${process.env.NODE_ENV}`);
-        console.log(`> Next.js version: ${packageJson.dependencies.next}`);
-        console.log(`> Node.js version: ${process.version}`);
-        console.log(`> Health check available at: http://localhost:${port}/api/health`);
+      // Let Next.js handle the request
+      handle(req, res, parsedUrl);
+    });
+    
+    // Add graceful shutdown handling
+    const gracefulShutdown = () => {
+      console.log('Received shutdown signal, closing HTTP server...');
+      server.close(() => {
+        console.log('HTTP server closed');
+        clearInterval(memoryMonitor);
+        process.exit(0);
       });
-    } catch (err) {
-      console.error('Error during server initialization:', err);
-      // Try to recover in production, exit in development
-      if (dev) {
+      
+      // Force close if it takes too long
+      setTimeout(() => {
+        console.error('Could not close connections in time, forcefully shutting down');
         process.exit(1);
-      } else {
-        console.log('Attempting to continue despite initialization error...');
-      }
-    }
+      }, 10000);
+    };
+    
+    process.on('SIGTERM', gracefulShutdown);
+    process.on('SIGINT', gracefulShutdown);
+    
+    server.listen(port, (err) => {
+      if (err) throw err;
+      const startupTime = (Date.now() - startTime)/1000;
+      console.log(`> Ready on http://localhost:${port} - startup took ${startupTime} seconds`);
+      console.log(`> Environment: ${process.env.NODE_ENV}`);
+      console.log(`> Next.js version: ${packageJson.dependencies.next}`);
+      console.log(`> Node.js version: ${process.version}`);
+      console.log(`> Health check available at: http://localhost:${port}/api/health`);
+    });
   })
   .catch((ex) => {
     console.error('Fatal error during app preparation:', ex);
