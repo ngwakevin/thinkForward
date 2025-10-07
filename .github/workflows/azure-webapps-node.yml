@@ -86,11 +86,7 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          auth-type: 'SERVICE_PRINCIPAL'
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Set App Settings for Azure Web App
         uses: azure/CLI@v1
@@ -115,8 +111,11 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy.zip
 # Make sure the following secrets are set in your GitHub repository:
-# - AZURE_CLIENT_ID: Service principal client ID
-# - AZURE_TENANT_ID: Azure tenant ID
-# - AZURE_SUBSCRIPTION_ID: Azure subscription ID
-# - AZURE_CLIENT_SECRET: Service principal secret
+# - AZURE_CREDENTIALS: A JSON object with the following format:
+#   {
+#     "clientId": "...",
+#     "clientSecret": "...",
+#     "subscriptionId": "...",
+#     "tenantId": "..."
+#   }
 # - AZURE_RESOURCE_GROUP: 'thinkforward-dev-rg'
