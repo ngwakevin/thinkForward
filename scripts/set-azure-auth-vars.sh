@@ -20,9 +20,9 @@ az webapp config appsettings set \
   --name "thinkforward-dev" \
   --resource-group "thinkforward-dev-rg" \
   --settings \
-  AZURE_AD_CLIENT_ID="bd449e4a-284e-4cbc-bff2-d92f4d9d1a75" \
+  AZURE_AD_CLIENT_ID="3ca9d2ec-a691-4a58-9658-ecd4fb8d6918" \
   AZURE_AD_CLIENT_SECRET="$CLIENT_SECRET" \
-  AZURE_AD_TENANT_ID="common"
+  AZURE_AD_TENANT_ID="438537ce-67d5-4799-837e-aa8ba4ed01eb"
 
 echo "Restarting the web app..."
 az webapp restart --name "thinkforward-dev" --resource-group "thinkforward-dev-rg"

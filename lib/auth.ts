@@ -90,8 +90,8 @@ export const authOptions: NextAuthOptions = {
 			name: 'Microsoft',
 			clientId: process.env.AZURE_AD_CLIENT_ID!,
 			clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-			// Use 'common' for multi-tenant, or specific tenantId for single-tenant
-			tenantId: 'common', // Changed from process.env.AZURE_AD_TENANT_ID! to 'common' for multi-tenant support
+			// Use tenant ID from environment, falling back to 'organizations' for multi-tenant support
+			tenantId: process.env.AZURE_AD_TENANT_ID || 'organizations', // 'organizations' is for multi-tenant apps
 			authorization: {
 				params: {
 					// Extended scope to get more profile information
