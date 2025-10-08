@@ -56,6 +56,7 @@ jobs:
           echo "COSMOS_DB_KEY=${{ secrets.COSMOS_DB_KEY }}" >> .env.production
           echo "KEY_VAULT_URI=${{ secrets.KEY_VAULT_URI }}" >> .env.production
           echo "APP_INSIGHTS_CONNECTION_STRING=${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" >> .env.production
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.production
           
           # Install ALL dependencies including dev dependencies needed for build
           npm ci
@@ -117,8 +118,12 @@ jobs:
               COSMOS_DB_KEY="${{ secrets.COSMOS_DB_KEY }}" \
               KEY_VAULT_URI="${{ secrets.KEY_VAULT_URI }}" \
               APP_INSIGHTS_CONNECTION_STRING="${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" \
+              AZURE_AD_CLIENT_ID="${{ secrets.AZURE_AD_CLIENT_ID }}" \
+              AZURE_AD_CLIENT_SECRET="${{ secrets.AZURE_AD_CLIENT_SECRET }}" \
+              AZURE_AD_TENANT_ID="${{ secrets.AZURE_AD_TENANT_ID }}" \
               NODE_ENV="production" \
-              NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+              NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" \
+              NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
 
       - name: Wait for SCM to be ready
         run: sleep 60

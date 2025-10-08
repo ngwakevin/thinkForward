@@ -95,7 +95,12 @@ az webapp config appsettings set \
   NODE_ENV="$NODE_ENV" \
   WEBSITE_RUN_FROM_PACKAGE="1" \
   APPLICATIONINSIGHTS_CONNECTION_STRING="$APP_INSIGHTS_CONNECTION_STRING" \
-  APPLICATIONINSIGHTS_ROLE_NAME="thinkforward-web"
+  APPLICATIONINSIGHTS_ROLE_NAME="thinkforward-web" \
+  AZURE_AD_CLIENT_ID="$AZURE_AD_CLIENT_ID" \
+  AZURE_AD_CLIENT_SECRET="$AZURE_AD_CLIENT_SECRET" \
+  AZURE_AD_TENANT_ID="$AZURE_AD_TENANT_ID" \
+  NEXTAUTH_URL="https://${WEBAPP_NAME}.azurewebsites.net" \
+  NEXTAUTH_SECRET="$NEXTAUTH_SECRET"
 
 echo -e "${GREEN}Deployment to ${WEBAPP_NAME} completed successfully!${NC}"
 echo -e "You can access your application at: https://${WEBAPP_NAME}.azurewebsites.net"
