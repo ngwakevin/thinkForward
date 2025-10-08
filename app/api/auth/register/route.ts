@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import prisma from '../../../../lib/prisma';
+import { CosmosDBService } from '../../../../lib/azure/cosmos-service';
+import { verifyCosmosDBConnection } from '../../../../lib/azure/cosmos-config';
 
 // Simple in-memory rate limiting (per IP) - NOT for production scale
 const rateMap = new Map<string, { count: number; ts: number }>();
@@ -49,13 +50,19 @@ export async function POST(req: Request) {
 
     // Quick connectivity probe (lightweight)
     try {
-      await prisma.$queryRaw`SELECT 1`;
+      const connected = await verifyCosmosDBConnection();
+      if (!connected) {
+        throw new Error('Cosmos DB connection failed');
+      }
     } catch (dbErr) {
       return NextResponse.json({ ok: false, error: 'Service temporarily unavailable (DB unreachable).' }, { status: 503 });
     }
 
+    // Initialize Cosmos DB service
+    const cosmosService = new CosmosDBService();
+
     // Ensure unique by email (normalized lowercase)
-    const existing = await prisma.user.findFirst({ where: { email } });
+    const existing = await cosmosService.getUserByEmail(email!);
     if (existing) {
       return NextResponse.json({ ok: false, fieldErrors: { email: 'Email already in use' } }, { status: 409 });
     }
@@ -63,20 +70,17 @@ export async function POST(req: Request) {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password!, saltRounds);
 
-    // Create user + empty profile
-    const createdAt = new Date();
-    const user = await prisma.user.create({
-      data: {
-        provider: 'credentials',
-        providerAccountId: crypto.randomUUID(),
-        email,
-        name: name?.trim() || null,
-        passwordHash,
-        signInIdentity: email,
-        lastSignInAt: createdAt,
-        profile: { create: {} },
-      } as any,
-      include: { profile: true },
+    // Create user with empty profile
+    const user = await cosmosService.createUser({
+      provider: 'credentials',
+      providerAccountId: crypto.randomUUID(),
+      email,
+      name: name?.trim() || null,
+      passwordHash,
+      signInIdentity: email,
+      lastSignInAt: new Date(),
+      isMentor: false,
+      profile: {}
     });
 
     return NextResponse.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });

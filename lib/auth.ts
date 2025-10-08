@@ -4,7 +4,7 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import type { NextAuthOptions } from 'next-auth';
 import { ensureUserFromOidc } from './db/users';
-import prisma from './prisma';
+import { CosmosDBService } from './azure/cosmos-service';
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
@@ -83,18 +83,19 @@ export const authOptions: NextAuthOptions = {
 					ent.count += 1;
 					if (ent.count > CRED_MAX_ATTEMPTS) return null; // silent throttle
 				}
-				const user: any = await prisma.user.findFirst({ where: { email: normEmail } });
+                
+                // Initialize Cosmos DB service
+                const cosmosService = new CosmosDBService();
+                
+				const user: any = await cosmosService.getUserByEmail(normEmail);
 				if (!user || !('passwordHash' in user) || !user.passwordHash) return null;
 				const ok = await bcrypt.compare(creds.password, user.passwordHash);
 				if (!ok) {
 					// Increment failed sign-in counters (best-effort)
 					try {
-						await prisma.user.update({
-							where: { id: user.id },
-							data: ({
-								failedSignInCount: (user.failedSignInCount ?? 0) + 1,
-								lastFailedSignInAt: new Date(),
-							}) as any,
+						await cosmosService.updateUser(user.id, {
+							failedSignInCount: (user.failedSignInCount ?? 0) + 1,
+							lastFailedSignInAt: new Date(),
 						});
 					} catch (e) {
 						console.warn('[auth][credentials] failed to update failedSignInCount', e);
@@ -103,13 +104,10 @@ export const authOptions: NextAuthOptions = {
 				}
 				// Update last sign-in timestamp
 				try {
-					await prisma.user.update({
-						where: { id: user.id },
-						data: ({
-							lastSignInAt: new Date(),
-							signInIdentity: normEmail,
-							failedSignInCount: 0,
-						}) as any,
+					await cosmosService.updateUser(user.id, {
+						lastSignInAt: new Date(),
+						signInIdentity: normEmail,
+						failedSignInCount: 0,
 					});
 				} catch (e) {
 					console.warn('[auth][credentials] failed to update lastSignInAt', e);
@@ -162,11 +160,14 @@ export const authOptions: NextAuthOptions = {
 			try {
 				if (!(token as any).uid) {
 					let u: any = null;
+                    // Initialize Cosmos DB service
+                    const cosmosService = new CosmosDBService();
+                    
 					if ((token as any).providerAccountId) {
-						u = await prisma.user.findUnique({ where: { providerAccountId: (token as any).providerAccountId } });
+						u = await cosmosService.getUserByProviderAccountId(token.provider as string, (token as any).providerAccountId);
 					}
 					if (!u && token.email) {
-						u = await prisma.user.findFirst({ where: { email: token.email.toLowerCase() } });
+						u = await cosmosService.getUserByEmail(token.email.toLowerCase());
 					}
 					if (u) {
 						(token as any).uid = u.id;
@@ -194,16 +195,24 @@ export const authOptions: NextAuthOptions = {
 				}
 				// Hydrate profile fields if available
 				try {
-						if ((token as any).uid || (token as any).providerAccountId || token.email) {
-							const userRec = await prisma.user.findFirst({
-								where: (token as any).uid
-									? { id: (token as any).uid }
-									: ( (token as any).providerAccountId
-										? { providerAccountId: (token as any).providerAccountId }
-										: { email: token.email?.toLowerCase() }
-								),
-								include: { profile: true },
-							});
+					if ((token as any).uid || (token as any).providerAccountId || token.email) {
+						// Initialize Cosmos DB service
+						const cosmosService = new CosmosDBService();
+						
+						let userRec: any = null;
+						
+						// Try to find the user by ID, providerAccountId, or email
+						if ((token as any).uid) {
+							userRec = await cosmosService.getUserById((token as any).uid);
+						} else if ((token as any).providerAccountId && (token as any).provider) {
+							userRec = await cosmosService.getUserByProviderAccountId(
+								(token as any).provider,
+								(token as any).providerAccountId
+							);
+						} else if (token.email) {
+							userRec = await cosmosService.getUserByEmail(token.email.toLowerCase());
+						}
+						
 						if (userRec?.profile) {
 							if (userRec.profile.displayName) {
 								(session.user as any).displayName = userRec.profile.displayName;
@@ -217,24 +226,24 @@ export const authOptions: NextAuthOptions = {
 						} else {
 							(session.user as any).needsProfile = true;
 						}
+						
 						// Attach identity & custom fields (cast to any to avoid client drift)
-						const u: any = userRec;
-						if (u) {
+						if (userRec) {
 							// Always overwrite providerAccountId with DB authoritative value
-							(session.user as any).providerAccountId = u.providerAccountId;
-							(session.user as any).objectId = u?.objectId;
-							(session.user as any).upn = u?.upn;
-							(session.user as any).signInIdentity = u?.signInIdentity;
-							(session.user as any).lastSignInAt = u?.lastSignInAt;
-							(session.user as any).firstName = u?.firstName;
-							(session.user as any).lastName = u?.lastName;
-							(session.user as any).phoneNumber = u?.phoneNumber;
-							(session.user as any).phoneVerifiedAt = u?.phoneVerifiedAt;
-							(session.user as any).emailVerifiedAt = u?.emailVerifiedAt;
-							(session.user as any).loyaltyNumber = u?.loyaltyNumber;
-							(session.user as any).preferredLanguage = u?.preferredLanguage;
-							(session.user as any).customerTier = u?.customerTier;
-							(session.user as any).isDisabled = u?.isDisabled;
+							(session.user as any).providerAccountId = userRec.providerAccountId;
+							(session.user as any).objectId = userRec?.objectId;
+							(session.user as any).upn = userRec?.upn;
+							(session.user as any).signInIdentity = userRec?.signInIdentity;
+							(session.user as any).lastSignInAt = userRec?.lastSignInAt;
+							(session.user as any).firstName = userRec?.firstName;
+							(session.user as any).lastName = userRec?.lastName;
+							(session.user as any).phoneNumber = userRec?.phoneNumber;
+							(session.user as any).phoneVerifiedAt = userRec?.phoneVerifiedAt;
+							(session.user as any).emailVerifiedAt = userRec?.emailVerifiedAt;
+							(session.user as any).loyaltyNumber = userRec?.loyaltyNumber;
+							(session.user as any).preferredLanguage = userRec?.preferredLanguage;
+							(session.user as any).customerTier = userRec?.customerTier;
+							(session.user as any).isDisabled = userRec?.isDisabled;
 						}
 					}
 				} catch (e) {
