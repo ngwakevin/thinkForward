@@ -49,15 +49,16 @@ export const authOptions: NextAuthOptions = {
 			tenantId: process.env.AZURE_AD_TENANT_ID!,
 			authorization: {
 				params: {
-					// standard OIDC scopes; add offline_access if you need refresh tokens
-					scope: 'openid profile email',
+					// Extended scope to get more profile information
+					scope: 'openid profile email User.Read',
 				},
 			},
-			// If you need custom profile mapping you can map here
 			profile(profile) {
-				// profile.oid is object ID; sub is subject
+				// Enhanced profile mapping with Microsoft Graph data
 				return {
 					id: profile.sub || profile.oid,
+					objectId: profile.oid, // Microsoft specific identifier
+					tenantId: profile.tid, // Azure AD tenant ID
 					name: profile.name ?? null,
 					email: profile.email ?? profile.preferred_username ?? null,
 				} as any;

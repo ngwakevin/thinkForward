@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../lib/auth';
 import Link from 'next/link';
 import Image from 'next/image';
-import ProfileForm from './ProfileForm';
+import AccountTabs from './AccountTabs';
 import prisma from '../../lib/prisma';
 
 // Ensure this page is always rendered dynamically so freshly saved profile data shows immediately
@@ -13,7 +13,7 @@ export default async function ProfilePage() {
   if (!session?.user) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16 space-y-6">
-        <h1 className="text-2xl font-semibold">Profile</h1>
+        <h1 className="text-2xl font-semibold">Account Profile</h1>
         <p className="text-fg-muted">You need to sign in to view your profile.</p>
         <Link href="/auth/signin" className="inline-flex rounded-md bg-accent px-4 py-2 text-white hover:bg-accent/90">Sign in</Link>
       </main>
@@ -49,8 +49,11 @@ export default async function ProfilePage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-10">
       <Header initial={data} />
-      {/* Merge profile first so user scalar fields (e.g. id, email) remain while profile values populate form */}
-      <ProfileForm initial={data ? { ...(data.profile || {}), ...data } : {}} />
+      {/* Using the new AccountTabs component for a more comprehensive profile management experience */}
+      <AccountTabs 
+        user={session.user}
+        initialData={data ? { ...(data.profile || {}), ...data } : {}}
+      />
     </main>
   );
 }

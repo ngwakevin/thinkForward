@@ -15,18 +15,34 @@ export default function SignInForm() {
     setLoading(true); setError(null);
     try {
       const normEmail = email.trim().toLowerCase();
-      // Try credentials sign-in (if configured). We don't know if credentials provider exists; swallow error UI if it fails and fallback to MS
+      // Try credentials sign-in (if configured)
       const res: any = await signIn('credentials', { redirect: false, email: normEmail, password });
       if (res && !res.error) {
         // success -> redirect to home
         window.location.href = '/';
         return;
       }
-      // fallback to azure sign-in (SSO) if credentials failed / not configured
-      await signIn('azure-ad', { callbackUrl: '/' });
+      
+      // Show specific error message
+      if (res && res.error === 'CredentialsSignin') {
+        setError('Invalid email or password');
+      } else {
+        setError('Sign in failed. Try using Microsoft login instead.');
+      }
     } catch (e: any) {
       setError('Sign in failed');
     } finally { setLoading(false); }
+  }
+  
+  async function handleMicrosoftLogin() {
+    setLoading(true);
+    try {
+      await signIn('azure-ad', { callbackUrl: '/' });
+    } catch (e) {
+      // Error handling is managed by NextAuth
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -56,9 +72,18 @@ export default function SignInForm() {
         <div className="h-px flex-1 bg-border" /> <span>or continue with</span> <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-3">
-        <button type="button" onClick={()=>signIn('azure-ad', { callbackUrl: '/' })} className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40">
-          <MicrosoftIcon className="h-5 w-5" />
-          <span>Sign in with Microsoft</span>
+        <button 
+          type="button" 
+          onClick={handleMicrosoftLogin} 
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+        >
+          {loading ? (
+            <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : (
+            <MicrosoftIcon className="h-5 w-5" />
+          )}
+          <span>{loading ? 'Signing in...' : 'Sign in with Microsoft'}</span>
         </button>
         <button type="button" disabled className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border/70 bg-bg-alt/40 px-4 py-2 text-sm font-medium text-fg-muted/60 cursor-not-allowed">
           <GoogleIcon className="h-5 w-5" />
