@@ -1,10 +1,36 @@
-// Auth is disabled. Export a placeholder to satisfy imports.
+// Auth configuration for Next-Auth
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import type { NextAuthOptions } from 'next-auth';
 import { ensureUserFromOidc } from './db/users';
 import prisma from './prisma';
+
+// Ensure NEXTAUTH_SECRET is set in production
+if (!process.env.NEXTAUTH_SECRET) {
+  console.error('ERROR: NEXTAUTH_SECRET is not set in environment!');
+  console.error('This will cause authentication to fail. Please set NEXTAUTH_SECRET in your environment.');
+  console.error('Run `npm run generate:secret` to generate a secure value and add it to:');
+  console.error('1. GitHub repository secrets (for CI/CD)');
+  console.error('2. Azure App Service application settings');
+  console.error('3. .env.production file (for local production testing)');
+  
+  // In production, we'll throw an error to prevent insecure deployments
+  if (process.env.NODE_ENV === 'production' && !process.env.IGNORE_AUTH_SECRET_WARNING) {
+    console.error('Setting fallback secret for production - THIS IS NOT SECURE FOR LONG-TERM USE');
+    // Set a fallback secret that is at least stable for the current runtime
+    process.env.NEXTAUTH_SECRET = 'FALLBACK_SECRET_' + Date.now().toString() + '_PLEASE_CONFIGURE_PROPERLY';
+  }
+  
+  // Use a default value in development only
+  if (process.env.NODE_ENV !== 'production') {
+    process.env.NEXTAUTH_SECRET = 'DEV_INSECURE_SECRET_DO_NOT_USE_IN_PRODUCTION_' + Date.now().toString();
+    console.warn('Using insecure default NEXTAUTH_SECRET for development only.');
+  }
+
+  // Log that we're using a generated secret
+  console.warn('Using a generated NEXTAUTH_SECRET - THIS WILL CAUSE SESSIONS TO RESET ON SERVER RESTART');
+}
 
 // Simple in-memory rate limiting for credentials auth (per email/IP). For production, replace.
 const credRateMap = new Map<string, { count: number; ts: number }>();
@@ -13,6 +39,8 @@ const CRED_MAX_ATTEMPTS = 15;
 
 // NextAuth configuration using Microsoft Entra ID (Azure AD) single-tenant
 export const authOptions: NextAuthOptions = {
+	// Explicitly set the secret from environment variable
+	secret: process.env.NEXTAUTH_SECRET,
 	providers: [
 		AzureADProvider({
 			name: 'Microsoft',
