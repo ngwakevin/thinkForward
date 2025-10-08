@@ -1,9 +1,45 @@
 node_modules
 .next
-.env.local
 .DS_Store
 out
 tsconfig.tsbuildinfo
 deploy.zip
 source.zip
 startup.sh
+
+# Environment variables
+.env
+.env.local
+.env.local.*
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Azure credentials
+azure-credentials*.json
+azure-resources.env
+
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Secrets
+*.pem
+*.key
+*.pfx
+*.publishsettings
+*-publish-profile.xml
+thinkforward-publish-profile.xml
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
