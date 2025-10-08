@@ -40,6 +40,9 @@ const CRED_MAX_ATTEMPTS = 15;
 // Check Azure AD environment variables 
 if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET || !process.env.AZURE_AD_TENANT_ID) {
 	console.error('[auth] AZURE_AD_* environment variables missing');
+	console.error('[auth] CLIENT_ID:', process.env.AZURE_AD_CLIENT_ID ? `Set (${process.env.AZURE_AD_CLIENT_ID})` : 'Not set');
+	console.error('[auth] CLIENT_SECRET:', process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set');
+	console.error('[auth] TENANT_ID:', process.env.AZURE_AD_TENANT_ID ? `Set (${process.env.AZURE_AD_TENANT_ID})` : 'Not set');
 }
 if (!process.env.NEXTAUTH_URL) {
 	console.error('[auth] NEXTAUTH_URL environment variable missing');
@@ -61,6 +64,16 @@ export const authOptions: NextAuthOptions = {
 	logger: {
 		error(code, ...message) {
 			console.error('[nextauth][error]', code, ...message);
+			
+			// Log Azure AD configuration on authentication errors
+			if (code === 'SIGNIN_OAUTH_ERROR') {
+				console.error('[nextauth][error][debug] Azure AD environment variables:', {
+					AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID ? `${process.env.AZURE_AD_CLIENT_ID.substring(0, 8)}...` : 'Not set',
+					AZURE_AD_CLIENT_SECRET: process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set',
+					AZURE_AD_TENANT_ID: process.env.AZURE_AD_TENANT_ID || 'common',
+					NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'Not set'
+				});
+			}
 		},
 		warn(code, ...message) {
 			console.warn('[nextauth][warn]', code, ...message);
