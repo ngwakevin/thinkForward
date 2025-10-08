@@ -37,6 +37,22 @@ const credRateMap = new Map<string, { count: number; ts: number }>();
 const CRED_WINDOW_MS = 60_000;
 const CRED_MAX_ATTEMPTS = 15;
 
+// Check Azure AD environment variables 
+if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET || !process.env.AZURE_AD_TENANT_ID) {
+	console.error('[auth] AZURE_AD_* environment variables missing');
+}
+if (!process.env.NEXTAUTH_URL) {
+	console.error('[auth] NEXTAUTH_URL environment variable missing');
+} else {
+	console.log('[auth] Redirect URI for Microsoft login should be:', `${process.env.NEXTAUTH_URL}/api/auth/callback/microsoft`);
+}
+
+// Ensure we have a valid NEXTAUTH_URL for building
+if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
+  console.warn('NEXTAUTH_URL not set, using fallback URL for build');
+  process.env.NEXTAUTH_URL = 'https://thinkforward-dev.azurewebsites.net';
+}
+
 // NextAuth configuration using Microsoft Entra ID (Azure AD) single-tenant
 export const authOptions: NextAuthOptions = {
 	// Explicitly set the secret from environment variable
@@ -78,18 +94,7 @@ export const authOptions: NextAuthOptions = {
 				} as any;
 			},
 			// Log early if important environment variables are missing
-			checks: ['state', 'pkce'],
-			async checks() {
-				if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET || !process.env.AZURE_AD_TENANT_ID) {
-					console.error('[auth] AZURE_AD_* environment variables missing');
-				}
-				if (!process.env.NEXTAUTH_URL) {
-					console.error('[auth] NEXTAUTH_URL environment variable missing');
-				} else {
-					console.log('[auth] Redirect URI for Microsoft login should be:', `${process.env.NEXTAUTH_URL}/api/auth/callback/microsoft`);
-				}
-				return ['pkce', 'state'];
-			},
+			checks: ['pkce', 'state'],
 		}),
 		Credentials({
 			name: 'Credentials',

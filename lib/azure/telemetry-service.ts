@@ -86,7 +86,14 @@ export class TelemetryService {
       const duration = Date.now() - startTime;
       
       // Get request details
-      const path = request.url ? new URL(request.url).pathname : 'unknown';
+      let path = 'unknown';
+      try {
+        if (request.url && request.url.trim() !== '') {
+          path = new URL(request.url).pathname;
+        }
+      } catch (e) {
+        console.warn('Failed to parse URL in telemetry:', request.url);
+      }
       const method = request.method || 'unknown';
       const status = response.status;
       

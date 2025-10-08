@@ -29,8 +29,17 @@ export function withTelemetry(
       );
       
       // Track the exception
+      let path = 'unknown';
+      try {
+        if (request.url && request.url.trim() !== '') {
+          path = new URL(request.url).pathname;
+        }
+      } catch (e) {
+        console.warn('Failed to parse URL in telemetry exception:', request.url);
+      }
+      
       telemetry.trackException(error as Error, {
-        path: request.url ? new URL(request.url).pathname : 'unknown',
+        path,
         method: request.method || 'unknown'
       });
       

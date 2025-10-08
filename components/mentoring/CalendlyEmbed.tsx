@@ -8,7 +8,11 @@ export function CalendlyEmbed({ url, height = 760 }: CalendlyEmbedProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!url) return;
+    if (!url || url.trim() === '') {
+      setError('No booking URL available');
+      return;
+    }
+    
     try {
       const u = new URL(url);
       // Append embed params if missing

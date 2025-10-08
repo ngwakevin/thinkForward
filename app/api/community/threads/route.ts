@@ -7,7 +7,16 @@ import { authOptions } from '../../../../lib/auth';
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { searchParams } = new URL(req.url);
+  
+  let searchParams = new URLSearchParams();
+  try {
+    if (req.url && req.url.trim() !== '') {
+      searchParams = new URL(req.url).searchParams;
+    }
+  } catch (e) {
+    console.warn('Failed to parse URL in threads API:', req.url);
+  }
+  
   const categoryId = searchParams.get('categoryId') || undefined;
   const q = searchParams.get('q') || undefined;
   const where: any = {};
