@@ -1,0 +1,51 @@
+name: Deploy to Azure with Auth Configuration
+
+on:
+  push:
+    branches: [ main, newImplement-hardening ]
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Deploy to Azure Web App
+        id: deploy-to-azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'thinkforward-dev'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .
+      
+      - name: Configure Azure AD settings
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            # Configure Azure Web App settings for authentication
+            az webapp config appsettings set \
+              --name thinkforward-dev \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --settings \
+              AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }} \
+              AZURE_AD_CLIENT_SECRET=${{ secrets.AZURE_AD_CLIENT_SECRET }} \
+              AZURE_AD_TENANT_ID="common" \
+              NEXTAUTH_URL="https://thinkforward-dev.azurewebsites.net" \
+              NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+            
+            # Restart the web app to apply changes
+            az webapp restart --name thinkforward-dev --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}

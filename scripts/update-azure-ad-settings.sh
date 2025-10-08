@@ -13,6 +13,13 @@ ENVIRONMENT=${1:-"development"}
 APP_NAME="thinkforward"
 RESOURCE_GROUP="thinkforward-rg"
 
+# Allow user to override resource group
+echo -e "${YELLOW}Enter Azure Resource Group name [${RESOURCE_GROUP}]:${NC}"
+read RG_INPUT
+if [ ! -z "$RG_INPUT" ]; then
+  RESOURCE_GROUP="$RG_INPUT"
+fi
+
 # Determine App Service name based on environment
 if [ "$ENVIRONMENT" == "production" ]; then
   WEBAPP_NAME="${APP_NAME}"
@@ -35,15 +42,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Prompt for Azure AD values if not set
+# Prompt for Azure AD values
 if [ -z "$AZURE_AD_CLIENT_ID" ]; then
   echo -e "${YELLOW}Enter Azure AD Client ID (Application ID):${NC}"
   read AZURE_AD_CLIENT_ID
 fi
 
 if [ -z "$AZURE_AD_TENANT_ID" ]; then
-  echo -e "${YELLOW}Enter Azure AD Tenant ID:${NC}"
-  read AZURE_AD_TENANT_ID
+  # Using "common" for multi-tenant support
+  AZURE_AD_TENANT_ID="common"
+  echo -e "${GREEN}Using Azure AD Tenant ID: ${AZURE_AD_TENANT_ID} (for multi-tenant support)${NC}"
 fi
 
 if [ -z "$AZURE_AD_CLIENT_SECRET" ]; then

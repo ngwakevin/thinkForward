@@ -73,10 +73,12 @@ export const authOptions: NextAuthOptions = {
 	},
 	providers: [
 		AzureADProvider({
+			id: 'microsoft', // Set ID to 'microsoft' to match what's used in signIn() calls
 			name: 'Microsoft',
 			clientId: process.env.AZURE_AD_CLIENT_ID!,
 			clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-			tenantId: process.env.AZURE_AD_TENANT_ID!,
+			// Use 'common' for multi-tenant, or specific tenantId for single-tenant
+			tenantId: 'common', // Changed from process.env.AZURE_AD_TENANT_ID! to 'common' for multi-tenant support
 			authorization: {
 				params: {
 					// Extended scope to get more profile information
