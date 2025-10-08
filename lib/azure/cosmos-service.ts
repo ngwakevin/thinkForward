@@ -20,6 +20,8 @@ export interface User {
   emailVerifiedAt?: Date | null;
   isDisabled?: boolean;
   lastSignInAt?: Date | null;
+  failedSignInCount?: number;
+  lastFailedSignInAt?: Date | null;
   loyaltyNumber?: string | null;
   preferredLanguage?: string | null;
   customerTier?: string | null;
