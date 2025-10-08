@@ -37,9 +37,10 @@ export default function SignInForm() {
   async function handleMicrosoftLogin() {
     setLoading(true);
     try {
-      await signIn('azure-ad', { callbackUrl: '/' });
+      await signIn('microsoft', { callbackUrl: '/' });
     } catch (e) {
       // Error handling is managed by NextAuth
+      console.error('Microsoft login error:', e);
     } finally {
       setLoading(false);
     }

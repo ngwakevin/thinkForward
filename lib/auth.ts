@@ -41,6 +41,20 @@ const CRED_MAX_ATTEMPTS = 15;
 export const authOptions: NextAuthOptions = {
 	// Explicitly set the secret from environment variable
 	secret: process.env.NEXTAUTH_SECRET,
+	debug: process.env.NODE_ENV !== 'production',
+	logger: {
+		error(code, ...message) {
+			console.error('[nextauth][error]', code, ...message);
+		},
+		warn(code, ...message) {
+			console.warn('[nextauth][warn]', code, ...message);
+		},
+		debug(code, ...message) {
+			if (process.env.NODE_ENV !== 'production') {
+				console.debug('[nextauth][debug]', code, ...message);
+			}
+		},
+	},
 	providers: [
 		AzureADProvider({
 			name: 'Microsoft',
@@ -62,6 +76,19 @@ export const authOptions: NextAuthOptions = {
 					name: profile.name ?? null,
 					email: profile.email ?? profile.preferred_username ?? null,
 				} as any;
+			},
+			// Log early if important environment variables are missing
+			checks: ['state', 'pkce'],
+			async checks() {
+				if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET || !process.env.AZURE_AD_TENANT_ID) {
+					console.error('[auth] AZURE_AD_* environment variables missing');
+				}
+				if (!process.env.NEXTAUTH_URL) {
+					console.error('[auth] NEXTAUTH_URL environment variable missing');
+				} else {
+					console.log('[auth] Redirect URI for Microsoft login should be:', `${process.env.NEXTAUTH_URL}/api/auth/callback/microsoft`);
+				}
+				return ['pkce', 'state'];
 			},
 		}),
 		Credentials({
@@ -275,5 +302,4 @@ export const authOptions: NextAuthOptions = {
 	pages: {
 		signIn: '/auth/signin',
 	},
-	debug: false,
 };
