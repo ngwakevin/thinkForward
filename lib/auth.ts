@@ -43,9 +43,20 @@ if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET || !p
 	console.error('[auth] CLIENT_ID:', process.env.AZURE_AD_CLIENT_ID ? `Set (${process.env.AZURE_AD_CLIENT_ID})` : 'Not set');
 	console.error('[auth] CLIENT_SECRET:', process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set');
 	console.error('[auth] TENANT_ID:', process.env.AZURE_AD_TENANT_ID ? `Set (${process.env.AZURE_AD_TENANT_ID})` : 'Not set');
+	
+	// Try to use static values as a fallback for development or when environment variables are missing
+	console.warn('[auth] Using hardcoded fallback values for AZURE_AD - THIS IS NOT SECURE FOR PRODUCTION');
+	process.env.AZURE_AD_CLIENT_ID = '3ca9d2ec-a691-4a58-9658-ecd4fb8d6918';
+	process.env.AZURE_AD_TENANT_ID = '438537ce-67d5-4799-837e-aa8ba4ed01eb';
+	
+	// Log environment keys (without values)
+	console.log('[auth] Available environment variables:', Object.keys(process.env).sort());
 }
 if (!process.env.NEXTAUTH_URL) {
 	console.error('[auth] NEXTAUTH_URL environment variable missing');
+	
+	// Try to determine the URL from request headers in a later step
+	console.warn('[auth] Will try to determine NEXTAUTH_URL from request headers');
 } else {
 	console.log('[auth] Redirect URI for Microsoft login should be:', `${process.env.NEXTAUTH_URL}/api/auth/callback/microsoft`);
 }
