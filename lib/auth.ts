@@ -295,7 +295,7 @@ export const authOptions: NextAuthOptions = {
 							name: (profile as any)?.name,
 							given_name: (profile as any)?.given_name,
 							family_name: (profile as any)?.family_name,
-							provider: 'azure-ad',
+							provider: 'microsoft',
 							providerAccountId: account?.providerAccountId || (account as any)?.sub,
 						});
 					} catch (e) {

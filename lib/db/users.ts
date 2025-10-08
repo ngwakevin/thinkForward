@@ -13,7 +13,7 @@ type OidcIdentity = {
 };
 
 export async function ensureUserFromOidc(identity: OidcIdentity) {
-  const provider = identity.provider ?? 'azure-ad';
+  const provider = identity.provider ?? 'microsoft';
   const providerAccountId = identity.providerAccountId ?? identity.sub ?? undefined;
   if (!providerAccountId) return null;
 
