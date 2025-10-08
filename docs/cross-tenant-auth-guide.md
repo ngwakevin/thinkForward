@@ -31,19 +31,21 @@ If you need to verify this configuration:
 4. Go to "Authentication" > "Supported account types"
 5. Confirm that "Accounts in any organizational directory" is selected
 
-### 3. Verify Redirect URIs
+### 3. Configure Redirect URIs
 
-✅ **Already Configured**: Your app registration already has the production redirect URI configured.
+⚠️ **Configuration Required**: Your app registration needs specific redirect URIs to handle both NextAuth.js and App Service Authentication.
 
-Current redirect URI: 
+Required redirect URIs:
 ```
-https://thinkforward-dev.azurewebsites.net/api/auth/callback/microsoft
+https://thinkforward-dev.azurewebsites.net/api/auth/callback/microsoft  (for NextAuth.js)
+https://thinkforward-dev.azurewebsites.net/.auth/login/aad/callback     (for App Service Authentication)
 ```
 
-If you need to add your local development URL for testing:
+To configure these redirect URIs:
 1. Go to your app registration in the Azure Portal
 2. Navigate to "Authentication" > "Platform configurations" > "Web"
-3. Add the following redirect URI:
+3. Add both redirect URIs listed above
+4. For local development, also add:
    ```
    http://localhost:3000/api/auth/callback/microsoft
    ```
@@ -51,6 +53,9 @@ If you need to add your local development URL for testing:
    ```
    http://localhost:3006/api/auth/callback/microsoft
    ```
+5. Click Save at the top of the page
+
+**Important Note**: You appear to be using both NextAuth.js and App Service Authentication (Easy Auth). This can cause conflicts. Consider using only one authentication method, preferably NextAuth.js for your app.
 
 ### 4. Grant Admin Consent (Optional but Recommended)
 
@@ -109,7 +114,10 @@ Without this setting, you'll encounter the error: `AADSTS700054: response_type '
    - Regenerate it in the Azure Portal if needed
 
 4. **"AADSTS50011: The redirect URI specified doesn't match the ones configured"**:
-   - Verify the redirect URI in your app registration matches your app's callback URL
+   - Add both required redirect URIs to your app registration:
+     - `https://thinkforward-dev.azurewebsites.net/api/auth/callback/microsoft` (for NextAuth.js)
+     - `https://thinkforward-dev.azurewebsites.net/.auth/login/aad/callback` (for App Service Authentication)
+   - Consider disabling App Service Authentication if you're using NextAuth.js
 
 5. **"User from tenant 'X' is not allowed to access this application"**:
    - Verify the app is configured for multi-tenant access
