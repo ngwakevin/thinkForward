@@ -79,20 +79,39 @@ If users from other tenants need to use your app, they'll need to consent to the
 https://login.microsoftonline.com/common/adminconsent?client_id=3ca9d2ec-a691-4a58-9658-ecd4fb8d6918&redirect_uri=https://thinkforward-dev.azurewebsites.net
 ```
 
+### 7. Enable Implicit Flow and ID Tokens
+
+⚠️ **Required Configuration**: You must enable ID tokens in your app registration.
+
+NextAuth.js with Azure AD provider uses the PKCE authorization code flow with ID tokens, which requires the 'ID tokens' option to be enabled:
+
+1. Go to your app registration in the Azure Portal
+2. Navigate to "Authentication" in the left menu
+3. In the "Implicit grant and hybrid flows" section, check both:
+   - ☑ Access tokens (used for implicit flows)
+   - ☑ ID tokens (used for implicit and hybrid flows)
+4. Click Save at the top of the page
+
+Without this setting, you'll encounter the error: `AADSTS700054: response_type 'id_token' is not enabled for the application.`
+
 ## Troubleshooting Common Issues
 
-1. **"App is trying to access a resource it doesn't have permissions to access"**:
+1. **"AADSTS700054: response_type 'id_token' is not enabled for the application"**:
+   - You need to enable ID tokens in your app registration's Authentication settings
+   - Follow the steps in section 7 above to fix this
+
+2. **"App is trying to access a resource it doesn't have permissions to access"**:
    - Make sure you've configured the app as multi-tenant in the Azure Portal
    - Verify users have granted consent to the application
 
-2. **"Invalid client secret"**:
+3. **"Invalid client secret"**:
    - Verify the client secret hasn't expired
    - Regenerate it in the Azure Portal if needed
 
-3. **"AADSTS50011: The redirect URI specified doesn't match the ones configured"**:
+4. **"AADSTS50011: The redirect URI specified doesn't match the ones configured"**:
    - Verify the redirect URI in your app registration matches your app's callback URL
 
-4. **"User from tenant 'X' is not allowed to access this application"**:
+5. **"User from tenant 'X' is not allowed to access this application"**:
    - Verify the app is configured for multi-tenant access
    - Check that you're using `tenantId: 'common'` in your code
 
