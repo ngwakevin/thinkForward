@@ -9,6 +9,11 @@ export function Header() {
   const { status, data: session } = useSession();
   const aboutMenuRef = React.useRef<HTMLDetailsElement | null>(null);
   const closeAboutMenu = () => aboutMenuRef.current?.removeAttribute('open');
+  
+  // Log session state for debugging
+  React.useEffect(() => {
+    console.log('Session status in Header:', status, session);
+  }, [status, session]);
 
   // Preview-style nav (to match app/preview/header)
   const nav = [
@@ -119,13 +124,22 @@ export function Header() {
               <Link onClick={closeAboutMenu} href={'/careers' as any} className="block rounded-[6px] px-3 py-2 text-sm text-fg-muted hover:text-fg hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40">Careers</Link>
             </div>
           </details>
-          {status === 'unauthenticated' && (
+          {(status === 'unauthenticated' || status === 'loading') && (
             <Link
               href={'/auth/signin' as any}
               className="inline-flex items-center gap-2 rounded-md border border-border px-4 h-9 text-sm font-medium text-fg hover:bg-bg-alt transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 21v-6"/><path d="M8 21h8"/><path d="M5 10a7 7 0 0 1 14 0v4c0 3-2 5-5 5h-4c-3 0-5-2-5-5v-4Z"/></svg>
-              Log In
+              {status === 'loading' ? (
+                <>
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 21v-6"/><path d="M8 21h8"/><path d="M5 10a7 7 0 0 1 14 0v4c0 3-2 5-5 5h-4c-3 0-5-2-5-5v-4Z"/></svg>
+                  Log In
+                </>
+              )}
             </Link>
           )}
           {status === 'authenticated' && (

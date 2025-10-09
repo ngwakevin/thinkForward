@@ -6,6 +6,7 @@ import { UserMenuProvider } from '../components/layout/UserMenuProvider';
 import { Footer } from '../components/layout/Footer';
 import { ThemeProvider } from '../components/theme/ThemeProvider';
 import { AuthProvider } from '../components/auth/AuthProvider';
+import { SessionDebug } from '../components/auth/SessionDebug';
 import { siteConfig } from '../config/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -52,6 +53,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Header />
               <main id="main" role="main" className="min-h-[60vh] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">{children}</main>
               <Footer />
+              {/* Add the session debug component - remove this in production */}
+              {process.env.NODE_ENV !== 'production' && 
+                <div className="session-debug">
+                  <SessionDebug />
+                </div>
+              }
             </UserMenuProvider>
           </AuthProvider>
         </ThemeProvider>

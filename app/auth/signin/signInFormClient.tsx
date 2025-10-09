@@ -16,11 +16,24 @@ export default function SignInForm() {
     setLoading(true); setError(null);
     try {
       const normEmail = email.trim().toLowerCase();
+      console.log('Attempting sign in with email:', normEmail);
+      
       // Try credentials sign-in (if configured)
-      const res: any = await signIn('credentials', { redirect: false, email: normEmail, password });
+      const res: any = await signIn('credentials', { 
+        redirect: false, 
+        email: normEmail, 
+        password,
+        callbackUrl: '/'
+      });
+      
+      console.log('Sign-in response:', res);
+      
       if (res && !res.error) {
-        // success -> redirect to home
-        window.location.href = '/';
+        // Redirect manually with a small delay to ensure session is set properly
+        console.log('Sign-in successful, redirecting...');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 300);
         return;
       }
       
@@ -31,6 +44,7 @@ export default function SignInForm() {
         setError('Sign in failed. Check your credentials or try another method.');
       }
     } catch (e: any) {
+      console.error('Sign-in error:', e);
       setError('Sign in failed');
     } finally { setLoading(false); }
   }
@@ -38,7 +52,12 @@ export default function SignInForm() {
   async function handleMicrosoftLogin() {
     setLoading(true);
     try {
-      await signIn('microsoft', { callbackUrl: '/' });
+      console.log('Attempting Microsoft sign in');
+      // Use redirect:true to ensure proper session handling
+      await signIn('microsoft', { 
+        callbackUrl: '/',
+        redirect: true
+      });
     } catch (e) {
       // Error handling is managed by NextAuth
       console.error('Microsoft login error:', e);
@@ -50,7 +69,12 @@ export default function SignInForm() {
   async function handleGoogleLogin() {
     setLoading(true);
     try {
-      await signIn('google', { callbackUrl: '/' });
+      console.log('Attempting Google sign in');
+      // Use redirect:true to ensure proper session handling
+      await signIn('google', { 
+        callbackUrl: '/',
+        redirect: true
+      });
     } catch (e) {
       // Error handling is managed by NextAuth
       console.error('Google login error:', e);
