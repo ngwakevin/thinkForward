@@ -42,11 +42,17 @@ const checkEnvVars = () => {
     console.error('[auth] CLIENT_SECRET:', process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set');
     console.error('[auth] TENANT_ID:', process.env.AZURE_AD_TENANT_ID ? `Set (${process.env.AZURE_AD_TENANT_ID})` : 'Not set (using "common")');
     
-    // Try to use static values as a fallback for development or when environment variables are missing
-    console.warn('[auth] Using hardcoded fallback values for AZURE_AD - THIS IS NOT SECURE FOR PRODUCTION');
-    process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
-    // Use 'common' tenant to allow any Microsoft account to sign in
-    process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || 'common';
+    if (process.env.NODE_ENV !== 'production') {
+      // Use the confirmed values if they're not already set
+      console.warn('[auth] Using fallback values for AZURE_AD');
+      process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
+      // Don't set a fallback client secret in code
+      // Use the confirmed tenant ID
+      process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
+    } else {
+      console.error('[auth] Missing required Microsoft authentication environment variables in production');
+      console.error('[auth] This will cause Microsoft sign-in to fail');
+    }
   }
   
   // Google
@@ -82,6 +88,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
   },
+  // Debug logs are added to the logger above
   providers: [
     // Microsoft / Entra ID Provider
     AzureADProvider({
@@ -89,8 +96,8 @@ export const authOptions: NextAuthOptions = {
       name: 'Microsoft',
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      // Use 'common' tenant to allow any Microsoft account to sign in
-      tenantId: 'common',
+      // Use the confirmed tenant ID which is the same as the client ID in this case
+      tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
       authorization: {
         params: {
           // Extended scope to get more profile information
@@ -185,10 +192,34 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signIn({ user, account, isNewUser }: { user: any; account: any; isNewUser?: boolean }) {
       console.log(`[auth] User ${user.email} signed in with ${account?.provider}`);
-      await ensureUserFromOidc(user);
+      if (user.email && account) {
+        await ensureUserFromOidc({
+          email: user.email,
+          name: user.name || '',
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+        });
+      }
     },
     async signOut({ token }: { token: any; session: any }) {
       console.log(`[auth] User signed out`);
+    },
+    async error(error: Error & { providerId?: string }) {
+      // Log detailed error information for easier debugging
+      console.error('[auth] Authentication error:', error);
+      if (error.name === 'OAuthCallbackError') {
+        console.error('[auth] OAuth Callback Error details:', {
+          providerId: (error as any).providerId,
+          clientId: process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
+          tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
+          // Don't log the client secret
+          hasClientSecret: !!process.env.AZURE_AD_CLIENT_SECRET,
+          // Include NEXTAUTH_URL which is critical for callbacks
+          nextAuthUrl: process.env.NEXTAUTH_URL,
+          // Node environment
+          nodeEnv: process.env.NODE_ENV,
+        });
+      }
     }
   },
 };

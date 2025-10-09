@@ -9,6 +9,7 @@ export default function SignInForm() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'credentials' | 'providers'>('credentials');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +28,7 @@ export default function SignInForm() {
       if (res && res.error === 'CredentialsSignin') {
         setError('Invalid email or password');
       } else {
-        setError('Sign in failed. Try using Microsoft login instead.');
+        setError('Sign in failed. Check your credentials or try another method.');
       }
     } catch (e: any) {
       setError('Sign in failed');
@@ -59,56 +60,112 @@ export default function SignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-xs font-medium mb-1">Enter your email</label>
-          <div className="relative">
-            <input id="email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="you@example.com" className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40" />
+    <div>
+      <div className="flex border-b border-border mb-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab('credentials')}
+          className={`flex-1 pb-2 text-sm font-medium ${
+            activeTab === 'credentials' 
+              ? 'border-b-2 border-accent text-accent' 
+              : 'text-fg-muted hover:text-fg'
+          }`}
+        >
+          Email & Password
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('providers')}
+          className={`flex-1 pb-2 text-sm font-medium ${
+            activeTab === 'providers' 
+              ? 'border-b-2 border-accent text-accent' 
+              : 'text-fg-muted hover:text-fg'
+          }`}
+        >
+          Sign in with Provider
+        </button>
+      </div>
+
+      {activeTab === 'credentials' ? (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium mb-1">Enter your email</label>
+              <div className="relative">
+                <input id="email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="you@example.com" className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40" />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-xs font-medium mb-1">Choose your password</label>
+              <div className="relative flex items-center">
+                <input id="password" type={showPw ? 'text' : 'password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-accent/40" />
+                <button type="button" onClick={()=>setShowPw(s=>!s)} className="absolute right-2 inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition" aria-label={showPw ? 'Hide password' : 'Show password'}>
+                  {showPw ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div>
-          <label htmlFor="password" className="block text-xs font-medium mb-1">Choose your password</label>
-          <div className="relative flex items-center">
-            <input id="password" type={showPw ? 'text' : 'password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-accent/40" />
-            <button type="button" onClick={()=>setShowPw(s=>!s)} className="absolute right-2 inline-flex h-6 w-6 items-center justify-center rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition" aria-label={showPw ? 'Hide password' : 'Show password'}>
-              {showPw ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+          {error && <div className="text-xs text-red-500 -mt-2">{error}</div>}
+          <button type="submit" disabled={loading} className="w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-accent/30 hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60 disabled:cursor-not-allowed">
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+          <div className="flex items-center gap-3 text-[10px] text-fg-muted/60">
+            <div className="h-px flex-1 bg-border" /> <span>or continue with</span> <div className="h-px flex-1 bg-border" />
+          </div>
+          <div className="grid gap-3">
+            <button 
+              type="button" 
+              onClick={handleMicrosoftLogin} 
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+            >
+              {loading ? (
+                <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <MicrosoftIcon className="h-5 w-5" />
+              )}
+              <span>{loading ? 'Signing in...' : 'Sign in with Microsoft'}</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={handleGoogleLogin} 
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid gap-3">
+            <button 
+              type="button" 
+              onClick={handleMicrosoftLogin} 
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+            >
+              {loading ? (
+                <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <MicrosoftIcon className="h-5 w-5" />
+              )}
+              <span>{loading ? 'Signing in...' : 'Sign in with Microsoft'}</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={handleGoogleLogin} 
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
             </button>
           </div>
         </div>
-      </div>
-      {error && <div className="text-xs text-red-500 -mt-2">{error}</div>}
-      <button type="submit" disabled={loading} className="w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-accent/30 hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60 disabled:cursor-not-allowed">
-        {loading ? 'Signing in…' : 'Sign in'}
-      </button>
-      <div className="flex items-center gap-3 text-[10px] text-fg-muted/60">
-        <div className="h-px flex-1 bg-border" /> <span>or continue with</span> <div className="h-px flex-1 bg-border" />
-      </div>
-      <div className="grid gap-3">
-        <button 
-          type="button" 
-          onClick={handleMicrosoftLogin} 
-          disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
-        >
-          {loading ? (
-            <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : (
-            <MicrosoftIcon className="h-5 w-5" />
-          )}
-          <span>{loading ? 'Signing in...' : 'Sign in with Microsoft'}</span>
-        </button>
-        <button 
-          type="button" 
-          onClick={handleGoogleLogin} 
-          disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
-        >
-          <GoogleIcon className="h-5 w-5" />
-          <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
-        </button>
-      </div>
-    </form>
+      )}
+    </div>
   );
 }
 
