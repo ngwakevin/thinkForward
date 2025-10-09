@@ -57,6 +57,18 @@ export default function SignInForm() {
       setLoading(false);
     }
   }
+  
+  async function handleAppleLogin() {
+    setLoading(true);
+    try {
+      await signIn('apple', { callbackUrl: '/' });
+    } catch (e) {
+      // Error handling is managed by NextAuth
+      console.error('Apple login error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -107,9 +119,14 @@ export default function SignInForm() {
           <GoogleIcon className="h-5 w-5" />
           <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
         </button>
-        <button type="button" disabled className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border/70 bg-bg-alt/40 px-4 py-2 text-sm font-medium text-fg-muted/60 cursor-not-allowed">
+        <button 
+          type="button" 
+          onClick={handleAppleLogin} 
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+        >
           <AppleIcon className="h-5 w-5" />
-          <span>Sign in with Apple (soon)</span>
+          <span>{loading ? 'Signing in...' : 'Sign in with Apple'}</span>
         </button>
       </div>
     </form>
