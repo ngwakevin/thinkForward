@@ -165,8 +165,20 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }: { session: any; token: any }) {
       // Add additional info to session
-      session.user.id = token.id;
-      session.provider = token.provider;
+      if (session.user) {
+        // Add ID and provider directly to user object
+        session.user.id = token.id;
+        session.user.provider = token.provider;
+        
+        // These fields are needed for proper user identification
+        if (token.providerAccountId) {
+          session.user.providerAccountId = token.providerAccountId;
+        }
+        
+        if (token.oid) {
+          session.user.oid = token.oid;
+        }
+      }
       return session;
     }
   },
