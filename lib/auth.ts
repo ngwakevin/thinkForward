@@ -193,4 +193,5 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
+// Export the authentication configuration for use in the application
 export default authOptions;
