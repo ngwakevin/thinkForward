@@ -45,7 +45,8 @@ const checkEnvVars = () => {
     // Try to use static values as a fallback for development or when environment variables are missing
     console.warn('[auth] Using hardcoded fallback values for AZURE_AD - THIS IS NOT SECURE FOR PRODUCTION');
     process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
-    process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || '438537ce-67d5-4799-837e-aa8ba4ed01eb';
+    // Use 'common' tenant to allow any Microsoft account to sign in
+    process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || 'common';
   }
   
   // Google
@@ -88,8 +89,8 @@ export const authOptions: NextAuthOptions = {
       name: 'Microsoft',
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      // Use tenant ID from environment, falling back to 'common' for all Microsoft accounts
-      tenantId: process.env.AZURE_AD_TENANT_ID || 'common',
+      // Use 'common' tenant to allow any Microsoft account to sign in
+      tenantId: 'common',
       authorization: {
         params: {
           // Extended scope to get more profile information
