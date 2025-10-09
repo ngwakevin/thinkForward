@@ -203,23 +203,26 @@ export const authOptions: NextAuthOptions = {
     },
     async signOut({ token }: { token: any; session: any }) {
       console.log(`[auth] User signed out`);
-    },
-    async error(error: Error & { providerId?: string }) {
-      // Log detailed error information for easier debugging
-      console.error('[auth] Authentication error:', error);
-      if (error.name === 'OAuthCallbackError') {
-        console.error('[auth] OAuth Callback Error details:', {
-          providerId: (error as any).providerId,
-          clientId: process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
-          tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
-          // Don't log the client secret
-          hasClientSecret: !!process.env.AZURE_AD_CLIENT_SECRET,
-          // Include NEXTAUTH_URL which is critical for callbacks
-          nextAuthUrl: process.env.NEXTAUTH_URL,
-          // Node environment
-          nodeEnv: process.env.NODE_ENV,
-        });
-      }
+    }
+    // Removed error event handler as it's not in the NextAuth EventCallbacks type
+    // Error event handler was causing build failures with NextAuth v4.24.0
+    // async error(error: Error & { providerId?: string }) {
+    //   // Log detailed error information for easier debugging
+    //   console.error('[auth] Authentication error:', error);
+    //   if (error.name === 'OAuthCallbackError') {
+    //     console.error('[auth] OAuth Callback Error details:', {
+    //       providerId: (error as any).providerId,
+    //       clientId: process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
+    //       tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
+    //       // Don't log the client secret
+    //       hasClientSecret: !!process.env.AZURE_AD_CLIENT_SECRET,
+    //       // Include NEXTAUTH_URL which is critical for callbacks
+    //       nextAuthUrl: process.env.NEXTAUTH_URL,
+    //       // Node environment
+    //       nodeEnv: process.env.NODE_ENV,
+    //     });
+    //   }
+    // }
     }
   },
 };
