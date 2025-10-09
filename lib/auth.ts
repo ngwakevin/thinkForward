@@ -1,10 +1,9 @@
-// Auth configuration for Next-Auth
+// Updated NextAuth.js configuration to use Microsoft, Google, and Apple providers
+import { NextAuthOptions } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
-import Credentials from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
-import type { NextAuthOptions } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import AppleProvider from 'next-auth/providers/apple';
 import { ensureUserFromOidc } from './db/users';
-import { CosmosDBService } from './azure/cosmos-service';
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
@@ -32,305 +31,182 @@ if (!process.env.NEXTAUTH_SECRET) {
   console.warn('Using a generated NEXTAUTH_SECRET - THIS WILL CAUSE SESSIONS TO RESET ON SERVER RESTART');
 }
 
-// Simple in-memory rate limiting for credentials auth (per email/IP). For production, replace.
-const credRateMap = new Map<string, { count: number; ts: number }>();
-const CRED_WINDOW_MS = 60_000;
-const CRED_MAX_ATTEMPTS = 15;
-
-// Check Azure AD environment variables 
-if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET || !process.env.AZURE_AD_TENANT_ID) {
-	console.error('[auth] AZURE_AD_* environment variables missing');
-	console.error('[auth] CLIENT_ID:', process.env.AZURE_AD_CLIENT_ID ? `Set (${process.env.AZURE_AD_CLIENT_ID})` : 'Not set');
-	console.error('[auth] CLIENT_SECRET:', process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set');
-	console.error('[auth] TENANT_ID:', process.env.AZURE_AD_TENANT_ID ? `Set (${process.env.AZURE_AD_TENANT_ID})` : 'Not set');
-	
-	// Try to use static values as a fallback for development or when environment variables are missing
-	console.warn('[auth] Using hardcoded fallback values for AZURE_AD - THIS IS NOT SECURE FOR PRODUCTION');
-	process.env.AZURE_AD_CLIENT_ID = '3ca9d2ec-a691-4a58-9658-ecd4fb8d6918';
-	process.env.AZURE_AD_TENANT_ID = '438537ce-67d5-4799-837e-aa8ba4ed01eb';
-	
-	// Log environment keys (without values)
-	console.log('[auth] Available environment variables:', Object.keys(process.env).sort());
-}
-if (!process.env.NEXTAUTH_URL) {
-	console.error('[auth] NEXTAUTH_URL environment variable missing');
-	
-	// Try to determine the URL from request headers in a later step
-	console.warn('[auth] Will try to determine NEXTAUTH_URL from request headers');
-} else {
-	console.log('[auth] Redirect URI for Microsoft login should be:', `${process.env.NEXTAUTH_URL}/api/auth/callback/microsoft`);
-}
-
-// Ensure we have a valid NEXTAUTH_URL for building
-if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
-  console.warn('NEXTAUTH_URL not set, using fallback URL for build');
-  process.env.NEXTAUTH_URL = 'https://thinkforward-dev.azurewebsites.net';
-}
-
-// NextAuth configuration using Microsoft Entra ID (Azure AD) single-tenant
-export const authOptions: NextAuthOptions = {
-	// Explicitly set the secret from environment variable
-	secret: process.env.NEXTAUTH_SECRET,
-	debug: process.env.NODE_ENV !== 'production',
-	logger: {
-		error(code, ...message) {
-			console.error('[nextauth][error]', code, ...message);
-			
-			// Log Azure AD configuration on authentication errors
-			if (code === 'SIGNIN_OAUTH_ERROR') {
-				console.error('[nextauth][error][debug] Azure AD environment variables:', {
-					AZURE_AD_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID ? `${process.env.AZURE_AD_CLIENT_ID.substring(0, 8)}...` : 'Not set',
-					AZURE_AD_CLIENT_SECRET: process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set',
-					AZURE_AD_TENANT_ID: process.env.AZURE_AD_TENANT_ID || 'common',
-					NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'Not set'
-				});
-			}
-		},
-		warn(code, ...message) {
-			console.warn('[nextauth][warn]', code, ...message);
-		},
-		debug(code, ...message) {
-			if (process.env.NODE_ENV !== 'production') {
-				console.debug('[nextauth][debug]', code, ...message);
-			}
-		},
-	},
-	providers: [
-		AzureADProvider({
-			id: 'microsoft', // Set ID to 'microsoft' to match what's used in signIn() calls
-			name: 'Microsoft',
-			clientId: process.env.AZURE_AD_CLIENT_ID!,
-			clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-			// Use tenant ID from environment, falling back to 'organizations' for multi-tenant support
-			tenantId: process.env.AZURE_AD_TENANT_ID || 'organizations', // 'organizations' is for multi-tenant apps
-			authorization: {
-				params: {
-					// Extended scope to get more profile information
-					scope: 'openid profile email User.Read',
-				},
-			},
-			profile(profile) {
-				// Enhanced profile mapping with Microsoft Graph data
-				return {
-					id: profile.sub || profile.oid,
-					objectId: profile.oid, // Microsoft specific identifier
-					tenantId: profile.tid, // Azure AD tenant ID
-					name: profile.name ?? null,
-					email: profile.email ?? profile.preferred_username ?? null,
-				} as any;
-			},
-			// Log early if important environment variables are missing
-			checks: ['pkce', 'state'],
-		}),
-		Credentials({
-			name: 'Credentials',
-			credentials: {
-				email: { label: 'Email', type: 'email', placeholder: 'you@example.com' },
-				password: { label: 'Password', type: 'password' },
-			},
-			async authorize(creds) {
-				if (!creds?.email || !creds.password) return null;
-				const normEmail = creds.email.trim().toLowerCase();
-				// Rate limit key combines email + ip (ip best-effort from headers in API routes; here we only have email)
-				const key = normEmail;
-				const now = Date.now();
-				const ent = credRateMap.get(key);
-				if (!ent || now - ent.ts > CRED_WINDOW_MS) {
-					credRateMap.set(key, { count: 1, ts: now });
-				} else {
-					ent.count += 1;
-					if (ent.count > CRED_MAX_ATTEMPTS) return null; // silent throttle
-				}
-                
-                // Initialize Cosmos DB service
-                const cosmosService = new CosmosDBService();
-                
-				const user: any = await cosmosService.getUserByEmail(normEmail);
-				if (!user || !('passwordHash' in user) || !user.passwordHash) return null;
-				const ok = await bcrypt.compare(creds.password, user.passwordHash);
-				if (!ok) {
-					// Increment failed sign-in counters (best-effort)
-					try {
-						await cosmosService.updateUser(user.id, {
-							failedSignInCount: (user.failedSignInCount ?? 0) + 1,
-							lastFailedSignInAt: new Date(),
-						});
-					} catch (e) {
-						console.warn('[auth][credentials] failed to update failedSignInCount', e);
-					}
-					return null;
-				}
-				// Update last sign-in timestamp
-				try {
-					await cosmosService.updateUser(user.id, {
-						lastSignInAt: new Date(),
-						signInIdentity: normEmail,
-						failedSignInCount: 0,
-					});
-				} catch (e) {
-					console.warn('[auth][credentials] failed to update lastSignInAt', e);
-				}
-				return {
-					id: user.id,
-					name: user.name || user.email || 'User',
-					email: user.email,
-					provider: 'credentials',
-					// Use persisted providerAccountId from DB so session lookups succeed
-					providerAccountId: user.providerAccountId,
-				};
-			},
-		}),
-	],
-	session: { strategy: 'jwt' },
-	callbacks: {
-		async jwt({ token, account, profile, user }) {
-			// Persist provider/account identifiers
-			if (account) {
-				// Distinguish credentials vs azure-ad
-				token.provider = account.provider;
-				token.providerAccountId = account.providerAccountId || (user as any)?.id || account.sub || account.userId || account.accountId;
-			}
-				// Persist internal user.id when we have a user object
-				if (user && (user as any).id) {
-					(token as any).uid = (user as any).id;
-				}
-			// Repair token if later executions lack account but we have user
-			if (!token.providerAccountId && user && (user as any).providerAccountId) {
-				(token as any).providerAccountId = (user as any).providerAccountId;
-			}
-			// For credentials sign in ensure email stays normalized lower
-			if (user && (user as any).email) {
-				token.email = (user as any).email.toLowerCase();
-			}
-			// Basic profile props
-			if (profile) {
-				token.name = profile.name ?? token.name;
-				// Azure AD often surfaces preferred_username as the UPN
-				// Keep existing email if already present
-				const email = (profile as any).email || (profile as any).preferred_username;
-				if (email) token.email = email;
-				// oid/sub can be used for stable id
-				const oid = (profile as any).oid || (profile as any).sub;
-				if (oid) (token as any).oid = oid;
-			}
-			// If we still don't have an internal uid (typical for OAuth without an adapter),
-			// resolve it from our own User table using providerAccountId or email.
-			try {
-				if (!(token as any).uid) {
-					let u: any = null;
-                    // Initialize Cosmos DB service
-                    const cosmosService = new CosmosDBService();
-                    
-					if ((token as any).providerAccountId) {
-						u = await cosmosService.getUserByProviderAccountId(token.provider as string, (token as any).providerAccountId);
-					}
-					if (!u && token.email) {
-						u = await cosmosService.getUserByEmail(token.email.toLowerCase());
-					}
-					if (u) {
-						(token as any).uid = u.id;
-						// Normalize providerAccountId from DB (authoritative)
-						(token as any).providerAccountId = u.providerAccountId;
-						// Attach directory ids for convenience
-						(token as any).oid = (token as any).oid || u.objectId;
-					}
-				}
-			} catch (e) {
-				// Non-fatal. Leave token as-is.
-			}
-			return token;
-		},
-		async session({ session, token }) {
-			if (session.user) {
-				// Basic identity
-				session.user.name = token.name as string | undefined;
-				session.user.email = token.email as string | undefined;
-				(session.user as any).provider = (token as any).provider;
-				(session.user as any).providerAccountId = (token as any).providerAccountId;
-				(session.user as any).oid = (token as any).oid;
-				if ((token as any).uid) {
-					(session.user as any).id = (token as any).uid;
-				}
-				// Hydrate profile fields if available
-				try {
-					if ((token as any).uid || (token as any).providerAccountId || token.email) {
-						// Initialize Cosmos DB service
-						const cosmosService = new CosmosDBService();
-						
-						let userRec: any = null;
-						
-						// Try to find the user by ID, providerAccountId, or email
-						if ((token as any).uid) {
-							userRec = await cosmosService.getUserById((token as any).uid);
-						} else if ((token as any).providerAccountId && (token as any).provider) {
-							userRec = await cosmosService.getUserByProviderAccountId(
-								(token as any).provider,
-								(token as any).providerAccountId
-							);
-						} else if (token.email) {
-							userRec = await cosmosService.getUserByEmail(token.email.toLowerCase());
-						}
-						
-						if (userRec?.profile) {
-							if (userRec.profile.displayName) {
-								(session.user as any).displayName = userRec.profile.displayName;
-								session.user.name = userRec.profile.displayName;
-							}
-							if (userRec.profile.avatarUrl) {
-								(session.user as any).avatarUrl = userRec.profile.avatarUrl;
-								(session.user as any).image = userRec.profile.avatarUrl;
-							}
-							(session.user as any).needsProfile = !userRec.profile.displayName;
-						} else {
-							(session.user as any).needsProfile = true;
-						}
-						
-						// Attach identity & custom fields (cast to any to avoid client drift)
-						if (userRec) {
-							// Always overwrite providerAccountId with DB authoritative value
-							(session.user as any).providerAccountId = userRec.providerAccountId;
-							(session.user as any).objectId = userRec?.objectId;
-							(session.user as any).upn = userRec?.upn;
-							(session.user as any).signInIdentity = userRec?.signInIdentity;
-							(session.user as any).lastSignInAt = userRec?.lastSignInAt;
-							(session.user as any).firstName = userRec?.firstName;
-							(session.user as any).lastName = userRec?.lastName;
-							(session.user as any).phoneNumber = userRec?.phoneNumber;
-							(session.user as any).phoneVerifiedAt = userRec?.phoneVerifiedAt;
-							(session.user as any).emailVerifiedAt = userRec?.emailVerifiedAt;
-							(session.user as any).loyaltyNumber = userRec?.loyaltyNumber;
-							(session.user as any).preferredLanguage = userRec?.preferredLanguage;
-							(session.user as any).customerTier = userRec?.customerTier;
-							(session.user as any).isDisabled = userRec?.isDisabled;
-						}
-					}
-				} catch (e) {
-					// Silent fail; do not break session
-					console.warn('[auth][session] profile hydration failed', e);
-				}
-			}
-			return session;
-		},
-				async signIn({ profile, account }) {
-					try {
-						await ensureUserFromOidc({
-							sub: (profile as any)?.sub || (profile as any)?.oid,
-							oid: (profile as any)?.oid,
-							email: (profile as any)?.email || (profile as any)?.preferred_username,
-							preferred_username: (profile as any)?.preferred_username,
-							name: (profile as any)?.name,
-							given_name: (profile as any)?.given_name,
-							family_name: (profile as any)?.family_name,
-							provider: 'microsoft',
-							providerAccountId: account?.providerAccountId || (account as any)?.sub,
-						});
-					} catch (e) {
-						console.error('[auth] ensureUserFromOidc failed', e);
-					}
-					return true;
-				},
-	},
-	pages: {
-		signIn: '/auth/signin',
-	},
+// Check for required environment variables
+const checkEnvVars = () => {
+  // Microsoft/Entra ID
+  if (!process.env.AZURE_AD_CLIENT_ID || !process.env.AZURE_AD_CLIENT_SECRET) {
+    console.error('[auth] AZURE_AD_* environment variables missing');
+    console.error('[auth] CLIENT_ID:', process.env.AZURE_AD_CLIENT_ID ? `Set (${process.env.AZURE_AD_CLIENT_ID})` : 'Not set');
+    console.error('[auth] CLIENT_SECRET:', process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set');
+    console.error('[auth] TENANT_ID:', process.env.AZURE_AD_TENANT_ID ? `Set (${process.env.AZURE_AD_TENANT_ID})` : 'Not set (using "common")');
+    
+    // Try to use static values as a fallback for development or when environment variables are missing
+    console.warn('[auth] Using hardcoded fallback values for AZURE_AD - THIS IS NOT SECURE FOR PRODUCTION');
+    process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
+    process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || '438537ce-67d5-4799-837e-aa8ba4ed01eb';
+  }
+  
+  // Google
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.warn('[auth] Google auth environment variables missing. Google login will be disabled.');
+  }
+  
+  // Apple
+  if (!process.env.APPLE_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_PRIVATE_KEY || !process.env.APPLE_KEY_ID) {
+    console.warn('[auth] Apple auth environment variables missing. Apple login will be disabled.');
+  }
 };
+
+// Call the environment check function
+checkEnvVars();
+
+export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: 'jwt',
+    // Adjust session max age as needed (default: 30 days)
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+  debug: process.env.NODE_ENV !== 'production',
+  logger: {
+    error(code, ...message) {
+      console.error('[nextauth][error]', code, ...message);
+    },
+    warn(code, ...message) {
+      console.warn('[nextauth][warn]', code, ...message);
+    },
+    debug(code, ...message) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[nextauth][debug]', code, ...message);
+      }
+    },
+  },
+  providers: [
+    // Microsoft / Entra ID Provider
+    AzureADProvider({
+      id: 'microsoft', // Set ID to 'microsoft' to match what's used in signIn() calls
+      name: 'Microsoft',
+      clientId: process.env.AZURE_AD_CLIENT_ID!,
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+      // Use tenant ID from environment, falling back to 'common' for all Microsoft accounts
+      tenantId: process.env.AZURE_AD_TENANT_ID || 'common',
+      authorization: {
+        params: {
+          // Extended scope to get more profile information
+          scope: 'openid profile email User.Read',
+        },
+      },
+      profile(profile) {
+        // Enhanced profile mapping with Microsoft Graph data
+        return {
+          id: profile.sub || profile.oid,
+          objectId: profile.oid, // Microsoft specific identifier
+          tenantId: profile.tid, // Azure AD tenant ID
+          name: profile.name ?? null,
+          email: profile.email ?? profile.preferred_username ?? null,
+          image: null, // Microsoft doesn't provide image URL by default
+          provider: 'microsoft',
+        };
+      },
+    }),
+    
+    // Google Provider (conditional based on environment variables)
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            profile(profile) {
+              return {
+                id: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                image: profile.picture,
+                provider: 'google',
+              };
+            },
+          }),
+        ]
+      : []),
+    
+    // Apple Provider (conditional based on environment variables)
+    ...(process.env.APPLE_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_PRIVATE_KEY && process.env.APPLE_KEY_ID
+      ? [
+          AppleProvider({
+            clientId: process.env.APPLE_ID,
+            clientSecret: {
+              teamId: process.env.APPLE_TEAM_ID,
+              privateKey: process.env.APPLE_PRIVATE_KEY,
+              keyId: process.env.APPLE_KEY_ID,
+            },
+            profile(profile) {
+              return {
+                id: profile.sub,
+                name: profile.name?.firstName 
+                  ? `${profile.name.firstName} ${profile.name.lastName || ''}`.trim()
+                  : null,
+                email: profile.email,
+                image: null, // Apple doesn't provide profile image
+                provider: 'apple',
+              };
+            },
+          }),
+        ]
+      : []),
+  ],
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      // Create or update user in database when they sign in
+      try {
+        if (account && user.email) {
+          await ensureUserFromOidc({
+            email: user.email,
+            name: user.name || '',
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error('[auth] Error during sign in:', error);
+        return false;
+      }
+    },
+    async jwt({ token, user, account }) {
+      // Add provider info to the token
+      if (account) {
+        token.provider = account.provider;
+        token.accessToken = account.access_token;
+      }
+      if (user) {
+        token.id = user.id;
+        token.provider = user.provider;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Add additional info to session
+      if (session?.user) {
+        session.user.id = token.id as string;
+        session.user.provider = token.provider as string;
+      }
+      return session;
+    },
+  },
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      console.log(`[auth] User ${user.email} signed in with ${account?.provider}`);
+    },
+    async signOut({ token }) {
+      console.log(`[auth] User signed out`);
+    },
+    async error(error) {
+      console.error(`[auth] Error:`, error);
+    },
+  },
+};
+
+export default authOptions;
