@@ -3,9 +3,6 @@ import { NextAuthOptions } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import GoogleProvider from 'next-auth/providers/google';
 import { ensureUserFromOidc } from './db/users';
-import { JWT } from 'next-auth/jwt';
-import { Session } from 'next-auth';
-import { User, Account } from 'next-auth';
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
@@ -42,17 +39,10 @@ const checkEnvVars = () => {
     console.error('[auth] CLIENT_SECRET:', process.env.AZURE_AD_CLIENT_SECRET ? 'Set (hidden)' : 'Not set');
     console.error('[auth] TENANT_ID:', process.env.AZURE_AD_TENANT_ID ? `Set (${process.env.AZURE_AD_TENANT_ID})` : 'Not set (using "common")');
     
-    if (process.env.NODE_ENV !== 'production') {
-      // Use the confirmed values if they're not already set
-      console.warn('[auth] Using fallback values for AZURE_AD');
-      process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
-      // Don't set a fallback client secret in code
-      // Use the confirmed tenant ID
-      process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
-    } else {
-      console.error('[auth] Missing required Microsoft authentication environment variables in production');
-      console.error('[auth] This will cause Microsoft sign-in to fail');
-    }
+    // Try to use static values as a fallback for development or when environment variables are missing
+    console.warn('[auth] Using hardcoded fallback values for AZURE_AD - THIS IS NOT SECURE FOR PRODUCTION');
+    process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
+    process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || '438537ce-67d5-4799-837e-aa8ba4ed01eb';
   }
   
   // Google
@@ -88,7 +78,6 @@ export const authOptions: NextAuthOptions = {
       }
     },
   },
-  // Debug logs are added to the logger above
   providers: [
     // Microsoft / Entra ID Provider
     AzureADProvider({
@@ -96,8 +85,8 @@ export const authOptions: NextAuthOptions = {
       name: 'Microsoft',
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      // Use the confirmed tenant ID which is the same as the client ID in this case
-      tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
+      // Use tenant ID from environment, falling back to 'common' for all Microsoft accounts
+      tenantId: process.env.AZURE_AD_TENANT_ID || 'common',
       authorization: {
         params: {
           // Extended scope to get more profile information
@@ -155,76 +144,42 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async jwt({ token, account, user }: { token: any; account: any; user?: any }) {
-      // Add provider from account info, fallback to user if available
+    async jwt({ token, user, account }) {
+      // Add provider info to the token
       if (account) {
         token.provider = account.provider;
         token.accessToken = account.access_token;
       }
       if (user) {
         token.id = user.id;
-        // Access provider property safely with type assertion
+        // User provider is added during the sign in callback but not typed in the NextAuth User type
+        // Access it safely with type assertion for the custom field
         if (user && typeof user === 'object' && 'provider' in user) {
           token.provider = (user as any).provider;
         }
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }) {
       // Add additional info to session
-      if (session.user) {
-        // Add ID and provider directly to user object
-        session.user.id = token.id;
-        session.user.provider = token.provider;
-        
-        // These fields are needed for proper user identification
-        if (token.providerAccountId) {
-          session.user.providerAccountId = token.providerAccountId;
-        }
-        
-        if (token.oid) {
-          session.user.oid = token.oid;
-        }
+      if (session?.user) {
+        // Extend session.user with additional fields using type assertion
+        const user = session.user as any;
+        user.id = token.id as string;
+        user.provider = token.provider as string;
       }
       return session;
-    }
+    },
   },
   events: {
-    async signIn({ user, account, isNewUser }: { user: any; account: any; isNewUser?: boolean }) {
-      console.log(`[auth] User ${user.email} signed in with ${account?.provider}`);
-      if (user.email && account) {
-        await ensureUserFromOidc({
-          email: user.email,
-          name: user.name || '',
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-        });
-      }
+    async signIn({ user, account, isNewUser }) {
+      console.log(`[auth] User ${user?.email} signed in with ${account?.provider}`);
     },
-    async signOut({ token }: { token: any; session: any }) {
+    async signOut({ token }) {
       console.log(`[auth] User signed out`);
-    }
-    // Removed error event handler as it's not in the NextAuth EventCallbacks type
-    // Error event handler was causing build failures with NextAuth v4.24.0
-    // async error(error: Error & { providerId?: string }) {
-    //   // Log detailed error information for easier debugging
-    //   console.error('[auth] Authentication error:', error);
-    //   if (error.name === 'OAuthCallbackError') {
-    //     console.error('[auth] OAuth Callback Error details:', {
-    //       providerId: (error as any).providerId,
-    //       clientId: process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
-    //       tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
-    //       // Don't log the client secret
-    //       hasClientSecret: !!process.env.AZURE_AD_CLIENT_SECRET,
-    //       // Include NEXTAUTH_URL which is critical for callbacks
-    //       nextAuthUrl: process.env.NEXTAUTH_URL,
-    //       // Node environment
-    //       nodeEnv: process.env.NODE_ENV,
-    //     });
-    //   }
-    // }
+    },
+    // Removed error handler as it's not in the NextAuth EventCallbacks type
   },
 };
 
-// Export the authentication configuration for use in the application
 export default authOptions;
