@@ -45,6 +45,18 @@ export default function SignInForm() {
       setLoading(false);
     }
   }
+  
+  async function handleGoogleLogin() {
+    setLoading(true);
+    try {
+      await signIn('google', { callbackUrl: '/' });
+    } catch (e) {
+      // Error handling is managed by NextAuth
+      console.error('Google login error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -86,9 +98,14 @@ export default function SignInForm() {
           )}
           <span>{loading ? 'Signing in...' : 'Sign in with Microsoft'}</span>
         </button>
-        <button type="button" disabled className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border/70 bg-bg-alt/40 px-4 py-2 text-sm font-medium text-fg-muted/60 cursor-not-allowed">
+        <button 
+          type="button" 
+          onClick={handleGoogleLogin} 
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
+        >
           <GoogleIcon className="h-5 w-5" />
-          <span>Sign in with Google (soon)</span>
+          <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
         </button>
         <button type="button" disabled className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border/70 bg-bg-alt/40 px-4 py-2 text-sm font-medium text-fg-muted/60 cursor-not-allowed">
           <AppleIcon className="h-5 w-5" />
