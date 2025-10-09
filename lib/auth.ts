@@ -1,8 +1,7 @@
-// Updated NextAuth.js configuration to use Microsoft, Google, and Apple providers
+// Updated NextAuth.js configuration to use Microsoft and Google providers
 import { NextAuthOptions } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import GoogleProvider from 'next-auth/providers/google';
-import AppleProvider from 'next-auth/providers/apple';
 import { ensureUserFromOidc } from './db/users';
 
 // Ensure NEXTAUTH_SECRET is set in production
@@ -49,11 +48,6 @@ const checkEnvVars = () => {
   // Google
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     console.warn('[auth] Google auth environment variables missing. Google login will be disabled.');
-  }
-  
-  // Apple
-  if (!process.env.APPLE_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_PRIVATE_KEY || !process.env.APPLE_KEY_ID) {
-    console.warn('[auth] Apple auth environment variables missing. Apple login will be disabled.');
   }
 };
 
@@ -126,31 +120,6 @@ export const authOptions: NextAuthOptions = {
                 email: profile.email,
                 image: profile.picture,
                 provider: 'google',
-              };
-            },
-          }),
-        ]
-      : []),
-    
-    // Apple Provider (conditional based on environment variables)
-    ...(process.env.APPLE_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_PRIVATE_KEY && process.env.APPLE_KEY_ID
-      ? [
-          AppleProvider({
-            clientId: process.env.APPLE_ID,
-            clientSecret: {
-              teamId: process.env.APPLE_TEAM_ID,
-              privateKey: process.env.APPLE_PRIVATE_KEY,
-              keyId: process.env.APPLE_KEY_ID,
-            },
-            profile(profile) {
-              return {
-                id: profile.sub,
-                name: profile.name?.firstName 
-                  ? `${profile.name.firstName} ${profile.name.lastName || ''}`.trim()
-                  : null,
-                email: profile.email,
-                image: null, // Apple doesn't provide profile image
-                provider: 'apple',
               };
             },
           }),

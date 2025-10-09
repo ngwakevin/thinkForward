@@ -57,18 +57,6 @@ export default function SignInForm() {
       setLoading(false);
     }
   }
-  
-  async function handleAppleLogin() {
-    setLoading(true);
-    try {
-      await signIn('apple', { callbackUrl: '/' });
-    } catch (e) {
-      // Error handling is managed by NextAuth
-      console.error('Apple login error:', e);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -119,15 +107,6 @@ export default function SignInForm() {
           <GoogleIcon className="h-5 w-5" />
           <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
         </button>
-        <button 
-          type="button" 
-          onClick={handleAppleLogin} 
-          disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-border bg-bg px-4 py-2 text-sm font-medium hover:bg-bg-alt/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors"
-        >
-          <AppleIcon className="h-5 w-5" />
-          <span>{loading ? 'Signing in...' : 'Sign in with Apple'}</span>
-        </button>
       </div>
     </form>
   );
@@ -163,13 +142,6 @@ function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path fill="#EA4335" d="M12 11h11c.1.6.2 1.1.2 1.8 0 6-4 10.2-11.2 10.2A11.8 11.8 0 0 1 0 12 11.8 11.8 0 0 1 12 .8c3.2 0 5.9 1.2 8 3.1l-3.4 3.3c-.9-.8-2.3-1.6-4.6-1.6-3.9 0-7 3.2-7 7.2s3.1 7.2 7 7.2c4.5 0 6.2-3.2 6.5-4.8H12V11Z" />
-    </svg>
-  );
-}
-function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M16.6 2c-.9.1-2 .5-2.7 1.2-.6.6-1.2 1.6-1 2.6 1 .1 2-.4 2.7-1.1.6-.6 1.1-1.6 1-2.7ZM20.9 17c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.5 3.1-4.2 3.1-1.6 0-2-.9-4-.9-2.1 0-2.5.9-4.1.9-1.7 0-3-1.6-4.1-3-2.8-4-3.1-8.7-1.4-11.2 1-1.6 2.7-2.6 4.6-2.6 1.7 0 3.3 1 4 1 .8 0 2.3-1.1 4-1 1.4.1 2.7.7 3.6 1.7-3.2 1.8-2.7 6.6.5 7.8-.3.9-.7 1.6-1.4 2.5Z" />
     </svg>
   );
 }
