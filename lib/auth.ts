@@ -3,6 +3,9 @@ import { NextAuthOptions } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import GoogleProvider from 'next-auth/providers/google';
 import { ensureUserFromOidc } from './db/users';
+import { JWT } from 'next-auth/jwt';
+import { Session } from 'next-auth';
+import { User, Account } from 'next-auth';
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
@@ -144,37 +147,36 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async jwt({ token, user, account }) {
-      // Add provider info to the token
+    async jwt({ token, account, user }: { token: any; account: any; user?: any }) {
+      // Add provider from account info, fallback to user if available
       if (account) {
         token.provider = account.provider;
         token.accessToken = account.access_token;
       }
       if (user) {
         token.id = user.id;
-        token.provider = user.provider;
+        // Access provider property safely with type assertion
+        if (user && typeof user === 'object' && 'provider' in user) {
+          token.provider = (user as any).provider;
+        }
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       // Add additional info to session
-      if (session?.user) {
-        session.user.id = token.id as string;
-        session.user.provider = token.provider as string;
-      }
+      session.user.id = token.id;
+      session.provider = token.provider;
       return session;
-    },
+    }
   },
   events: {
-    async signIn({ user, account, isNewUser }) {
+    async signIn({ user, account, isNewUser }: { user: any; account: any; isNewUser?: boolean }) {
       console.log(`[auth] User ${user.email} signed in with ${account?.provider}`);
+      await ensureUserFromOidc(user);
     },
-    async signOut({ token }) {
+    async signOut({ token }: { token: any; session: any }) {
       console.log(`[auth] User signed out`);
-    },
-    async error(error) {
-      console.error(`[auth] Error:`, error);
-    },
+    }
   },
 };
 
