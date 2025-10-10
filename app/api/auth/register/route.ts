@@ -17,8 +17,8 @@ const passwordPolicy = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-={}|\[\]:"
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-  let { email, password, name } = body as { email?: string; password?: string; name?: string };
-  if (email) email = email.trim().toLowerCase();
+    let { email, password, name } = body as { email?: string; password?: string; name?: string };
+    if (email) email = email.trim().toLowerCase();
 
     const fieldErrors: Record<string, string> = {};
 

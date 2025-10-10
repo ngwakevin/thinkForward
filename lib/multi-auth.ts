@@ -2,7 +2,9 @@
 import { NextAuthOptions } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { ensureUserFromOidc } from './db/users';
+import bcrypt from 'bcryptjs';
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
@@ -79,6 +81,58 @@ export const authOptions: NextAuthOptions = {
     },
   },
   providers: [
+    // Credentials Provider
+    CredentialsProvider({
+      id: 'credentials',
+      name: 'Email & Password',
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          console.warn('[auth] Missing credentials');
+          return null;
+        }
+
+        try {
+          // Import CosmosDBService for user lookup
+          const { cosmosService } = await import('./azure/cosmos-service');
+
+          // Find user by email
+          const user = await cosmosService.getUserByEmail(credentials.email.toLowerCase());
+          
+          // User not found
+          if (!user || !user.passwordHash) {
+            console.warn(`[auth] User not found or no password: ${credentials.email}`);
+            return null;
+          }
+
+          // Compare password
+          const passwordValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          
+          // Password doesn't match
+          if (!passwordValid) {
+            console.warn(`[auth] Invalid password for: ${credentials.email}`);
+            return null;
+          }
+
+          // Return user data needed for session
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.profile?.avatarUrl || null,
+            provider: 'credentials',
+            providerAccountId: user.id,
+          };
+        } catch (error) {
+          console.error('[auth] Error authorizing credentials:', error);
+          return null;
+        }
+      },
+    }),
+    
     // Microsoft / Entra ID Provider
     AzureADProvider({
       id: 'microsoft', // Set ID to 'microsoft' to match what's used in signIn() calls

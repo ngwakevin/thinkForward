@@ -3,9 +3,9 @@ import { CosmosClient, PartitionKeyDefinition } from '@azure/cosmos';
 
 // Configuration details for Cosmos DB
 export const cosmosConfig = {
-  endpoint: process.env.COSMOS_DB_ENDPOINT || '',
-  key: process.env.COSMOS_DB_KEY || '',
-  databaseId: process.env.COSMOS_DB_DATABASE_ID || 'thinkforward',
+  endpoint: process.env.COSMOS_ENDPOINT || process.env.COSMOS_DB_ENDPOINT || '',
+  key: process.env.COSMOS_KEY || process.env.COSMOS_DB_KEY || '',
+  databaseId: process.env.COSMOS_DATABASE || process.env.COSMOS_DB_DATABASE_ID || 'thinkforward',
   containerId: process.env.COSMOS_DB_CONTAINER_ID || 'users',
   partitionKey: { kind: 'Hash', paths: ['/id'] } as PartitionKeyDefinition
 };
