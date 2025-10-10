@@ -1,10 +1,26 @@
-// Custom Next.js server for Azure App Service using ES modules
+// Custom Next.js server for Azure App Service - supports both ESM and CommonJS
+// ESM imports
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+
+// Log startup information
+console.log('Starting server.js - specialized for Azure App Service');
+console.log(`Node.js version: ${process.version}`);
+console.log(`Current directory: ${process.cwd()}`);
+console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`Azure WebSite Name: ${process.env.WEBSITE_SITE_NAME || 'unknown'}`);
+console.log(`Azure WebSite Instance: ${process.env.WEBSITE_INSTANCE_ID || 'unknown'}`);
+
+// Check for critical environment variables
+const checkEnvVars = ['PORT', 'NEXTAUTH_URL', 'NEXTAUTH_SECRET'];
+console.log('Checking critical environment variables...');
+checkEnvVars.forEach(varName => {
+  console.log(`${varName}: ${process.env[varName] ? 'Set' : 'NOT SET'}`);
+});
 
 // Start with some basic server information logging
 console.log(`Starting Next.js server in ${process.env.NODE_ENV || 'development'} mode`);

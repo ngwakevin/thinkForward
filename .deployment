@@ -1,0 +1,9 @@
+# .deployment file for Azure App Service
+# This tells the deployment system how to deploy the app
+
+[config]
+# Use SCM_DO_BUILD_DURING_DEPLOYMENT to control build during deployment
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
+# Run Node.js server
+command = npm run start:custom

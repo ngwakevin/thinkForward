@@ -1,0 +1,28 @@
+# iisnode.yml for Azure App Service configuration
+
+# Node.js runtime settings
+nodeProcessCommandLine: "node --max-old-space-size=4096"
+
+# Enable detailed logging
+loggingEnabled: true
+
+# Debug settings
+devErrorsEnabled: true
+
+# Watchfiles for changes to restart the server
+watchedFiles: *.js;web.config;iisnode.yml;.env.production
+
+# Enable X-Forwarded-For headers
+enableXFF: true
+
+# Logging directory
+logDirectory: iisnode
+
+# Node environment
+node_env: production
+
+# Flush response
+flushResponse: true
+
+# Log output files
+logFileFlushInterval: 5000
