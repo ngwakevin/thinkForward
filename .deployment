@@ -2,8 +2,9 @@
 # This tells the deployment system how to deploy the app
 
 [config]
-# Use SCM_DO_BUILD_DURING_DEPLOYMENT to control build during deployment
-SCM_DO_BUILD_DURING_DEPLOYMENT=true
+# Optimized deployment settings for Node.js applications
+SCM_DO_BUILD_DURING_DEPLOYMENT=false
+ENABLE_ORYX_BUILD=false
 
-# Run Node.js server
-command = npm run start:custom
+# For ZIP deploy, use custom startup command
+command = node server.js

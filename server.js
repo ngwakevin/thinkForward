@@ -119,13 +119,30 @@ app.prepare()
     process.on('SIGINT', gracefulShutdown);
     
     server.listen(port, (err) => {
-      if (err) throw err;
+      if (err) {
+        console.error('Failed to start server:', err);
+        // Don't throw in production, just log the error
+        if (dev) throw err;
+        return;
+      }
+      
       const startupTime = (Date.now() - startTime)/1000;
-      console.log(`> Ready on http://localhost:${port} - startup took ${startupTime} seconds`);
+      const azureInfo = process.env.WEBSITE_SITE_NAME ? 
+        `on Azure App Service (${process.env.WEBSITE_SITE_NAME})` : 
+        `on http://localhost:${port}`;
+        
+      console.log(`> Server ready ${azureInfo} - startup took ${startupTime} seconds`);
       console.log(`> Environment: ${process.env.NODE_ENV}`);
       console.log(`> Next.js version: ${packageJson.dependencies.next}`);
       console.log(`> Node.js version: ${process.version}`);
-      console.log(`> Health check available at: http://localhost:${port}/api/health`);
+      console.log(`> Health check available at: /api/health`);
+      
+      // Log critical environment variable status (without values)
+      console.log('> Environment variable status:');
+      console.log(`  - NEXTAUTH_URL: ${process.env.NEXTAUTH_URL ? '✅' : '❌'}`);
+      console.log(`  - NEXTAUTH_SECRET: ${process.env.NEXTAUTH_SECRET ? '✅' : '❌'}`);
+      console.log(`  - AZURE_AD_CLIENT_ID: ${process.env.AZURE_AD_CLIENT_ID ? '✅' : '❌'}`);
+      console.log(`  - COSMOS_ENDPOINT: ${process.env.COSMOS_ENDPOINT ? '✅' : '❌'}`);
     });
   })
   .catch((ex) => {

@@ -1,0 +1,87 @@
+name: Azure App Service Deployment
+
+on:
+  push:
+    branches: [ "azure-deploy-clean" ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'                     # Set Node.js version
+  AZURE_WEBAPP_NAME: thinkforward-webapp   # Azure App Service name
+  AZURE_WEBAPP_PACKAGE_PATH: azure-deploy  # Set to the path to your deployment package
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Prepare deployment package
+      run: |
+        # Create deployment directory
+        mkdir -p ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        
+        # Copy necessary files (exclude dev files and node_modules)
+        rsync -av --exclude='.git/' --exclude='.github/' --exclude='node_modules/' --exclude='.next/cache/' --exclude='*.zip' --exclude='*.tar.gz' --exclude='terraform/' --exclude='infra/' --exclude='.env.local' . ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/
+        
+        # Create minimal package.json
+        node -e "
+          const pkg = require('./package.json');
+          const minPkg = {
+            name: pkg.name,
+            version: pkg.version,
+            private: pkg.private,
+            type: pkg.type,
+            engines: pkg.engines,
+            scripts: {
+              start: 'node server.js',
+              postinstall: pkg.scripts.postinstall
+            },
+            dependencies: pkg.dependencies
+          };
+          require('fs').writeFileSync('${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/package.json', JSON.stringify(minPkg, null, 2));
+        "
+        
+        # Create safe .env.production
+        cat > "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/.env.production" << EOL
+        # Production placeholders for Azure App Service
+        NODE_ENV=production
+        PORT=8080
+        # Auth placeholders - will be overridden by App Service settings
+        NEXTAUTH_URL=https://placeholder.azurewebsites.net
+        NEXTAUTH_SECRET=placeholder-for-build
+        AZURE_AD_CLIENT_ID=placeholder-client-id
+        AZURE_AD_TENANT_ID=common
+        AZURE_AD_CLIENT_SECRET=placeholder-for-build
+        # Database placeholders
+        COSMOS_ENDPOINT=https://placeholder.documents.azure.com:443/
+        COSMOS_KEY=placeholder-key-for-build
+        COSMOS_DATABASE=thinkforward
+        EOL
+
+    - name: Install dependencies
+      working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      run: |
+        npm ci --only=production
+        # Pre-build if needed
+        npm run prisma:generate || true
+        npm run build || true
+
+    - name: Create deployment package
+      run: |
+        cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        zip -r ../deploy.zip . -x "node_modules/.*" "*.git*"
+
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: deploy.zip
