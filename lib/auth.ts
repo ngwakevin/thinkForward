@@ -47,8 +47,8 @@ const checkEnvVars = () => {
       console.warn('[auth] Using fallback values for AZURE_AD');
       process.env.AZURE_AD_CLIENT_ID = process.env.AZURE_AD_CLIENT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
       // Don't set a fallback client secret in code
-      // Use the confirmed tenant ID
-      process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6';
+      // Use 'common' for multi-tenant access including personal Microsoft accounts
+      process.env.AZURE_AD_TENANT_ID = process.env.AZURE_AD_TENANT_ID || 'common';
     } else {
       console.error('[auth] Missing required Microsoft authentication environment variables in production');
       console.error('[auth] This will cause Microsoft sign-in to fail');
@@ -63,6 +63,15 @@ const checkEnvVars = () => {
 
 // Call the environment check function
 checkEnvVars();
+
+// Ensure NEXTAUTH_URL is set
+if (!process.env.NEXTAUTH_URL && typeof window === 'undefined') {
+  // Only set this on the server side
+  const hostname = process.env.VERCEL_URL || process.env.NEXTAUTH_URL_INTERNAL || 'localhost:3000';
+  const protocol = hostname.includes('localhost') ? 'http' : 'https';
+  process.env.NEXTAUTH_URL = `${protocol}://${hostname}`;
+  console.warn(`[auth] NEXTAUTH_URL not set, using: ${process.env.NEXTAUTH_URL}`);
+}
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -96,8 +105,8 @@ export const authOptions: NextAuthOptions = {
       name: 'Microsoft',
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      // Use the confirmed tenant ID which is the same as the client ID in this case
-      tenantId: process.env.AZURE_AD_TENANT_ID || 'd46ea9de-b544-4972-906e-72c6be61f1d6',
+      // Use 'common' for multi-tenant access including personal Microsoft accounts
+      tenantId: process.env.AZURE_AD_TENANT_ID || 'common',
       authorization: {
         params: {
           // Extended scope to get more profile information
