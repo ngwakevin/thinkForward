@@ -151,17 +151,29 @@ export const authOptions: NextAuthOptions = {
       // Create or update user in database when they sign in
       try {
         if (account && user.email) {
-          await ensureUserFromOidc({
+          // Store user in database or fallback to in-memory if DB is unavailable
+          const persistedUser = await ensureUserFromOidc({
             email: user.email,
             name: user.name || '',
             provider: account.provider,
             providerAccountId: account.providerAccountId,
+            oid: (user as any).objectId, // Add object ID if available
+            sub: (user as any).id, // Add subject ID if available
+            preferred_username: (user as any).email, // Fallback to email as UPN if needed
           });
+          
+          // Log user persistence status
+          if (persistedUser) {
+            console.log(`[auth] User authenticated: ${user.email} (Provider: ${account.provider})`);
+          } else {
+            console.warn(`[auth] User authenticated but not persisted: ${user.email} (Provider: ${account.provider})`);
+          }
         }
         return true;
       } catch (error) {
         console.error('[auth] Error during sign in:', error);
-        return false;
+        // Allow sign in even if persistence fails
+        return true;
       }
     },
     async jwt({ token, account, user }: { token: any; account: any; user?: any }) {

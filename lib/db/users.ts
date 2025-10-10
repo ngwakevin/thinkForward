@@ -1,4 +1,4 @@
-import { getUsersContainer, getProfilesContainer } from '../cosmos';
+import { getUsersContainer, getProfilesContainer, isCosmosAvailable } from '../cosmos';
 import { v4 as uuidv4 } from 'uuid';
 
 type OidcIdentity = {
@@ -13,10 +13,14 @@ type OidcIdentity = {
   providerAccountId?: string | null;
 };
 
+// In-memory storage as fallback when Cosmos DB is not available
+const memoryUserStore: Map<string, any> = new Map();
+const memoryProfileStore: Map<string, any> = new Map();
+
 export async function ensureUserFromOidc(identity: OidcIdentity) {
   try {
     const provider = identity.provider ?? 'microsoft';
-    const providerAccountId = identity.providerAccountId ?? identity.sub ?? undefined;
+    const providerAccountId = identity.providerAccountId ?? identity.sub ?? identity.oid ?? undefined;
     if (!providerAccountId) return null;
 
     const email = identity.email ?? undefined;
@@ -26,6 +30,13 @@ export async function ensureUserFromOidc(identity: OidcIdentity) {
     const firstName = identity.given_name || undefined;
     const lastName = identity.family_name || undefined;
     const now = new Date().toISOString();
+    
+    // Check if Cosmos DB is available - use memory store if not
+    const cosmosAvailable = isCosmosAvailable();
+    
+    if (!cosmosAvailable) {
+      return handleInMemoryUserStore(provider, providerAccountId, email, name, objectId, upn, firstName, lastName, now);
+    }
 
     // Get containers
     const usersContainer = await getUsersContainer();
@@ -64,10 +75,12 @@ export async function ensureUserFromOidc(identity: OidcIdentity) {
         signInIdentity: email || upn,
         firstName,
         lastName,
-        lastSignInAt: now
+        lastSignInAt: now,
+        updatedAt: now
       };
       
-      const { resource: updatedUserResource } = await usersContainer.item(userId).replace(updatedUser);
+      // Use items.upsert instead of item().replace for better compatibility
+      const { resource: updatedUserResource } = await usersContainer.items.upsert(updatedUser);
       user = updatedUserResource;
 
       // Check if profile exists
@@ -93,7 +106,8 @@ export async function ensureUserFromOidc(identity: OidcIdentity) {
           displayName: name ?? profile.displayName,
           updatedAt: now
         };
-        await profilesContainer.item(profile.id).replace(updatedProfile);
+        // Use items.upsert instead of item().replace
+        await profilesContainer.items.upsert(updatedProfile);
       } else {
         const newProfile = {
           id: uuidv4(),
@@ -120,6 +134,7 @@ export async function ensureUserFromOidc(identity: OidcIdentity) {
         firstName,
         lastName,
         createdAt: now,
+        updatedAt: now,
         lastSignInAt: now
       };
       
@@ -159,6 +174,105 @@ export async function ensureUserFromOidc(identity: OidcIdentity) {
     };
   } catch (error) {
     console.error("Error in ensureUserFromOidc:", error);
-    return null;
+    // Fallback to memory store on error
+    const provider = identity.provider ?? 'microsoft';
+    const providerAccountId = identity.providerAccountId ?? identity.sub ?? identity.oid ?? undefined;
+    if (!providerAccountId) return null;
+    
+    const email = identity.email ?? undefined;
+    const name = identity.name ?? undefined;
+    const objectId = identity.oid || identity.sub || undefined;
+    const upn = identity.preferred_username || undefined;
+    const firstName = identity.given_name || undefined;
+    const lastName = identity.family_name || undefined;
+    const now = new Date().toISOString();
+    
+    return handleInMemoryUserStore(provider, providerAccountId, email, name, objectId, upn, firstName, lastName, now);
   }
+}
+
+/**
+ * Fallback function that uses in-memory storage when Cosmos DB is not available
+ */
+function handleInMemoryUserStore(
+  provider: string, 
+  providerAccountId: string,
+  email?: string, 
+  name?: string, 
+  objectId?: string, 
+  upn?: string, 
+  firstName?: string, 
+  lastName?: string,
+  now: string = new Date().toISOString()
+) {
+  console.log("Using in-memory user store (Cosmos DB not available)");
+  
+  // Use providerAccountId as the key
+  let user = memoryUserStore.get(providerAccountId);
+  let userId;
+  
+  // If user exists, update it
+  if (user) {
+    userId = user.id;
+    user = {
+      ...user,
+      email: email ?? user.email,
+      name: name ?? user.name,
+      objectId: objectId ?? user.objectId,
+      upn: upn ?? user.upn,
+      signInIdentity: email || upn || user.signInIdentity,
+      firstName: firstName ?? user.firstName,
+      lastName: lastName ?? user.lastName,
+      lastSignInAt: now,
+      updatedAt: now
+    };
+    memoryUserStore.set(providerAccountId, user);
+  } 
+  // If user doesn't exist, create it
+  else {
+    userId = uuidv4();
+    user = {
+      id: userId,
+      provider,
+      providerAccountId,
+      email,
+      name,
+      objectId,
+      upn,
+      signInIdentity: email || upn,
+      firstName,
+      lastName,
+      createdAt: now,
+      updatedAt: now,
+      lastSignInAt: now
+    };
+    memoryUserStore.set(providerAccountId, user);
+  }
+  
+  // Check if profile exists
+  let profile = Array.from(memoryProfileStore.values()).find(p => p.userId === userId);
+  
+  if (profile) {
+    profile = {
+      ...profile,
+      displayName: name ?? profile.displayName,
+      updatedAt: now
+    };
+    memoryProfileStore.set(profile.id, profile);
+  } else {
+    const profileId = uuidv4();
+    profile = {
+      id: profileId,
+      userId,
+      displayName: name ?? undefined,
+      createdAt: now,
+      updatedAt: now
+    };
+    memoryProfileStore.set(profileId, profile);
+  }
+  
+  return {
+    ...user,
+    profile
+  };
 }
