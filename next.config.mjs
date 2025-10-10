@@ -1,3 +1,6 @@
+// Load build configuration
+import './lib/build-config.js';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
