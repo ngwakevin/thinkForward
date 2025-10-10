@@ -1,6 +1,8 @@
 {
   "extends": ["next", "next/core-web-vitals"],
   "rules": {
-    "react/jsx-curly-brace-presence": ["warn", {"props": "never", "children": "never"}]
+    "react/jsx-curly-brace-presence": ["warn", {"props": "never", "children": "never"}],
+    "import/no-anonymous-default-export": "off",
+    "react-hooks/exhaustive-deps": "warn"
   }
 }
