@@ -1,9 +1,9 @@
 import { CosmosClient, Database, Container } from "@azure/cosmos";
 
 // Environment variables should be set in the .env.local file and on Azure
-const endpoint = process.env.COSMOS_ENDPOINT || "";
-const key = process.env.COSMOS_KEY || "";
-const databaseId = process.env.COSMOS_DATABASE || "thinkforward";
+const endpoint = process.env.COSMOS_ENDPOINT || process.env.COSMOS_DB_ENDPOINT || "";
+const key = process.env.COSMOS_KEY || process.env.COSMOS_DB_KEY || "";
+const databaseId = process.env.COSMOS_DATABASE || process.env.COSMOS_DB_DATABASE_ID || "thinkforward";
 
 // Check if configuration is valid
 const isValidCosmosConfig = (
