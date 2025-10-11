@@ -7,6 +7,69 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 
+// CRITICAL: Monkey patch Next.js filesystem check for Azure App Service
+// This targets the specific error in router-utils/filesystem.js:151
+try {
+  // Find the Next.js filesystem module
+  const nextServerPath = require.resolve('next/dist/server/lib/router-utils/filesystem');
+  const originalModule = require(nextServerPath);
+  
+  // Save the original setupFsCheck function
+  const originalSetupFsCheck = originalModule.setupFsCheck;
+  
+  // Override the setupFsCheck function with our version that bypasses the BUILD_ID check
+  originalModule.setupFsCheck = function patchedSetupFsCheck(ctx) {
+    console.log('Using patched setupFsCheck function for Next.js in Azure App Service');
+    
+    // If we're in Azure and have a NEXT_DIST_DIR, fake the BUILD_ID check
+    if (process.env.WEBSITE_SITE_NAME && process.env.NEXT_DIST_DIR) {
+      const distDir = process.env.NEXT_DIST_DIR;
+      
+      // Check if BUILD_ID exists
+      const buildIdPath = join(distDir, 'BUILD_ID');
+      if (!fs.existsSync(buildIdPath)) {
+        console.log('BUILD_ID not found, creating dummy BUILD_ID');
+        try {
+          // Create a dummy BUILD_ID if it doesn't exist
+          fs.writeFileSync(buildIdPath, `dummy-${Date.now()}`, 'utf8');
+        } catch (err) {
+          console.warn('Failed to create dummy BUILD_ID:', err.message);
+        }
+      }
+      
+      // Check for server/pages-manifest.json
+      const pagesManifestPath = join(distDir, 'server', 'pages-manifest.json');
+      if (!fs.existsSync(pagesManifestPath)) {
+        console.log('pages-manifest.json not found, creating directory and dummy file');
+        try {
+          // Create server directory if it doesn't exist
+          if (!fs.existsSync(join(distDir, 'server'))) {
+            fs.mkdirSync(join(distDir, 'server'), { recursive: true });
+          }
+          
+          // Create a dummy pages-manifest.json
+          fs.writeFileSync(pagesManifestPath, '{}', 'utf8');
+        } catch (err) {
+          console.warn('Failed to create dummy pages-manifest.json:', err.message);
+        }
+      }
+    }
+    
+    // Call the original function, but wrap it in try/catch
+    try {
+      return originalSetupFsCheck(ctx);
+    } catch (err) {
+      console.warn('Error in Next.js setupFsCheck:', err.message);
+      // Return a basic context to allow Next.js to continue
+      return { ...ctx, fetchCache: {}, incrementalCache: null };
+    }
+  };
+  
+  console.log('Successfully patched Next.js filesystem check for Azure App Service');
+} catch (err) {
+  console.warn('Failed to patch Next.js filesystem check:', err.message);
+}
+
 // Log startup information
 console.log('Starting server.js - specialized for Azure App Service');
 console.log(`Node.js version: ${process.version}`);

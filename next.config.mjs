@@ -40,8 +40,14 @@ const nextConfig = {
     typedRoutes: true,
     mdxRs: true,
     // Configure a writable temp directory for Azure App Service
-    serverComponentsExternalPackages: ['sharp']
+    serverComponentsExternalPackages: ['sharp'],
+    // Critical for Azure App Service - skip filesystem checks
+    skipTrailingSlashRedirect: true,
+    skipMiddlewareUrlNormalize: true,
+    disableOptimizedLoading: true
   },
+  // Force the server to ignore file system checks
+  productionBrowserSourceMaps: true,
   // Adjust output caching for Azure App Service (read-only file system)
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   generateEtags: true,

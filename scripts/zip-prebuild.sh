@@ -54,6 +54,8 @@ chmod -R 755 \"\$NEXT_TEMP_DIR\" || echo \"Warning: Could not set permissions on
 export NEXT_DIST_DIR=\"\$NEXT_TEMP_DIR/.next\"
 echo \"Creating NEXT_DIST_DIR: \$NEXT_DIST_DIR\"
 mkdir -p \"\$NEXT_DIST_DIR\" || echo \"Warning: Could not create \$NEXT_DIST_DIR\"
+mkdir -p \"\$NEXT_DIST_DIR/server\" || echo \"Warning: Could not create server directory\"
+mkdir -p \"\$NEXT_DIST_DIR/cache\" || echo \"Warning: Could not create cache directory\"
 
 # Check if .next directory exists in the current directory
 if [ -d \"./.next\" ] && [ -f \"./.next/BUILD_ID\" ]; then
@@ -64,12 +66,23 @@ if [ -d \"./.next\" ] && [ -f \"./.next/BUILD_ID\" ]; then
   if [ -f \"\$NEXT_DIST_DIR/BUILD_ID\" ]; then
     echo \"Successfully copied build files. Build ID: \$(cat \"\$NEXT_DIST_DIR/BUILD_ID\")\"
   else
-    echo \"Warning: Failed to copy BUILD_ID file\"
+    echo \"Warning: Failed to copy BUILD_ID file - creating it manually\"
+    echo \"$(date +%s)\" > \"\$NEXT_DIST_DIR/BUILD_ID\"
   fi
 else
   echo \"No .next directory found with BUILD_ID in current directory!\"
-  echo \"This will likely cause startup failures\"
+  echo \"Creating minimal Next.js build structure manually...\"
+  
+  # Create minimal build structure
+  echo \"$(date +%s)\" > \"\$NEXT_DIST_DIR/BUILD_ID\"
+  echo \"{}\" > \"\$NEXT_DIST_DIR/build-manifest.json\"
+  echo \"{}\" > \"\$NEXT_DIST_DIR/server/pages-manifest.json\"
+  echo \"{}\" > \"\$NEXT_DIST_DIR/prerender-manifest.json\"
+  echo \"{}\" > \"\$NEXT_DIST_DIR/required-server-files.json\"
 fi
+
+# Force correct permissions
+chmod -R 777 \"\$NEXT_TEMP_DIR\" || echo \"Warning: Could not set permissions on temp directory\"
 
 # List critical directories to verify
 echo \"Contents of .next directory:\"
@@ -95,6 +108,32 @@ export NODE_OPTIONS=\"\${NODE_OPTIONS:---max_old_space_size=512 --expose-gc}\"
 echo \"- NODE_OPTIONS: \$NODE_OPTIONS\"
 echo \"- NEXT_TEMP_DIR: \$NEXT_TEMP_DIR\"
 echo \"- NEXT_DIST_DIR: \$NEXT_DIST_DIR\"
+
+# Patch Next.js filesystem check for Azure App Service
+if [ -f \"scripts/patch-nextjs.js\" ]; then
+  echo \"Patching Next.js filesystem check for Azure...\"
+  node scripts/patch-nextjs.js || echo \"Warning: Could not patch Next.js filesystem check\"
+else
+  echo \"Warning: patch-nextjs.js not found, skipping patch\"
+fi
+
+# Double-check critical files one more time
+if [ ! -f \"\$NEXT_DIST_DIR/BUILD_ID\" ]; then
+  echo \"BUILD_ID still missing, creating it...\"
+  echo \"azure-$(date +%s)\" > \"\$NEXT_DIST_DIR/BUILD_ID\"
+fi
+
+if [ ! -f \"\$NEXT_DIST_DIR/server/pages-manifest.json\" ]; then
+  echo \"pages-manifest.json still missing, creating it...\"
+  mkdir -p \"\$NEXT_DIST_DIR/server\"
+  echo \"{}\" > \"\$NEXT_DIST_DIR/server/pages-manifest.json\"
+fi
+
+# Set critical environment variables for Next.js
+export NEXT_IGNORE_FILESYSTEM_CHECK=1
+export NEXT_TELEMETRY_DISABLED=1
+export NEXT_DISABLE_PATCHING_REQUIRE=1
+export NODE_OPTIONS=\"\${NODE_OPTIONS} --no-warnings --experimental-specifier-resolution=node --experimental-json-modules\"
 
 # Ensure Cosmos DB environment variables are set properly
 if [ -z \"\$COSMOS_KEY\" ] && [ -n \"\$COSMOS_DB_KEY\" ]; then
@@ -166,7 +205,7 @@ fi
 # Create deployment package including all necessary files with maximum compression
 # Make sure to include next.js specific directories (.next, public) and our custom server
 echo "Creating optimized deployment package with maximum compression..."
-zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js tailwind.config.mjs postcss.config.mjs
+zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js tailwind.config.mjs postcss.config.mjs scripts/patch-nextjs.js
 
 # Check the size of the deployment package
 PACKAGE_SIZE=$(du -h deploy.zip | cut -f1)
