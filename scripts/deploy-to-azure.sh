@@ -50,17 +50,15 @@ NODE_ENV="production" npm run build
 echo -e "${GREEN}Removing dev dependencies...${NC}"
 npm prune --production
 
-# Create startup command file for Azure App Service
-echo -e "${GREEN}Creating startup.sh...${NC}"
-cat > startup.sh << 'EOL'
-#!/bin/sh
-cd /home/site/wwwroot
-export NODE_ENV=production
-export PORT=8080
-node server.js
-EOL
+# Create diagnostic script and direct start wrapper
+echo -e "${GREEN}Ensuring all Azure deployment scripts are included...${NC}"
+chmod +x scripts/diagnose-nextjs.sh
+chmod +x scripts/create-direct-startup.sh
+chmod +x scripts/test-azure-deployment.sh
 
-chmod +x startup.sh
+# Test the deployment locally
+echo -e "${GREEN}Testing the deployment approach locally...${NC}"
+bash scripts/test-azure-deployment.sh
 
 # Package the application
 echo -e "${GREEN}Packaging application...${NC}"
@@ -78,7 +76,7 @@ echo -e "${GREEN}Updating App Service configuration...${NC}"
 az webapp config set \
   --resource-group "$RESOURCE_GROUP" \
   --name "$WEBAPP_NAME" \
-  --startup-file /home/site/wwwroot/startup.sh \
+  --startup-command "bash scripts/create-direct-startup.sh && bash startup.sh" \
   --node-version 20-lts
 
 # Set application settings
@@ -94,6 +92,9 @@ az webapp config appsettings set \
   KEY_VAULT_URL="$KEY_VAULT_URI" \
   NODE_ENV="$NODE_ENV" \
   WEBSITE_RUN_FROM_PACKAGE="1" \
+  NEXT_IGNORE_FILESYSTEM_CHECK="1" \
+  NEXT_MANUAL_SIG_HANDLE="true" \
+  NEXT_TELEMETRY_DISABLED="1" \
   APPLICATIONINSIGHTS_CONNECTION_STRING="$APP_INSIGHTS_CONNECTION_STRING" \
   APPLICATIONINSIGHTS_ROLE_NAME="thinkforward-web" \
   AZURE_AD_CLIENT_ID="$AZURE_AD_CLIENT_ID" \

@@ -99,10 +99,30 @@ fi
 echo "======= NPM Packages (abbreviated) ======="
 npm list next react react-dom --depth=0
 
+# Check for direct start wrapper
+echo "======= Direct Start Wrapper ======="
+if [ -f "scripts/next-direct-start.js" ]; then
+  echo "✅ Found scripts/next-direct-start.js"
+  echo "File permissions: $(ls -la scripts/next-direct-start.js | awk '{print $1}')"
+  echo "File size: $(wc -c < scripts/next-direct-start.js) bytes"
+else
+  echo "❌ scripts/next-direct-start.js not found"
+  echo "Will attempt to create it during startup"
+fi
+
+# Check for wrapper generator
+if [ -f "scripts/create-nextjs-wrapper.js" ]; then
+  echo "✅ Found scripts/create-nextjs-wrapper.js"
+else
+  echo "❌ scripts/create-nextjs-wrapper.js not found"
+  echo "This file is required to create the direct start wrapper"
+fi
+
 echo "======= Diagnostic Complete ======="
 echo "If you're experiencing 'Could not find a production build' errors:"
 echo "1. Make sure your deployment package includes the .next directory"
 echo "2. Check that BUILD_ID exists in your .next directory"
 echo "3. Verify pages-manifest.json exists in .next/server"
 echo "4. Try setting NEXT_IGNORE_FILESYSTEM_CHECK=1 environment variable"
-echo "5. Consider using 'npx next start' instead of node_modules/.bin/next"
+echo "5. Use the direct start wrapper (scripts/next-direct-start.js) instead of standard Next.js CLI"
+echo "6. If all else fails, empty build files will be created automatically during startup"

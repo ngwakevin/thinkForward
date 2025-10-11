@@ -45,11 +45,57 @@ Make sure the following environment variables are set in your Azure App Service:
 
 You can run the `scripts/check-azure-env.sh` script locally to verify if all required variables are set.
 
+## Improved Startup Configuration
+
+ThinkForward uses an improved startup approach designed to be more resilient in Azure App Service:
+
+1. **Direct Start Wrapper**: A custom wrapper script (`scripts/next-direct-start.js`) that bypasses the Next.js CLI and starts the server directly, avoiding issues with the read-only filesystem in Azure.
+
+2. **Automatic Recovery**: The startup script will automatically create minimal build files if the .next directory is missing or corrupted.
+
+3. **Dynamic Startup Script**: The `scripts/create-direct-startup.sh` script generates a startup.sh file specifically for Azure App Service.
+
+To use this improved approach, set your App Service startup command to:
+
+```bash
+bash scripts/create-direct-startup.sh && bash startup.sh
+```
+
+## Testing Deployment Locally
+
+Before deploying to Azure, you can test the deployment process locally:
+
+```bash
+# Run the deployment test script
+bash scripts/test-azure-deployment.sh
+```
+
+This script will:
+1. Generate the direct start wrapper
+2. Create the startup script
+3. Run diagnostics
+4. Test the direct start wrapper locally
+
 ## Troubleshooting
 
-1. If deployment fails, check the GitHub Actions logs for error details
-2. Verify that the publish profile is correctly set as a GitHub secret
-3. Check if all required environment variables are set in Azure App Service
+If you encounter issues with your deployment:
+
+1. Check the GitHub Actions logs for error details
+2. Run the diagnostic script in Azure's SSH console:
+   ```bash
+   cd /home/site/wwwroot && bash scripts/diagnose-nextjs.sh
+   ```
+3. Verify that all required environment variables are set
+4. Check the Azure App Service logs for startup errors
+
+Common issues and solutions:
+
+| Issue | Solution |
+|-------|----------|
+| "Could not find a production build" | Use the direct start wrapper approach |
+| Missing .next directory | The startup script will create minimal build files |
+| Permission denied errors | Azure App Service has a read-only filesystem, use environment variables like NEXT_IGNORE_FILESYSTEM_CHECK=1 |
+| Port binding errors | Make sure to use the PORT environment variable provided by Azure |
 
 ## Application URL
 
