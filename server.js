@@ -42,8 +42,78 @@ try {
 const dev = process.env.NODE_ENV !== 'production';
 const port = parseInt(process.env.PORT, 10) || 3000;
 
-// Initialize Next.js
-const app = next({ dev });
+// Check for custom Next.js directories
+const tempDir = process.env.NEXT_TEMP_DIR;
+const distDir = process.env.NEXT_DIST_DIR || (tempDir ? `${tempDir}/.next` : '.next');
+
+console.log('Next.js build directory configuration:');
+console.log(`- NEXT_TEMP_DIR: ${tempDir || 'not set'}`);
+console.log(`- NEXT_DIST_DIR: ${process.env.NEXT_DIST_DIR || 'not set'}`);
+console.log(`- Using build directory: ${distDir}`);
+
+// Verify that the build directory exists and contains required files
+try {
+  if (fs.existsSync(distDir)) {
+    console.log(`Found Next.js build directory at ${distDir}`);
+    
+    // Check for critical files
+    const criticalFiles = ['build-manifest.json', 'BUILD_ID', 'server/pages-manifest.json'];
+    const missingFiles = [];
+    
+    for (const file of criticalFiles) {
+      const filePath = join(distDir, file);
+      if (fs.existsSync(filePath)) {
+        console.log(`✓ Found critical file: ${file}`);
+        
+        // For BUILD_ID, log the actual ID
+        if (file === 'BUILD_ID') {
+          try {
+            const buildId = fs.readFileSync(filePath, 'utf8').trim();
+            console.log(`  Build ID: ${buildId}`);
+          } catch (e) {
+            console.warn(`  Could not read BUILD_ID: ${e.message}`);
+          }
+        }
+      } else {
+        console.warn(`✗ Missing critical file: ${file}`);
+        missingFiles.push(file);
+      }
+    }
+    
+    if (missingFiles.length > 0) {
+      console.warn(`Build directory exists but is missing ${missingFiles.length} critical files`);
+      console.warn('The application may fail to start properly');
+      
+      // List all files in the directory for debugging
+      const files = fs.readdirSync(distDir);
+      console.log(`All files in ${distDir}:`, files.join(', '));
+    } else {
+      console.log('All critical Next.js build files found!');
+    }
+  } else {
+    console.error(`Next.js build directory not found at ${distDir}`);
+    console.error('Application will likely fail to start');
+    
+    // Check if any build exists in alternate locations
+    const altLocations = ['.next', '/home/site/wwwroot/.next', '/home/site/.next'];
+    for (const loc of altLocations) {
+      if (fs.existsSync(loc)) {
+        console.log(`Found alternate build at ${loc}, but it's not being used`);
+      }
+    }
+  }
+} catch (error) {
+  console.error(`Error checking build directory: ${error.message}`);
+}
+
+// Initialize Next.js with custom directory configuration
+const app = next({ 
+  dev,
+  dir: process.cwd(),
+  conf: { 
+    distDir: distDir
+  }
+});
 const handle = app.getRequestHandler();
 
 // Log start time for tracking server startup duration

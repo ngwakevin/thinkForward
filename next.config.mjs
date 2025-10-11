@@ -18,11 +18,19 @@ if (isAzureAppService) {
       fs.mkdirSync(tempDir, { recursive: true });
       console.log(`Created temp directory: ${tempDir}`);
     }
+    
+    // Also create .next directory inside it
+    const nextDir = path.join(tempDir, '.next');
+    if (!fs.existsSync(nextDir)) {
+      fs.mkdirSync(nextDir, { recursive: true });
+      console.log(`Created .next directory: ${nextDir}`);
+    }
   } catch (error) {
     console.warn(`Failed to create temp directory: ${error.message}`);
   }
 }
 
+// Log the directory that will be used
 console.log(`Using temp directory: ${tempDir}`);
 
 /** @type {import('next').NextConfig} */
