@@ -40,24 +40,73 @@ echo \"- Next.js version: \$(cat package.json | grep \\\"next\\\":)\"
 echo \"- NPM version: \$(npm -v)\"
 echo \"- Memory info: \$(free -m || echo 'free command not available')\"
 echo \"- Disk space: \$(df -h / || echo 'df command not available')\"
-echo \"- Files in .next/server: \$(ls -la .next/server 2>/dev/null || echo '.next/server not found')\"
 
-# Create temp directories if they don't exist (with error handling)
-echo \"Creating temp directories if needed...\"
-mkdir -p /tmp/nextjs-cache 2>/dev/null || echo \"Warning: Could not create /tmp/nextjs-cache. Using default temp directory.\"
-mkdir -p /tmp/nextjs-server 2>/dev/null || echo \"Warning: Could not create /tmp/nextjs-server. Using default temp directory.\"
+# Setup writable directories for Next.js in Azure App Service
+echo \"Setting up writable directories for Next.js...\"
+
+# Create the custom temp directory
+export NEXT_TEMP_DIR=\"/home/site/next-temp\"
+echo \"Creating NEXT_TEMP_DIR: \$NEXT_TEMP_DIR\"
+mkdir -p \"\$NEXT_TEMP_DIR\" || echo \"Warning: Could not create \$NEXT_TEMP_DIR\"
+chmod -R 755 \"\$NEXT_TEMP_DIR\" || echo \"Warning: Could not set permissions on \$NEXT_TEMP_DIR\"
+
+# Create .next directory in the temp directory
+export NEXT_DIST_DIR=\"\$NEXT_TEMP_DIR/.next\"
+echo \"Creating NEXT_DIST_DIR: \$NEXT_DIST_DIR\"
+mkdir -p \"\$NEXT_DIST_DIR\" || echo \"Warning: Could not create \$NEXT_DIST_DIR\"
+
+# Check if .next directory exists in the current directory
+if [ -d \"./.next\" ] && [ -f \"./.next/BUILD_ID\" ]; then
+  echo \"Found .next directory with BUILD_ID, copying to \$NEXT_DIST_DIR\"
+  cp -R ./.next/* \"\$NEXT_DIST_DIR/\" || echo \"Error: Failed to copy .next directory\"
+  
+  # Verify the copy
+  if [ -f \"\$NEXT_DIST_DIR/BUILD_ID\" ]; then
+    echo \"Successfully copied build files. Build ID: \$(cat \"\$NEXT_DIST_DIR/BUILD_ID\")\"
+  else
+    echo \"Warning: Failed to copy BUILD_ID file\"
+  fi
+else
+  echo \"No .next directory found with BUILD_ID in current directory!\"
+  echo \"This will likely cause startup failures\"
+fi
+
+# List critical directories to verify
+echo \"Contents of .next directory:\"
+ls -la ./.next 2>/dev/null || echo \".next directory not found\"
+
+echo \"Contents of temp .next directory:\"
+ls -la \"\$NEXT_DIST_DIR\" 2>/dev/null || echo \"Temp .next directory not found or empty\"
+
+# Set environment variables for Next.js
+export NEXT_TELEMETRY_DISABLED=1
+export NEXT_DISABLE_FILESYSTEM_CACHE=1
+export NEXT_SHARP_PATH=\"/home/site/wwwroot/node_modules/sharp\"
 
 # Set Node.js options for better performance in containerized environment
 export NODE_OPTIONS=\"\${NODE_OPTIONS:---max_old_space_size=512 --expose-gc}\"
 echo \"- NODE_OPTIONS: \$NODE_OPTIONS\"
+echo \"- NEXT_TEMP_DIR: \$NEXT_TEMP_DIR\"
+echo \"- NEXT_DIST_DIR: \$NEXT_DIST_DIR\"
+
+# Ensure Cosmos DB environment variables are set properly
+if [ -z \"\$COSMOS_KEY\" ] && [ -n \"\$COSMOS_DB_KEY\" ]; then
+  echo \"Setting COSMOS_KEY from COSMOS_DB_KEY\"
+  export COSMOS_KEY=\"\$COSMOS_DB_KEY\"
+fi
+
+if [ -z \"\$COSMOS_ENDPOINT\" ] && [ -n \"\$COSMOS_DB_ENDPOINT\" ]; then
+  echo \"Setting COSMOS_ENDPOINT from COSMOS_DB_ENDPOINT\"
+  export COSMOS_ENDPOINT=\"\$COSMOS_DB_ENDPOINT\"
+fi
 
 # Use the custom server.js instead of the next binary with ESM support
 echo \"Starting with custom server: node server.js\"
 node --experimental-specifier-resolution=node server.js || {
-    echo \"ERROR: Failed to start server. Retrying in 5 seconds...\"
-    sleep 5
-    echo \"Retrying server start...\"
-    node --experimental-specifier-resolution=node server.js
+    echo \"ERROR: Failed to start server with experimental specifier resolution. Retrying with default...\"
+    sleep 2
+    echo \"Retrying server start with default settings...\"
+    node server.js
 }
 
 # Log successful startup

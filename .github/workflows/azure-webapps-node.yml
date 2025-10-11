@@ -122,8 +122,17 @@ jobs:
               AZURE_AD_CLIENT_SECRET="${{ secrets.AZURE_AD_CLIENT_SECRET }}" \
               AZURE_AD_TENANT_ID="${{ secrets.AZURE_AD_TENANT_ID }}" \
               NODE_ENV="production" \
+              NEXT_TEMP_DIR="/home/site/next-temp" \
+              NEXT_DIST_DIR="/home/site/next-temp/.next" \
+              NEXT_DISABLE_FILESYSTEM_CACHE="1" \
+              NEXT_TELEMETRY_DISABLED="1" \
               NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" \
               NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+          
+          # Configure startup command to use our startup script
+          az webapp config set --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --startup-file "startup.sh"
 
       - name: Wait for SCM to be ready
         run: sleep 60
