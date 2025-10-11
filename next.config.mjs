@@ -36,14 +36,15 @@ console.log(`Using temp directory: ${tempDir}`);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // These options have been moved out of experimental in Next.js 14.2.5
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
   experimental: {
     typedRoutes: true,
     mdxRs: true,
     // Configure a writable temp directory for Azure App Service
     serverComponentsExternalPackages: ['sharp'],
-    // Critical for Azure App Service - skip filesystem checks
-    skipTrailingSlashRedirect: true,
-    skipMiddlewareUrlNormalize: true,
+    // Disable optimized loading for Azure
     disableOptimizedLoading: true
   },
   // Force the server to ignore file system checks

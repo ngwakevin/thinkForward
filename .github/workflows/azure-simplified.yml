@@ -43,24 +43,26 @@ jobs:
           
           # Build Next.js app
           echo "Building Next.js application..."
-          npm run build
+          NEXT_IGNORE_FILESYSTEM_CHECK=1 npm run build
           
-          # Verify build succeeded
-          if [ ! -d ".next" ]; then
-            echo "ERROR: Build failed - .next directory not found!"
-            exit 1
-          fi
-          
-          echo "Build completed successfully. Contents of .next directory:"
-          ls -la .next/
-          echo "Build ID: $(cat .next/BUILD_ID)"
+          # Verify build succeeded with detailed verification
+          bash ./scripts/verify-nextjs-build.sh
           
           # Create startup script
           bash ./scripts/create-direct-startup.sh
           
-          # Create deployment package with the .next directory included
-          echo "Creating deployment package..."
-          zip -9 -r deploy.zip package.json package-lock.json .next node_modules public startup.sh next.config.mjs
+          # Make sure .next directory is not gitignored in the package
+          if [ -f ".gitignore" ]; then
+            echo "Ensuring .next directory is not excluded from deployment..."
+            sed -i.bak 's/^\.next/# .next/' .gitignore
+          fi
+          
+          # Create deployment package with explicit .next directory inclusion
+          echo "Creating deployment package with .next directory..."
+          zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules public startup.sh
+          # Add .next directory with explicit verbose output
+          echo "Adding .next directory to deployment package..."
+          zip -9 -r -v deploy.zip .next
         env:
           CI: true
           NODE_OPTIONS: "--max_old_space_size=4096"
