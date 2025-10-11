@@ -106,12 +106,32 @@ try {
   console.error(`Error checking build directory: ${error.message}`);
 }
 
+// Check and manually set environment vars needed by Next.js
+console.log('--- Build Configuration ---');
+console.log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'not set'}`);
+console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+console.log('---------------------------');
+
+// Ensure Next.js can find the build directory
+if (process.env.NEXT_DIST_DIR) {
+  // Explicitly set the dist directory as an environment variable
+  // This is critical for Next.js 14.x to correctly locate build files
+  process.env.NEXT_DIST_DIR = distDir;
+  
+  console.log(`Using temp directory: ${tempDir || 'not available'}`);
+}
+
 // Initialize Next.js with custom directory configuration
 const app = next({ 
   dev,
   dir: process.cwd(),
   conf: { 
-    distDir: distDir
+    distDir: distDir,
+    // Force production mode in Azure App Service
+    env: {
+      ...process.env,
+      __NEXT_PROCESSED_ENV: 'true'
+    }
   }
 });
 const handle = app.getRequestHandler();

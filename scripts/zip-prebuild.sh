@@ -78,10 +78,17 @@ ls -la ./.next 2>/dev/null || echo \".next directory not found\"
 echo \"Contents of temp .next directory:\"
 ls -la \"\$NEXT_DIST_DIR\" 2>/dev/null || echo \"Temp .next directory not found or empty\"
 
+# Create a symbolic link for .next if it doesn't exist
+if [ ! -L \"./.next\" ] && [ -d \"\$NEXT_DIST_DIR\" ]; then
+  echo \"Creating symbolic link from ./.next to \$NEXT_DIST_DIR\"
+  ln -sfn \"\$NEXT_DIST_DIR\" ./.next
+fi
+
 # Set environment variables for Next.js
 export NEXT_TELEMETRY_DISABLED=1
 export NEXT_DISABLE_FILESYSTEM_CACHE=1
 export NEXT_SHARP_PATH=\"/home/site/wwwroot/node_modules/sharp\"
+export NEXT_IGNORE_FILESYSTEM_CHECK=1  # Critical for Next.js 14.x in read-only environments
 
 # Set Node.js options for better performance in containerized environment
 export NODE_OPTIONS=\"\${NODE_OPTIONS:---max_old_space_size=512 --expose-gc}\"

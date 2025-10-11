@@ -48,8 +48,10 @@ const nextConfig = {
   poweredByHeader: false,
   // Configure temp directory for Azure App Service read-only filesystem
   distDir: process.env.NODE_ENV === 'production' && isAzureAppService 
-    ? path.join(tempDir, '.next') 
+    ? process.env.NEXT_DIST_DIR || path.join(tempDir, '.next') 
     : '.next',
+  // Allow Next.js to use custom dist directory in Azure
+  useFileSystemPublicRoutes: true,
   // Disable file system caching in production for Azure App Service
   onDemandEntries: {
     maxInactiveAge: 60 * 60 * 1000, // 1 hour
