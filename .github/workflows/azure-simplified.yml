@@ -1,0 +1,133 @@
+name: Azure Web App Deployment (Direct)
+
+on:
+  push:
+    branches: [ "azure-deploy-clean" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - production
+
+env:
+  NODE_VERSION: '20.x'
+  AZURE_WEBAPP_NAME: ${{ github.event.inputs.environment == 'production' && 'thinkforward' || 'thinkforward-dev' }}
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+  # Azure Resources
+  COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
+  COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
+  KEY_VAULT_URI: ${{ secrets.KEY_VAULT_URI }}
+  APP_INSIGHTS_CONNECTION_STRING: ${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Direct Build and Deploy Package
+        run: |
+          # Install dependencies
+          npm ci
+          
+          # Build Next.js app
+          echo "Building Next.js application..."
+          npm run build
+          
+          # Verify build succeeded
+          if [ ! -d ".next" ]; then
+            echo "ERROR: Build failed - .next directory not found!"
+            exit 1
+          fi
+          
+          echo "Build completed successfully. Contents of .next directory:"
+          ls -la .next/
+          echo "Build ID: $(cat .next/BUILD_ID)"
+          
+          # Create startup script
+          bash ./scripts/create-direct-startup.sh
+          
+          # Create deployment package with the .next directory included
+          echo "Creating deployment package..."
+          zip -9 -r deploy.zip package.json package-lock.json .next node_modules public startup.sh next.config.mjs
+        env:
+          CI: true
+          NODE_OPTIONS: "--max_old_space_size=4096"
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: deploy.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Create Azure config directory
+        run: |
+          mkdir -p ~/.azure
+          chmod 700 ~/.azure
+      
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set App Settings for Azure Web App
+        run: |
+          # Set app settings for the web app
+          az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --settings \
+              COSMOS_DB_ENDPOINT="${{ secrets.COSMOS_DB_ENDPOINT }}" \
+              COSMOS_DB_KEY="${{ secrets.COSMOS_DB_KEY }}" \
+              KEY_VAULT_URI="${{ secrets.KEY_VAULT_URI }}" \
+              APP_INSIGHTS_CONNECTION_STRING="${{ secrets.APP_INSIGHTS_CONNECTION_STRING }}" \
+              AZURE_AD_CLIENT_ID="${{ secrets.AZURE_AD_CLIENT_ID }}" \
+              AZURE_AD_CLIENT_SECRET="${{ secrets.AZURE_AD_CLIENT_SECRET }}" \
+              AZURE_AD_TENANT_ID="${{ secrets.AZURE_AD_TENANT_ID }}" \
+              NODE_ENV="production" \
+              NEXTAUTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" \
+              NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+          
+          # Configure startup command to use our startup script
+          az webapp config set --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --startup-file "startup.sh"
+        
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: 'production'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./deploy.zip
+      
+      - name: Wait for deployment to propagate
+        run: sleep 30
+          
+      - name: Restart Azure Web App
+        run: |
+          az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
