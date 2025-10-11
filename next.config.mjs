@@ -1,17 +1,47 @@
 // Load build configuration
 import './lib/build-config.js';
+import path from 'path';
+import fs from 'fs';
+
+// Detect if we're running in Azure App Service
+const isAzureAppService = !!process.env.WEBSITE_SITE_NAME;
+
+// Determine the appropriate temp directory
+let tempDir = '/tmp';
+if (isAzureAppService) {
+  // In Azure App Service, use a writable directory
+  tempDir = process.env.NEXT_TEMP_DIR || '/home/site/next-temp';
+  
+  // Create the temp directory if it doesn't exist
+  try {
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+      console.log(`Created temp directory: ${tempDir}`);
+    }
+  } catch (error) {
+    console.warn(`Failed to create temp directory: ${error.message}`);
+  }
+}
+
+console.log(`Using temp directory: ${tempDir}`);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
     typedRoutes: true,
-    mdxRs: true
+    mdxRs: true,
+    // Configure a writable temp directory for Azure App Service
+    serverComponentsExternalPackages: ['sharp']
   },
   // Adjust output caching for Azure App Service (read-only file system)
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   generateEtags: true,
   poweredByHeader: false,
+  // Configure temp directory for Azure App Service read-only filesystem
+  distDir: process.env.NODE_ENV === 'production' && isAzureAppService 
+    ? path.join(tempDir, '.next') 
+    : '.next',
   // Disable file system caching in production for Azure App Service
   onDemandEntries: {
     maxInactiveAge: 60 * 60 * 1000, // 1 hour

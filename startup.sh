@@ -1,45 +1,46 @@
 #!/bin/bash
-# Azure App Service Startup Script - run before server.js
 
-echo "Running startup script for Azure App Service..."
-echo "Current working directory: $(pwd)"
-echo "Node.js version: $(node -v)"
-echo "NPM version: $(npm -v)"
-echo "Process environment: $NODE_ENV"
+# Create temp directories in a location the app can write to
+export NEXT_TEMP_DIR="/home/site/next-temp"
+mkdir -p "$NEXT_TEMP_DIR" || echo "Could not create temp directory at $NEXT_TEMP_DIR"
+export NEXT_CACHE_DIR="$NEXT_TEMP_DIR/cache"
+mkdir -p "$NEXT_CACHE_DIR" || echo "Could not create cache directory at $NEXT_CACHE_DIR"
 
-# Check for critical files
-echo "Checking for critical files..."
-if [ -f "server.js" ]; then
-    echo "Found server.js"
-else
-    echo "ERROR: server.js not found!"
+# Set environment variables for Next.js
+export NEXT_DISABLE_FILESYSTEM_CACHE=1
+export NEXT_TELEMETRY_DISABLED=1
+
+# Log the current directory and files for debugging
+echo "Current directory: $(pwd)"
+echo "Files in current directory: $(ls -la)"
+
+# Log environment variables (excluding sensitive ones)
+echo "NODE_ENV: $NODE_ENV"
+echo "COSMOS_ENDPOINT is set: $(if [ -n "$COSMOS_ENDPOINT" ]; then echo "Yes"; else echo "No"; fi)"
+echo "COSMOS_DB_ENDPOINT is set: $(if [ -n "$COSMOS_DB_ENDPOINT" ]; then echo "Yes"; else echo "No"; fi)"
+echo "COSMOS_KEY is set: $(if [ -n "$COSMOS_KEY" ]; then echo "Yes"; else echo "No"; fi)"
+echo "COSMOS_DB_KEY is set: $(if [ -n "$COSMOS_DB_KEY" ]; then echo "Yes"; else echo "No"; fi)"
+echo "COSMOS_DATABASE is set: $(if [ -n "$COSMOS_DATABASE" ]; then echo "Yes"; else echo "No"; fi)"
+echo "COSMOS_DB_DATABASE_ID is set: $(if [ -n "$COSMOS_DB_DATABASE_ID" ]; then echo "Yes"; else echo "No"; fi)"
+
+# If COSMOS_KEY is not set but COSMOS_DB_KEY is, copy the value
+if [ -z "$COSMOS_KEY" ] && [ -n "$COSMOS_DB_KEY" ]; then
+  echo "Setting COSMOS_KEY from COSMOS_DB_KEY"
+  export COSMOS_KEY="$COSMOS_DB_KEY"
 fi
 
-if [ -f "web.config" ]; then
-    echo "Found web.config"
-else
-    echo "ERROR: web.config not found!"
+# If COSMOS_ENDPOINT is not set but COSMOS_DB_ENDPOINT is, copy the value
+if [ -z "$COSMOS_ENDPOINT" ] && [ -n "$COSMOS_DB_ENDPOINT" ]; then
+  echo "Setting COSMOS_ENDPOINT from COSMOS_DB_ENDPOINT"
+  export COSMOS_ENDPOINT="$COSMOS_DB_ENDPOINT"
 fi
 
-if [ -f "next.config.mjs" ]; then
-    echo "Found next.config.mjs"
-else
-    echo "ERROR: next.config.mjs not found!"
+# If COSMOS_DATABASE is not set but COSMOS_DB_DATABASE_ID is, copy the value
+if [ -z "$COSMOS_DATABASE" ] && [ -n "$COSMOS_DB_DATABASE_ID" ]; then
+  echo "Setting COSMOS_DATABASE from COSMOS_DB_DATABASE_ID"
+  export COSMOS_DATABASE="$COSMOS_DB_DATABASE_ID"
 fi
 
-# Check for .next directory (built app)
-if [ -d ".next" ]; then
-    echo "Found .next directory"
-else
-    echo "WARNING: .next directory not found. The app may not be built properly."
-fi
-
-# Check memory
-free_memory=$(free -m | awk 'NR==2{print $4}')
-echo "Free memory: ${free_memory}MB"
-
-# List environment variables (excluding secrets)
-echo "Environment variables:"
-env | grep -v -e SECRET -e KEY -e PASSWORD | sort
-
-echo "Startup script completed"
+# Start the Node.js server
+echo "Starting Node.js server with custom environment..."
+exec node server.js

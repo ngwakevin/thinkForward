@@ -62,7 +62,8 @@ if [[ "$WEBSITE_RUN_FROM_PACKAGE" == "1" ]]; then
 #!/bin/bash
 
 # Create a temp directory for Next.js cache in a writable location
-export NEXT_TEMP_DIR="/tmp/next-temp"
+# Use the home directory which is writable by the app
+export NEXT_TEMP_DIR="/home/site/next-temp"
 mkdir -p "$NEXT_TEMP_DIR"
 export NEXT_CACHE_DIR="$NEXT_TEMP_DIR/cache"
 mkdir -p "$NEXT_CACHE_DIR"

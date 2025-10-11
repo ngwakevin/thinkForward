@@ -5,10 +5,21 @@ const endpoint = process.env.COSMOS_ENDPOINT || process.env.COSMOS_DB_ENDPOINT |
 const key = process.env.COSMOS_KEY || process.env.COSMOS_DB_KEY || "";
 const databaseId = process.env.COSMOS_DATABASE || process.env.COSMOS_DB_DATABASE_ID || "thinkforward";
 
+// Log environment variable states for debugging
+console.log("Cosmos DB Environment Variables:");
+console.log("COSMOS_ENDPOINT:", process.env.COSMOS_ENDPOINT ? "Set (length: " + process.env.COSMOS_ENDPOINT.length + ")" : "Not set");
+console.log("COSMOS_DB_ENDPOINT:", process.env.COSMOS_DB_ENDPOINT ? "Set (length: " + process.env.COSMOS_DB_ENDPOINT.length + ")" : "Not set");
+console.log("COSMOS_KEY:", process.env.COSMOS_KEY ? "Set (length: " + process.env.COSMOS_KEY.length + ")" : "Not set");
+console.log("COSMOS_DB_KEY:", process.env.COSMOS_DB_KEY ? "Set (length: " + process.env.COSMOS_DB_KEY.length + ")" : "Not set");
+console.log("Final endpoint:", endpoint ? "Set (length: " + endpoint.length + ")" : "Not set");
+console.log("Final key:", key ? "Set (length: " + key.length + ")" : "Not set");
+
 // Check if configuration is valid
 const isValidCosmosConfig = (
   endpoint && 
   key && 
+  endpoint.length > 10 && // Make sure it's a meaningful value
+  key.length > 10 && // Make sure it's a meaningful value
   !endpoint.includes('example.cosmos.azure.com') && 
   !endpoint.includes('placeholder')
 );
@@ -21,17 +32,33 @@ const USERS_CONTAINER = "users";
 const PROFILES_CONTAINER = "profiles";
 
 // Initialize the Cosmos client if configuration is valid
-const client = isValidCosmosConfig ? new CosmosClient({ 
-  endpoint, 
-  key,
-  connectionPolicy: {
-    requestTimeout: 10000, // 10 seconds
-    retryOptions: {
-      maxRetryAttemptCount: 3,
-      maxWaitTimeInSeconds: 5
-    }
+let client: CosmosClient | null = null;
+if (isValidCosmosConfig) {
+  try {
+    console.log("Attempting to create Cosmos client with:");
+    console.log(`- Endpoint: ${endpoint.substring(0, 15)}...`); // Only log the beginning for security
+    console.log(`- Key length: ${key.length}`);
+    console.log(`- First/last chars of key: ${key.substring(0, 3)}...${key.substring(key.length-3)}`);
+    
+    client = new CosmosClient({ 
+      endpoint, 
+      key,
+      connectionPolicy: {
+        requestTimeout: 15000, // 15 seconds for more tolerance
+        retryOptions: {
+          maxRetryAttemptCount: 5,
+          maxWaitTimeInSeconds: 10
+        }
+      }
+    });
+    console.log("Cosmos client created successfully");
+  } catch (initError) {
+    console.error("Failed to create Cosmos client:", initError);
+    client = null;
   }
-}) : null;
+} else {
+  console.warn("Invalid Cosmos configuration, client not initialized");
+}
 
 // Log Cosmos DB status
 console.log(`Cosmos DB configuration status: ${isValidCosmosConfig ? 'VALID' : 'INVALID'}`);
@@ -148,7 +175,87 @@ export function isCosmosAvailable(): boolean {
   return cosmosAvailable;
 }
 
+/**
+ * Test the Cosmos DB connection explicitly
+ */
+export async function testCosmosConnection(): Promise<{
+  success: boolean;
+  message: string;
+  details?: any;
+}> {
+  if (!client) {
+    return { 
+      success: false, 
+      message: "Cosmos client not initialized. Check endpoint and key." 
+    };
+  }
+
+  try {
+    console.log("Testing Cosmos DB connection...");
+    // Try to read database info as a simple connectivity test
+    const { resource: databaseInfo } = await client.database(databaseId).read();
+    
+    console.log("Connection test successful!");
+    
+    if (databaseInfo) {
+      console.log("Connected to database:", databaseInfo.id);
+      
+      return {
+        success: true,
+        message: `Successfully connected to database: ${databaseInfo.id}`,
+        details: {
+          databaseId: databaseInfo.id,
+          rid: databaseInfo._rid,
+          timestamp: new Date().toISOString()
+        }
+      };
+    } else {
+      console.log("Connected to database, but no database info returned");
+      
+      return {
+        success: true,
+        message: "Connected to database, but no database info returned",
+        details: {
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+  } catch (error: any) {
+    console.error("Connection test failed:", error);
+    
+    // Detailed error information
+    const errorDetails = {
+      name: error.name,
+      code: error.code,
+      body: error.body,
+      statusCode: error.statusCode,
+      message: error.message,
+      endpoint: endpoint.substring(0, 20) + '...' // Only show beginning for security
+    };
+    
+    return {
+      success: false,
+      message: `Connection test failed: ${error.message}`,
+      details: errorDetails
+    };
+  }
+}
+
 // Initialize the database on module import
-initializeDatabase().catch(error => {
-  console.error("Failed to initialize Cosmos DB on startup:", error);
-});
+initializeDatabase()
+  .then(success => {
+    if (success) {
+      console.log("Cosmos DB initialized successfully on startup");
+      // Test the connection after initialization
+      return testCosmosConnection();
+    } else {
+      console.warn("Cosmos DB initialization skipped or failed");
+      return { success: false, message: "Initialization skipped or failed" };
+    }
+  })
+  .then(testResult => {
+    console.log("Connection test result:", testResult.message);
+  })
+  .catch(error => {
+    console.error("Failed to initialize Cosmos DB on startup:", error);
+  });
