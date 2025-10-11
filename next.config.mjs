@@ -8,6 +8,15 @@ const nextConfig = {
     typedRoutes: true,
     mdxRs: true
   },
+  // Adjust output caching for Azure App Service (read-only file system)
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  generateEtags: true,
+  poweredByHeader: false,
+  // Disable file system caching in production for Azure App Service
+  onDemandEntries: {
+    maxInactiveAge: 60 * 60 * 1000, // 1 hour
+    pagesBufferLength: 5,
+  },
   // Handle Node.js built-in modules
   webpack: (config, { isServer }) => {
     // Fixes npm packages that depend on `fs` module
