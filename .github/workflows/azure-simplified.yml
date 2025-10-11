@@ -59,7 +59,7 @@ jobs:
           
           # Create deployment package with explicit .next directory inclusion
           echo "Creating deployment package with .next directory..."
-          zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules public startup.sh
+          zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules public startup.sh scripts/diagnose-nextjs.sh
           # Add .next directory with explicit verbose output
           echo "Adding .next directory to deployment package..."
           zip -9 -r -v deploy.zip .next

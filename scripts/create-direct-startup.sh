@@ -12,6 +12,15 @@ export NODE_ENV=production
 export PORT=${PORT:-8080}
 export NEXT_TELEMETRY_DISABLED=1
 export NEXT_IGNORE_FILESYSTEM_CHECK=1
+export NEXT_MANUAL_SIG_HANDLE=true
+
+# Run diagnostic script if it exists
+if [ -f "scripts/diagnose-nextjs.sh" ]; then
+  echo "Running Next.js diagnostic script..."
+  bash scripts/diagnose-nextjs.sh
+else
+  echo "Diagnostic script not found, continuing startup..."
+fi
 
 # Log startup information
 echo "Starting Next.js in production mode"
