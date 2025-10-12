@@ -42,14 +42,9 @@ jobs:
           bash scripts/fix-npm-issues.sh
           
           # Create production .env file
-          if [ -f ".env.production.template" ]; then
-            cp .env.production.template .env.production
-          else
-            # Create .env.production if template doesn't exist
-            echo "# Production environment settings" > .env.production
-            echo "NODE_ENV=production" >> .env.production
-            echo "NEXTAUTH_URL=https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" >> .env.production
-          fi
+          echo "# Production environment settings" > .env.production
+          echo "NODE_ENV=production" >> .env.production
+          echo "NEXTAUTH_URL=https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" >> .env.production
           
           # Add Azure resource configurations
           echo "COSMOS_DB_ENDPOINT=${{ secrets.COSMOS_DB_ENDPOINT }}" >> .env.production
@@ -61,20 +56,44 @@ jobs:
           # Install ALL dependencies including dev dependencies needed for build
           npm ci
           
-          # Build the application with all required dependencies
+          # Build the Next.js application - THIS IS CRITICAL
+          echo "Building Next.js application..."
           npm run build
           
-          # Now that build is complete, prune dev dependencies
-          echo "Removing dev dependencies to reduce package size..."
-          npm prune --production
+          # Verify the build succeeded and .next directory exists
+          if [ ! -d ".next" ]; then
+            echo "ERROR: Build failed - .next directory not found!"
+            exit 1
+          fi
           
-          # Clean up node_modules to make the package smaller
-          rm -rf node_modules/.cache
-          rm -rf node_modules/@next/swc-*
-          rm -rf node_modules/.bin
+          # Log build information for debugging
+          echo "Build completed successfully. Contents of .next directory:"
+          ls -la .next/
+          echo "Build ID: $(cat .next/BUILD_ID)"
           
-          # Create a leaner package
-          bash scripts/zip-prebuild.sh
+          # Prepare Azure deployment scripts
+          chmod +x scripts/fix-nextjs-build-dir.sh
+          chmod +x scripts/diagnose-nextjs.sh
+          chmod +x scripts/create-direct-startup.sh
+          chmod +x scripts/create-nextjs-wrapper.js
+          
+          # Make sure the build directory fix runs during deployment
+          echo "Generating startup script with build directory fix..."
+          bash scripts/create-direct-startup.sh
+          
+          # Verify our startup script is created correctly
+          if [ ! -f "startup.sh" ]; then
+            echo "ERROR: Failed to generate startup.sh"
+            exit 1
+          fi
+          
+          # Make sure the startup script is executable
+          chmod +x startup.sh
+          chmod +x startup.sh
+          
+          # Create deployment package directly
+          echo "Creating deployment package..."
+          zip -9 -r deploy.zip package.json package-lock.json .next node_modules public startup.sh next.config.mjs
         env:
           CI: true
           NODE_OPTIONS: "--max_old_space_size=4096"

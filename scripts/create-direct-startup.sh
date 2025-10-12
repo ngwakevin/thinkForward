@@ -13,6 +13,44 @@ export NEXT_TELEMETRY_DISABLED=1
 export NEXT_IGNORE_FILESYSTEM_CHECK=1
 export NEXT_MANUAL_SIG_HANDLE=true
 
+# Print environment variables for debugging
+echo "NEXT_TEMP_DIR=$NEXT_TEMP_DIR"
+echo "NEXT_DIST_DIR=$NEXT_DIST_DIR"
+
+# Create the directory structure based on environment variables
+if [ ! -z "$NEXT_TEMP_DIR" ]; then
+  echo "Creating build directory structure at $NEXT_TEMP_DIR..."
+  mkdir -p $NEXT_TEMP_DIR/.next/server
+  
+  # Copy the .next directory contents if available
+  if [ -d ".next" ]; then
+    echo "Copying .next directory contents to $NEXT_TEMP_DIR/.next..."
+    cp -r .next/* $NEXT_TEMP_DIR/.next/
+  else
+    # Create minimal required files
+    echo "Creating minimal required files in $NEXT_TEMP_DIR/.next..."
+    echo "$(date +%s)" > $NEXT_TEMP_DIR/.next/BUILD_ID
+    echo "{}" > $NEXT_TEMP_DIR/.next/server/pages-manifest.json
+    echo "{}" > $NEXT_TEMP_DIR/.next/build-manifest.json
+  fi
+  
+  # Create symbolic link
+  echo "Creating symbolic link from .next to $NEXT_TEMP_DIR/.next..."
+  rm -f .next
+  ln -sf $NEXT_TEMP_DIR/.next .next
+  
+  echo "Contents of $NEXT_TEMP_DIR/.next:"
+  ls -la $NEXT_TEMP_DIR/.next/
+fi
+
+# Run the build directory fix script for additional fixes
+if [ -f "scripts/fix-nextjs-build-dir.sh" ]; then
+  echo "Running Next.js build directory fix script..."
+  bash scripts/fix-nextjs-build-dir.sh
+else
+  echo "Fix script not found, this may cause build directory issues"
+fi
+
 # Run diagnostic script if it exists
 if [ -f "scripts/diagnose-nextjs.sh" ]; then
   echo "Running Next.js diagnostic script..."

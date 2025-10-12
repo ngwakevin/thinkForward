@@ -22,6 +22,39 @@ The GitHub Actions workflow will:
 3. Create a deployment package (deploy.zip)
 4. Deploy the package to Azure App Service
 
+### Important: Ensure CI/CD Builds Before Deployment
+
+Your GitHub Actions workflow **must** include a build step before deploying to ensure the `.next` directory is properly generated:
+
+```yaml
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build Next.js app
+        run: npm run build
+        
+      - name: Prepare deployment package
+        run: bash scripts/zip-prebuild.sh
+        
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: your-app-name
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy.zip
+```
+
 ## Manual Deployment
 
 If you prefer to deploy manually:
