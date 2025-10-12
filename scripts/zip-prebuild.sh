@@ -396,6 +396,7 @@ chmod +x scripts/create-nextjs-wrapper.js
 chmod +x scripts/create-direct-startup.sh
 chmod +x scripts/diagnose-nextjs.sh
 chmod +x scripts/resolve-next-modules.js
+chmod +x scripts/minimal-next-starter.js
 
 # Verify Next.js modules exist in node_modules
 echo "Verifying Next.js modules in node_modules..."

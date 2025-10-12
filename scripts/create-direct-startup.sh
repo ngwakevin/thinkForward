@@ -115,14 +115,26 @@ export NODE_OPTIONS="--max_old_space_size=512 --inspect=0.0.0.0:9229"
 TEMP_DIR="/home/site/temp"
 mkdir -p $TEMP_DIR
 
+# Copy server.js and important scripts to temp directory for easier access
+echo "Copying critical files to temp directory..."
+if [ -f "server.js" ]; then
+  cp server.js $TEMP_DIR/server.js
+  echo "✅ Copied server.js to $TEMP_DIR"
+fi
+
+if [ -f "scripts/minimal-next-starter.js" ]; then
+  cp scripts/minimal-next-starter.js $TEMP_DIR/minimal-next-starter.js
+  chmod +x $TEMP_DIR/minimal-next-starter.js
+  echo "✅ Copied minimal-next-starter.js to $TEMP_DIR"
+fi
+
 # Create the direct start wrapper in the temp directory
 echo "Creating Next.js direct start wrapper in temp directory..."
 cat > $TEMP_DIR/next-direct-start.js << 'EOL'
 #!/usr/bin/env node
 /**
  * Next.js direct start wrapper for Azure App Service
- * This script bypasses the build directory check that fails in Azure's read-only filesystem
- * Enhanced with module resolution diagnostics and fallback mechanisms
+ * This script is a simple forwarder to our minimal starter
  */
 
 // Force environment variables to bypass checks
@@ -135,132 +147,90 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('Current directory:', process.cwd());
 console.log('Node version:', process.version);
 
-// Print module search paths to diagnose module resolution issues
-console.log('Module search paths:');
-console.log(require.resolve.paths('next') || ['No search paths available']);
-
-// Helper function to check if a module exists
-function moduleExists(name) {
-  try {
-    require.resolve(name);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-// Check if Next.js is installed
-console.log('Checking for Next.js modules:');
-console.log('- next:', moduleExists('next'));
-console.log('- next/dist/server/next:', moduleExists('next/dist/server/next'));
-console.log('- next/dist/bin/next:', moduleExists('next/dist/bin/next'));
-
-// Try using the server directly
-console.log('Starting Next.js with direct server instantiation');
+// Forward to the minimal starter script
 try {
-  // Try to use server directly
-  const path = require('path');
-  const http = require('http');
-  const fs = require('fs');
-
-  // Check for modules in different locations
-  let nextServerPath = null;
-  const possiblePaths = [
-    'next/dist/server/next',
-    '../node_modules/next/dist/server/next',
-    '/home/site/wwwroot/node_modules/next/dist/server/next'
+  console.log('Forwarding to minimal Next.js starter...');
+  
+  // First, try to find the script in the scripts directory
+  const minimalStarterPaths = [
+    './scripts/minimal-next-starter.js',
+    '/home/site/wwwroot/scripts/minimal-next-starter.js',
+    './minimal-next-starter.js',
   ];
-
-  for (const modulePath of possiblePaths) {
+  
+  let scriptPath = null;
+  
+  // Find the script
+  for (const path of minimalStarterPaths) {
     try {
-      require.resolve(modulePath);
-      nextServerPath = modulePath;
-      console.log(`Found Next.js server at: ${modulePath}`);
+      require.resolve(path);
+      scriptPath = path;
+      console.log(`Found minimal starter at: ${path}`);
       break;
     } catch (e) {
-      console.log(`Not found at ${modulePath}`);
+      console.log(`Not found at ${path}`);
     }
   }
-
-  if (!nextServerPath) {
-    throw new Error('Could not locate Next.js server module');
+  
+  // If we found the script, run it
+  if (scriptPath) {
+    require(scriptPath);
+  } else {
+    throw new Error('Could not locate minimal-next-starter.js');
   }
-  
-  // Import the Next.js server
-  const { default: createServer } = require(nextServerPath);
-  
-  const port = parseInt(process.env.PORT, 10) || 3000;
-  const app = createServer({
-    dir: process.cwd(),
-    dev: false,
-    quiet: false
-  });
-  
-  app.prepare().then(() => {
-    http.createServer(app.getRequestHandler()).listen(port, () => {
-      console.log(`> Ready on http://localhost:${port}`);
-    });
-  });
 } catch (error) {
-  console.error('Failed to start server directly:', error);
-  console.log('Falling back to server.js approach...');
+  console.error('Failed to start with minimal starter:', error);
   
-  // Try to find and use the custom server.js first
-  try {
-    console.log('Attempting to use custom server.js');
-    require('/home/site/wwwroot/server.js');
-  } catch (serverErr) {
-    console.error('Failed to start with server.js:', serverErr);
-    
-    // Final fallback to CLI approach
-    try {
-      console.log('Falling back to CLI approach...');
-      
-      // Try to find Next.js CLI in different possible locations
-      let nextCliPath = null;
-      const possibleCliPaths = [
-        'next/dist/bin/next',
-        '../node_modules/next/dist/bin/next',
-        '/home/site/wwwroot/node_modules/next/dist/bin/next'
-      ];
-      
-      for (const cliPath of possibleCliPaths) {
-        try {
-          require.resolve(cliPath);
-          nextCliPath = cliPath;
-          console.log(`Found Next.js CLI at: ${cliPath}`);
-          break;
-        } catch (e) {
-          console.log(`CLI not found at ${cliPath}`);
-        }
-      }
-      
-      if (nextCliPath) {
-        process.argv[1] = require.resolve(nextCliPath);
-        process.argv.splice(2, 0, 'start');
-        console.log(`Starting Next.js with CLI command: next ${process.argv.slice(2).join(' ')}`);
-        require(nextCliPath);
-      } else {
-        throw new Error('Could not locate Next.js CLI');
-      }
-    } catch (cliErr) {
-      console.error('All startup methods failed:', cliErr);
-      console.error('Startup failed. Please check the logs for more information.');
-      process.exit(1);
-    }
-  }
+  // If all else fails, start a minimal HTTP server
+  const http = require('http');
+  const port = parseInt(process.env.PORT, 10) || 3000;
+  
+  console.log(`Starting emergency minimal HTTP server on port ${port}...`);
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>ThinkForward - Emergency Mode</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+            .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+            .emergency { background: #fff8e1; border-color: #ffecb3; }
+          </style>
+        </head>
+        <body>
+          <h1>ThinkForward Application</h1>
+          <div class="card emergency">
+            <h2>Emergency Mode</h2>
+            <p>The application is running in emergency mode. Normal startup procedures failed.</p>
+            <p>Please check the application logs for more information.</p>
+            <p>This page will refresh automatically every 30 seconds.</p>
+          </div>
+          <script>setTimeout(() => { window.location.reload(); }, 30000);</script>
+        </body>
+      </html>
+    `);
+  });
+  
+  server.listen(port, () => {
+    console.log(`Emergency server running at http://localhost:${port}`);
+  });
 }
 EOL
   chmod +x $TEMP_DIR/next-direct-start.js
   echo "Created wrapper script at $TEMP_DIR/next-direct-start.js"
 
-# Use the direct start wrapper from the temp directory
-if [ -f "$TEMP_DIR/next-direct-start.js" ]; then
+# Use our minimal starter as the primary option
+if [ -f "$TEMP_DIR/minimal-next-starter.js" ]; then
+  echo "Starting Next.js using minimal starter from temp directory..."
+  node $TEMP_DIR/minimal-next-starter.js
+elif [ -f "scripts/minimal-next-starter.js" ]; then
+  echo "Starting Next.js using minimal starter from scripts directory..."
+  node scripts/minimal-next-starter.js
+elif [ -f "$TEMP_DIR/next-direct-start.js" ]; then
   echo "Starting Next.js using direct start wrapper from temp directory..."
   node $TEMP_DIR/next-direct-start.js -p $PORT
-elif [ -f "scripts/next-direct-start.js" ]; then
-  echo "Starting Next.js using direct start wrapper from scripts directory..."
-  node scripts/next-direct-start.js -p $PORT
 elif [ -f "server.js" ]; then
   echo "Using custom server.js as fallback..."
   node server.js
