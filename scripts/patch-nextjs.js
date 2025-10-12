@@ -5,15 +5,27 @@
  * to bypass the BUILD_ID check that fails in Azure's read-only environment
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 console.log('Patching Next.js for Azure App Service compatibility...');
+
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Find the Next.js filesystem.js file
 let filesystemPath;
 try {
-  filesystemPath = require.resolve('next/dist/server/lib/router-utils/filesystem');
+  // In ESM, we don't have require.resolve, so we'll find it relative to node_modules
+  filesystemPath = path.resolve(__dirname, '../node_modules/next/dist/server/lib/router-utils/filesystem.js');
+  
+  // Check if the file exists
+  if (!fs.existsSync(filesystemPath)) {
+    throw new Error(`File not found at ${filesystemPath}`);
+  }
+  
   console.log(`Found Next.js filesystem module at: ${filesystemPath}`);
 } catch (err) {
   console.error('Failed to locate Next.js filesystem module:', err.message);
@@ -46,7 +58,6 @@ if (functionStart === -1) {
 }
 
 // Find the code that checks for BUILD_ID
-const buildIdCheckPattern = /if\s*\(\s*!\s*await\s*fileExists\s*\(\s*buildIdPath/;
 const buildIdCheckStart = content.indexOf('buildIdPath', functionStart);
 let buildIdCheckEnd = content.indexOf('throw new Error', buildIdCheckStart);
 

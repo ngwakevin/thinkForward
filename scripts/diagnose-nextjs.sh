@@ -80,10 +80,25 @@ else
   echo "❌ No .next directory in /home/site/next-temp/.next"
 fi
 
+# Check temp directory (our new approach)
+if [ -d "/home/site/temp/.next" ]; then
+  echo "✅ Found .next directory in /home/site/temp/.next (new approach)"
+  echo "Contents:"
+  ls -la /home/site/temp/.next/
+  
+  if [ -f "/home/site/temp/.next/BUILD_ID" ]; then
+    echo "✅ Found BUILD_ID: $(cat /home/site/temp/.next/BUILD_ID)"
+  else
+    echo "❌ BUILD_ID not found in /home/site/temp/.next"
+  fi
+else
+  echo "❌ No .next directory in /home/site/temp/.next (new approach)"
+fi
+
 # Check for required server files
 echo "======= Critical Next.js Files ======="
 # Look for pages-manifest.json
-for location in ".next/server" "/home/site/wwwroot/.next/server" "$NEXT_DIST_DIR/server"; do
+for location in ".next/server" "/home/site/wwwroot/.next/server" "/home/site/temp/.next/server" "/home/site/next-temp/.next/server" "$NEXT_DIST_DIR/server"; do
   if [ -d "$location" ]; then
     echo "Checking $location for critical files..."
     if [ -f "$location/pages-manifest.json" ]; then
@@ -116,12 +131,16 @@ npm list next react react-dom --depth=0
 
 # Check for direct start wrapper
 echo "======= Direct Start Wrapper ======="
-if [ -f "scripts/next-direct-start.js" ]; then
+if [ -f "/home/site/temp/next-direct-start.js" ]; then
+  echo "✅ Found /home/site/temp/next-direct-start.js (new approach)"
+  echo "File permissions: $(ls -la /home/site/temp/next-direct-start.js | awk '{print $1}')"
+  echo "File size: $(wc -c < /home/site/temp/next-direct-start.js) bytes"
+elif [ -f "scripts/next-direct-start.js" ]; then
   echo "✅ Found scripts/next-direct-start.js"
   echo "File permissions: $(ls -la scripts/next-direct-start.js | awk '{print $1}')"
   echo "File size: $(wc -c < scripts/next-direct-start.js) bytes"
 else
-  echo "❌ scripts/next-direct-start.js not found"
+  echo "❌ next-direct-start.js not found in either location"
   echo "Will attempt to create it during startup"
 fi
 
@@ -133,11 +152,31 @@ else
   echo "This file is required to create the direct start wrapper"
 fi
 
+# Check filesystem permissions
+echo "======= Filesystem Permissions ======="
+echo "Testing write permissions in key directories..."
+
+for dir in "/home/site/wwwroot" "/home/site/temp" "/home/site/next-temp"; do
+  if [ -d "$dir" ]; then
+    echo "Testing write access to $dir..."
+    if touch "$dir/test_permissions" 2>/dev/null; then
+      echo "✅ $dir is writable"
+      rm -f "$dir/test_permissions"
+    else
+      echo "❌ $dir is NOT writable (read-only filesystem)"
+    fi
+  else
+    echo "Directory $dir does not exist"
+  fi
+done
+
 echo "======= Diagnostic Complete ======="
 echo "If you're experiencing 'Could not find a production build' errors:"
 echo "1. Make sure your deployment package includes the .next directory"
 echo "2. Check that BUILD_ID exists in your .next directory"
 echo "3. Verify pages-manifest.json exists in .next/server"
 echo "4. Try setting NEXT_IGNORE_FILESYSTEM_CHECK=1 environment variable"
-echo "5. Use the direct start wrapper (scripts/next-direct-start.js) instead of standard Next.js CLI"
+echo "5. Use the direct start wrapper (/home/site/temp/next-direct-start.js) from writable temp directory"
 echo "6. If all else fails, empty build files will be created automatically during startup"
+echo ""
+echo "Our new approach uses /home/site/temp/.next which should be writable even in read-only environments"

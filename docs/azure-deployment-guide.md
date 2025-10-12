@@ -82,11 +82,13 @@ You can run the `scripts/check-azure-env.sh` script locally to verify if all req
 
 ThinkForward uses an improved startup approach designed to be more resilient in Azure App Service:
 
-1. **Direct Start Wrapper**: A custom wrapper script (`scripts/next-direct-start.js`) that bypasses the Next.js CLI and starts the server directly, avoiding issues with the read-only filesystem in Azure.
+1. **Direct Start Wrapper**: A custom wrapper script generated in `/home/site/temp/next-direct-start.js` that bypasses the Next.js CLI and starts the server directly, avoiding issues with the read-only filesystem in Azure.
 
-2. **Automatic Recovery**: The startup script will automatically create minimal build files if the .next directory is missing or corrupted.
+2. **Writable Temp Directory**: All dynamic file operations use the `/home/site/temp` directory which remains writable even in Azure's read-only production environment.
 
-3. **Dynamic Startup Script**: The `scripts/create-direct-startup.sh` script generates a startup.sh file specifically for Azure App Service.
+3. **Automatic Recovery**: The startup script will automatically create minimal build files if the .next directory is missing or corrupted.
+
+4. **Dynamic Startup Script**: The `scripts/create-direct-startup.sh` script generates a startup.sh file specifically for Azure App Service.
 
 To use this improved approach, set your App Service startup command to:
 
@@ -125,9 +127,10 @@ Common issues and solutions:
 
 | Issue | Solution |
 |-------|----------|
-| "Could not find a production build" | Use the direct start wrapper approach |
-| Missing .next directory | The startup script will create minimal build files |
-| Permission denied errors | Azure App Service has a read-only filesystem, use environment variables like NEXT_IGNORE_FILESYSTEM_CHECK=1 |
+| "Could not find a production build" | Use the direct start wrapper approach with the /home/site/temp directory |
+| Missing .next directory | The startup script will create minimal build files in /home/site/temp/.next |
+| Permission denied errors | All file operations use /home/site/temp which is writable even in read-only environments |
+| "Read-only file system" errors | The updated scripts use /home/site/temp for all file operations |
 | Port binding errors | Make sure to use the PORT environment variable provided by Azure |
 
 ## Application URL

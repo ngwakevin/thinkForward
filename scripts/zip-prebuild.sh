@@ -146,10 +146,12 @@ if [ -z \"\$COSMOS_ENDPOINT\" ] && [ -n \"\$COSMOS_DB_ENDPOINT\" ]; then
   export COSMOS_ENDPOINT=\"\$COSMOS_DB_ENDPOINT\"
 fi
 
-# Create direct start wrapper if needed
-if [ ! -f "next-direct-start.js" ]; then
-  echo \"Creating Next.js direct start wrapper in current directory...\"
-  cat > next-direct-start.js << 'WRAPPERSCRIPT'
+# Create direct start wrapper in writable temp directory
+TEMP_DIR=\"/home/site/temp\"
+mkdir -p \"\$TEMP_DIR\" || echo \"Warning: Could not create \$TEMP_DIR\"
+
+echo \"Creating Next.js direct start wrapper in temp directory...\"
+cat > \"\$TEMP_DIR/next-direct-start.js\" << 'WRAPPERSCRIPT'
 #!/usr/bin/env node
 /**
  * Next.js direct start wrapper for Azure App Service
@@ -210,13 +212,13 @@ try {
   }
 }
 WRAPPERSCRIPT
-  chmod +x next-direct-start.js
+  chmod +x \"\$TEMP_DIR/next-direct-start.js\"
   echo \"Created Next.js direct start wrapper\"
 fi
 
 # Try multiple startup methods in order of preference
 echo \"Starting with Next.js direct start wrapper...\"
-node next-direct-start.js || {
+node \"\$TEMP_DIR/next-direct-start.js\" || {
     echo \"Direct start wrapper failed, trying custom server...\"
     sleep 2
     echo \"Starting with custom server: node server.js\"
