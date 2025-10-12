@@ -71,6 +71,27 @@ bash scripts/test-azure-deployment.sh
 echo -e "${GREEN}Packaging application...${NC}"
 bash scripts/zip-prebuild.sh
 
+# Verify the deployment package
+echo -e "${GREEN}Verifying deployment package contents...${NC}"
+if [ -f "scripts/verify-deployment-package.sh" ]; then
+  if ! bash scripts/verify-deployment-package.sh deploy.zip; then
+    echo -e "${RED}ERROR: Deployment package verification failed!${NC}"
+    echo -e "${YELLOW}Please fix the issues before deploying.${NC}"
+    
+    # Prompt for confirmation to continue anyway
+    read -p "Do you want to continue with deployment anyway? (y/N): " CONTINUE
+    if [[ "$CONTINUE" != "y" && "$CONTINUE" != "Y" ]]; then
+      echo -e "${YELLOW}Deployment aborted.${NC}"
+      exit 1
+    fi
+    echo -e "${YELLOW}Continuing with deployment despite verification failures...${NC}"
+  else
+    echo -e "${GREEN}Deployment package verification passed!${NC}"
+  fi
+else
+  echo -e "${YELLOW}WARNING: verify-deployment-package.sh not found. Skipping verification.${NC}"
+fi
+
 # Deploy to Azure App Service
 echo -e "${GREEN}Deploying to Azure App Service (${WEBAPP_NAME})...${NC}"
 az webapp deployment source config-zip \
