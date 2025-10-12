@@ -23,6 +23,13 @@ find ./node_modules -type d -name "test" -o -name "tests" | xargs rm -rf
 find ./node_modules -type d -name ".git" | xargs rm -rf
 find ./node_modules -type f -name ".gitignore" -o -name "*.md" -o -name "LICENSE" | xargs rm -f
 
+# Ensure that our diagnostic and emergency scripts have executable permissions
+echo "Setting executable permissions on critical scripts..."
+chmod +x ./scripts/comprehensive-nextjs-diagnostics.js || echo "Warning: Could not set permissions on diagnostic script"
+chmod +x ./scripts/emergency-server.js || echo "Warning: Could not set permissions on emergency server script"
+chmod +x ./scripts/minimal-next-starter.js || echo "Warning: Could not set permissions on minimal starter script"
+chmod +x ./scripts/create-direct-startup.sh || echo "Warning: Could not set permissions on startup script creator"
+
 # Create startup command file for Azure App Service
 echo "#!/bin/sh
 cd /home/site/wwwroot

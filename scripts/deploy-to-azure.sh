@@ -76,7 +76,7 @@ echo -e "${GREEN}Updating App Service configuration...${NC}"
 az webapp config set \
   --resource-group "$RESOURCE_GROUP" \
   --name "$WEBAPP_NAME" \
-  --startup-command "bash scripts/create-direct-startup.sh && bash startup.sh" \
+  --startup-command "cd /home/site/wwwroot && bash scripts/create-direct-startup.sh && bash startup.sh" \
   --node-version 20-lts
 
 # Set application settings

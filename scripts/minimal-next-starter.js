@@ -87,7 +87,30 @@ function findServerJs() {
 
 // Try to start a minimal server when everything else fails
 function startMinimalServer(port) {
-  console.log(`Starting minimal HTTP server on port ${port}...`);
+  console.log(`Starting emergency server on port ${port}...`);
+  
+  // Try to use the comprehensive emergency server if available
+  const emergencyServerPaths = [
+    './scripts/emergency-server.js',
+    '/home/site/wwwroot/scripts/emergency-server.js',
+    '/home/site/temp/emergency-server.js'
+  ];
+  
+  for (const serverPath of emergencyServerPaths) {
+    try {
+      if (fs.existsSync(serverPath)) {
+        console.log(`Found emergency server at ${serverPath}, executing...`);
+        // Run the emergency server in this process
+        require(serverPath);
+        return; // Emergency server will take over
+      }
+    } catch (err) {
+      console.error(`Error loading emergency server from ${serverPath}:`, err);
+    }
+  }
+  
+  // Fallback to basic server if emergency server not found
+  console.log('Emergency server not found, using basic HTTP server instead');
   const server = http.createServer(createBasicHandler());
   server.listen(port, () => {
     console.log(`Minimal server running at http://localhost:${port}`);
@@ -125,32 +148,72 @@ async function main() {
       const possibleServerPaths = [
         '/home/site/wwwroot/node_modules/next/dist/server/next-server',
         '/home/site/wwwroot/node_modules/next/dist/server/next',
+        '/home/site/temp/node_modules/next/dist/server/next-server',
+        '/home/site/temp/node_modules/next/dist/server/next',
         'next/dist/server/next-server',
-        'next/dist/server/next'
+        'next/dist/server/next',
+        path.resolve('./node_modules/next/dist/server/next-server'),
+        path.resolve('./node_modules/next/dist/server/next')
       ];
       
+      console.log('Searching for Next.js server module in multiple locations...');
       for (const modulePath of possibleServerPaths) {
         try {
           nextServerPath = require.resolve(modulePath);
-          console.log(`Found Next.js server at: ${nextServerPath}`);
+          console.log(`✅ Found Next.js server at: ${nextServerPath}`);
           nextServerModule = require(nextServerPath);
           break;
         } catch (e) {
-          console.log(`Not found at ${modulePath}`);
+          console.log(`❌ Not found at ${modulePath}: ${e.code}`);
         }
       }
       
       if (!nextServerModule) {
-        throw new Error('Could not find Next.js server module');
+        console.error('❌ Could not find Next.js server module in any location!');
+        console.error('Attempting to install Next.js to a writable location as a last resort...');
+        
+        // Try to install Next.js in a writable directory as a last resort
+        try {
+          const tempDir = '/home/site/temp/emergency-next';
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+          }
+          
+          const childProcess = require('child_process');
+          console.log(`Installing Next.js to ${tempDir}...`);
+          childProcess.execSync(`cd ${tempDir} && npm init -y && npm install next@latest`, { 
+            stdio: 'inherit',
+            timeout: 60000
+          });
+          
+          // Try to load from the newly installed location
+          try {
+            nextServerModule = require(`${tempDir}/node_modules/next/dist/server/next`);
+            console.log('✅ Successfully installed and loaded Next.js from emergency location!');
+          } catch (installErr) {
+            console.error('❌ Failed to load Next.js after emergency installation:', installErr);
+            throw new Error('Could not find or install Next.js server module');
+          }
+        } catch (emergencyErr) {
+          console.error('❌ Emergency Next.js installation failed:', emergencyErr);
+          throw new Error('Could not find or install Next.js server module');
+        }
       }
       
       // Next.js exports the server differently in different versions
       if (nextServerModule.default) {
         NextServer = nextServerModule.default;
-        console.log('Using default export from Next.js server module');
+        console.log('✅ Using default export from Next.js server module');
       } else {
         NextServer = nextServerModule;
-        console.log('Using direct export from Next.js server module');
+        console.log('✅ Using direct export from Next.js server module');
+      }
+      
+      // Additional safety check to ensure we have a valid NextServer constructor or createServer function
+      if (typeof NextServer !== 'function' && typeof nextServerModule.createServer !== 'function') {
+        console.error('❌ Next.js module loaded but does not contain expected exports!');
+        console.error('Module exports:', Object.keys(nextServerModule));
+        throw new Error('Next.js module does not contain expected constructor or createServer function');
       }
       
       console.log('Successfully loaded Next.js server module');

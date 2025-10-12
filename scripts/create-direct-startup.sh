@@ -128,6 +128,18 @@ if [ -f "scripts/minimal-next-starter.js" ]; then
   echo "✅ Copied minimal-next-starter.js to $TEMP_DIR"
 fi
 
+if [ -f "scripts/emergency-server.js" ]; then
+  cp scripts/emergency-server.js $TEMP_DIR/emergency-server.js
+  chmod +x $TEMP_DIR/emergency-server.js
+  echo "✅ Copied emergency-server.js to $TEMP_DIR"
+fi
+
+if [ -f "scripts/comprehensive-nextjs-diagnostics.js" ]; then
+  cp scripts/comprehensive-nextjs-diagnostics.js $TEMP_DIR/comprehensive-nextjs-diagnostics.js
+  chmod +x $TEMP_DIR/comprehensive-nextjs-diagnostics.js
+  echo "✅ Copied comprehensive-nextjs-diagnostics.js to $TEMP_DIR"
+fi
+
 # Create the direct start wrapper in the temp directory
 echo "Creating Next.js direct start wrapper in temp directory..."
 cat > $TEMP_DIR/next-direct-start.js << 'EOL'
@@ -221,23 +233,138 @@ EOL
   chmod +x $TEMP_DIR/next-direct-start.js
   echo "Created wrapper script at $TEMP_DIR/next-direct-start.js"
 
-# Use our minimal starter as the primary option
+# Run comprehensive diagnostics if available
+if [ -f "$TEMP_DIR/comprehensive-nextjs-diagnostics.js" ]; then
+  echo "[Startup] Running comprehensive diagnostics..."
+  node $TEMP_DIR/comprehensive-nextjs-diagnostics.js || echo "Diagnostics completed with errors"
+fi
+
+# Try multiple startup methods in sequence with proper error handling
+echo "[Startup] Attempting to start with multiple methods in sequence..."
+
+# Method 1: Try minimal starter as the primary option
 if [ -f "$TEMP_DIR/minimal-next-starter.js" ]; then
   echo "Starting Next.js using minimal starter from temp directory..."
   node $TEMP_DIR/minimal-next-starter.js
-elif [ -f "scripts/minimal-next-starter.js" ]; then
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "❌ Minimal starter failed with code $RESULT, trying next option..."
+  else
+    exit 0 # Success
+  fi
+fi
+
+# Method 2: Try minimal starter from scripts directory
+if [ -f "scripts/minimal-next-starter.js" ]; then
   echo "Starting Next.js using minimal starter from scripts directory..."
   node scripts/minimal-next-starter.js
-elif [ -f "$TEMP_DIR/next-direct-start.js" ]; then
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "❌ Minimal starter in scripts directory failed with code $RESULT, trying next option..."
+  else
+    exit 0 # Success
+  fi
+fi
+
+# Method 3: Try the direct start wrapper
+if [ -f "$TEMP_DIR/next-direct-start.js" ]; then
   echo "Starting Next.js using direct start wrapper from temp directory..."
   node $TEMP_DIR/next-direct-start.js -p $PORT
-elif [ -f "server.js" ]; then
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "❌ Direct start wrapper failed with code $RESULT, trying next option..."
+  else
+    exit 0 # Success
+  fi
+fi
+
+# Method 4: Try server.js as a fallback
+if [ -f "server.js" ]; then
   echo "Using custom server.js as fallback..."
   node server.js
-else
-  echo "Falling back to standard npx approach..."
-  npx next start -p $PORT
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "❌ server.js failed with code $RESULT, trying next option..."
+  else
+    exit 0 # Success
+  fi
 fi
+
+# Method 5: Try standard next start command
+echo "Attempting with standard next start command..."
+npx next start -p $PORT
+RESULT=$?
+if [ $RESULT -ne 0 ]; then
+  echo "❌ Next start command failed with code $RESULT, falling back to emergency server..."
+else
+  exit 0 # Success
+fi
+
+# Method 6: Use emergency server if available
+if [ -f "$TEMP_DIR/emergency-server.js" ]; then
+  echo "⚠️ All startup methods failed! Starting emergency server..."
+  exec node $TEMP_DIR/emergency-server.js
+  exit $? # This shouldn't execute unless exec fails
+fi
+
+# Ultimate fallback - minimal HTTP server
+echo "⚠️ No emergency server found! Running minimalist HTTP server..."
+node -e "
+const http = require('http');
+const fs = require('fs');
+const os = require('os');
+const port = process.env.PORT || 8080;
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(\`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>ThinkForward - Critical Emergency Mode</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+          .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+          .emergency { background: #fff1f0; border-color: #ffccc7; }
+          .info { background: #e6f7ff; border-color: #91d5ff; }
+          pre { background: #f5f5f5; padding: 1rem; overflow: auto; }
+          h1 { color: #cf1322; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        </style>
+      </head>
+      <body>
+        <h1>ThinkForward - Critical Emergency Mode</h1>
+        <div class='card emergency'>
+          <h2>⚠️ Critical Startup Failure</h2>
+          <p>All startup methods have failed. The application is running in critical emergency mode.</p>
+          <p>This indicates serious issues with the application startup process.</p>
+        </div>
+        
+        <div class='card info'>
+          <h3>System Information:</h3>
+          <table>
+            <tr><th>Node Version</th><td>${process.version}</td></tr>
+            <tr><th>Server Time</th><td>${new Date().toISOString()}</td></tr>
+            <tr><th>Hostname</th><td>${os.hostname()}</td></tr>
+            <tr><th>Platform</th><td>${os.platform()}</td></tr>
+            <tr><th>Working Directory</th><td>${process.cwd()}</td></tr>
+            <tr><th>Environment</th><td>NODE_ENV=${process.env.NODE_ENV || 'not set'}</td></tr>
+          </table>
+          <p>This page will refresh every 30 seconds to check for updates.</p>
+        </div>
+        <script>setTimeout(() => { window.location.reload(); }, 30000);</script>
+      </body>
+    </html>
+  \`);
+});
+
+server.listen(port, () => {
+  console.log(\`[CRITICAL EMERGENCY] Server running at http://localhost:\${port}\`);
+  console.log('[CRITICAL EMERGENCY] Started at:', new Date().toISOString());
+  console.log('[CRITICAL EMERGENCY] Working directory:', process.cwd());
+});
+"
 STARTUPSCRIPT
 
 chmod +x startup.sh
