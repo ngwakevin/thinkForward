@@ -17,6 +17,23 @@ if [ ! -d "node_modules/next/dist/server" ]; then
   exit 1
 fi
 
+# Ensure critical scripts exist
+echo "Verifying critical scripts..."
+if [ ! -f "scripts/minimal-next-starter.js" ]; then
+  echo "ERROR: minimal-next-starter.js is missing!"
+  exit 1
+fi
+
+if [ ! -f "scripts/emergency-server.js" ]; then
+  echo "ERROR: emergency-server.js is missing!"
+  exit 1
+fi
+
+if [ ! -f "scripts/comprehensive-nextjs-diagnostics.js" ]; then
+  echo "ERROR: comprehensive-nextjs-diagnostics.js is missing!"
+  exit 1
+fi
+
 # Remove unnecessary files to reduce zip size
 echo "Removing unnecessary files to reduce package size..."
 find ./node_modules -type d -name "test" -o -name "tests" | xargs rm -rf

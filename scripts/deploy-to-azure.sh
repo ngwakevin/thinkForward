@@ -55,6 +55,13 @@ echo -e "${GREEN}Ensuring all Azure deployment scripts are included...${NC}"
 chmod +x scripts/diagnose-nextjs.sh
 chmod +x scripts/create-direct-startup.sh
 chmod +x scripts/test-azure-deployment.sh
+chmod +x scripts/minimal-next-starter.js
+chmod +x scripts/emergency-server.js
+chmod +x scripts/comprehensive-nextjs-diagnostics.js
+
+# Run the prepare-azure-deployment.sh script to ensure critical files are included
+echo -e "${GREEN}Preparing Azure deployment...${NC}"
+bash scripts/prepare-azure-deployment.sh
 
 # Test the deployment locally
 echo -e "${GREEN}Testing the deployment approach locally...${NC}"
