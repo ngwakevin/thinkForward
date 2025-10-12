@@ -395,6 +395,24 @@ chmod +x scripts/fix-nextjs-build-dir.sh
 chmod +x scripts/create-nextjs-wrapper.js
 chmod +x scripts/create-direct-startup.sh
 chmod +x scripts/diagnose-nextjs.sh
+chmod +x scripts/resolve-next-modules.js
+
+# Verify Next.js modules exist in node_modules
+echo "Verifying Next.js modules in node_modules..."
+if [ ! -d "node_modules/next" ]; then
+  echo "WARNING: Next.js not found in node_modules. Installing dependencies..."
+  npm install --production
+fi
+
+if [ ! -f "node_modules/next/dist/server/next.js" ]; then
+  echo "WARNING: Next.js server module not found. This may cause startup issues."
+  ls -la node_modules/next/dist/server/ || echo "Server directory not found"
+fi
+
+if [ ! -f "node_modules/next/dist/bin/next" ]; then
+  echo "WARNING: Next.js CLI not found. This may cause startup issues."
+  ls -la node_modules/next/dist/bin/ || echo "CLI directory not found"
+fi
 
 # Create deployment package including all necessary files with maximum compression
 # Make sure to include next.js specific directories (.next, public) and our custom server

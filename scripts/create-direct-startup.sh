@@ -43,6 +43,14 @@ if [ ! -z "$NEXT_TEMP_DIR" ]; then
   ls -la $NEXT_TEMP_DIR/.next/
 fi
 
+# Run module resolver to find and link Next.js modules
+if [ -f "scripts/resolve-next-modules.js" ]; then
+  echo "Running Next.js module resolver..."
+  node scripts/resolve-next-modules.js
+else
+  echo "Module resolver not found, this may cause module resolution issues"
+fi
+
 # Run the build directory fix script for additional fixes
 if [ -f "scripts/fix-nextjs-build-dir.sh" ]; then
   echo "Running Next.js build directory fix script..."
@@ -114,6 +122,7 @@ cat > $TEMP_DIR/next-direct-start.js << 'EOL'
 /**
  * Next.js direct start wrapper for Azure App Service
  * This script bypasses the build directory check that fails in Azure's read-only filesystem
+ * Enhanced with module resolution diagnostics and fallback mechanisms
  */
 
 // Force environment variables to bypass checks
@@ -121,14 +130,64 @@ process.env.NEXT_IGNORE_FILESYSTEM_CHECK = "1";
 process.env.NEXT_MANUAL_SIG_HANDLE = "true";
 process.env.NEXT_TELEMETRY_DISABLED = "1";
 
+// Log diagnostic information
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Current directory:', process.cwd());
+console.log('Node version:', process.version);
+
+// Print module search paths to diagnose module resolution issues
+console.log('Module search paths:');
+console.log(require.resolve.paths('next') || ['No search paths available']);
+
+// Helper function to check if a module exists
+function moduleExists(name) {
+  try {
+    require.resolve(name);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Check if Next.js is installed
+console.log('Checking for Next.js modules:');
+console.log('- next:', moduleExists('next'));
+console.log('- next/dist/server/next:', moduleExists('next/dist/server/next'));
+console.log('- next/dist/bin/next:', moduleExists('next/dist/bin/next'));
+
+// Try using the server directly
 console.log('Starting Next.js with direct server instantiation');
 try {
   // Try to use server directly
   const path = require('path');
   const http = require('http');
+  const fs = require('fs');
+
+  // Check for modules in different locations
+  let nextServerPath = null;
+  const possiblePaths = [
+    'next/dist/server/next',
+    '../node_modules/next/dist/server/next',
+    '/home/site/wwwroot/node_modules/next/dist/server/next'
+  ];
+
+  for (const modulePath of possiblePaths) {
+    try {
+      require.resolve(modulePath);
+      nextServerPath = modulePath;
+      console.log(`Found Next.js server at: ${modulePath}`);
+      break;
+    } catch (e) {
+      console.log(`Not found at ${modulePath}`);
+    }
+  }
+
+  if (!nextServerPath) {
+    throw new Error('Could not locate Next.js server module');
+  }
   
-  // Import the Next.js server (this may fail if the import structure changes)
-  const { default: createServer } = require('next/dist/server/next');
+  // Import the Next.js server
+  const { default: createServer } = require(nextServerPath);
   
   const port = parseInt(process.env.PORT, 10) || 3000;
   const app = createServer({
@@ -144,18 +203,51 @@ try {
   });
 } catch (error) {
   console.error('Failed to start server directly:', error);
-  console.log('Falling back to CLI approach...');
+  console.log('Falling back to server.js approach...');
   
-  // Fallback to CLI approach
-  process.argv[1] = require.resolve('next/dist/bin/next');
-  process.argv.splice(2, 0, 'start');
-  console.log(`Starting Next.js with fallback CLI command: next ${process.argv.slice(2).join(' ')}`);
+  // Try to find and use the custom server.js first
   try {
-    require('next/dist/bin/next');
-  } catch (err) {
-    console.error('Failed to start with Next.js CLI:', err);
-    console.log('Trying to start with node server.js as last resort');
-    require('../server');
+    console.log('Attempting to use custom server.js');
+    require('/home/site/wwwroot/server.js');
+  } catch (serverErr) {
+    console.error('Failed to start with server.js:', serverErr);
+    
+    // Final fallback to CLI approach
+    try {
+      console.log('Falling back to CLI approach...');
+      
+      // Try to find Next.js CLI in different possible locations
+      let nextCliPath = null;
+      const possibleCliPaths = [
+        'next/dist/bin/next',
+        '../node_modules/next/dist/bin/next',
+        '/home/site/wwwroot/node_modules/next/dist/bin/next'
+      ];
+      
+      for (const cliPath of possibleCliPaths) {
+        try {
+          require.resolve(cliPath);
+          nextCliPath = cliPath;
+          console.log(`Found Next.js CLI at: ${cliPath}`);
+          break;
+        } catch (e) {
+          console.log(`CLI not found at ${cliPath}`);
+        }
+      }
+      
+      if (nextCliPath) {
+        process.argv[1] = require.resolve(nextCliPath);
+        process.argv.splice(2, 0, 'start');
+        console.log(`Starting Next.js with CLI command: next ${process.argv.slice(2).join(' ')}`);
+        require(nextCliPath);
+      } else {
+        throw new Error('Could not locate Next.js CLI');
+      }
+    } catch (cliErr) {
+      console.error('All startup methods failed:', cliErr);
+      console.error('Startup failed. Please check the logs for more information.');
+      process.exit(1);
+    }
   }
 }
 EOL
@@ -169,6 +261,9 @@ if [ -f "$TEMP_DIR/next-direct-start.js" ]; then
 elif [ -f "scripts/next-direct-start.js" ]; then
   echo "Starting Next.js using direct start wrapper from scripts directory..."
   node scripts/next-direct-start.js -p $PORT
+elif [ -f "server.js" ]; then
+  echo "Using custom server.js as fallback..."
+  node server.js
 else
   echo "Falling back to standard npx approach..."
   npx next start -p $PORT
