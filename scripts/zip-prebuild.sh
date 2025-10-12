@@ -146,13 +146,86 @@ if [ -z \"\$COSMOS_ENDPOINT\" ] && [ -n \"\$COSMOS_DB_ENDPOINT\" ]; then
   export COSMOS_ENDPOINT=\"\$COSMOS_DB_ENDPOINT\"
 fi
 
-# Use the custom server.js instead of the next binary with ESM support
-echo \"Starting with custom server: node server.js\"
-node --experimental-specifier-resolution=node server.js || {
-    echo \"ERROR: Failed to start server with experimental specifier resolution. Retrying with default...\"
+# Create direct start wrapper if needed
+if [ ! -f "next-direct-start.js" ]; then
+  echo \"Creating Next.js direct start wrapper in current directory...\"
+  cat > next-direct-start.js << 'WRAPPERSCRIPT'
+#!/usr/bin/env node
+/**
+ * Next.js direct start wrapper for Azure App Service
+ * This script bypasses the build directory check that fails in Azure's read-only filesystem
+ */
+
+// Force environment variables to bypass checks
+process.env.NEXT_IGNORE_FILESYSTEM_CHECK = "1";
+process.env.NEXT_MANUAL_SIG_HANDLE = "true";
+process.env.NEXT_TELEMETRY_DISABLED = "1";
+
+console.log('Starting Next.js with direct server instantiation');
+try {
+  // Try to use server directly
+  const path = require('path');
+  const http = require('http');
+  
+  // Import the Next.js server (this may fail if the import structure changes)
+  try {
+    const { default: createServer } = require('next/dist/server/next');
+    
+    const port = parseInt(process.env.PORT, 10) || 3000;
+    const app = createServer({
+      dir: process.cwd(),
+      dev: false,
+      quiet: false
+    });
+    
+    app.prepare().then(() => {
+      http.createServer(app.getRequestHandler()).listen(port, () => {
+        console.log(`> Ready on http://localhost:${port}`);
+      });
+    });
+  } catch (nextImportError) {
+    console.error('Failed to import Next.js server:', nextImportError);
+    throw nextImportError;
+  }
+} catch (error) {
+  console.error('Failed to start server directly:', error);
+  console.log('Falling back to CLI approach...');
+  
+  // Fallback to CLI approach
+  try {
+    process.argv[1] = require.resolve('next/dist/bin/next');
+    process.argv.splice(2, 0, 'start');
+    console.log(`Starting Next.js with fallback CLI command: next ${process.argv.slice(2).join(' ')}`);
+    require('next/dist/bin/next');
+  } catch (err) {
+    console.error('Failed to start with Next.js CLI:', err);
+    console.log('Trying to start with node server.js as last resort');
+    try {
+      require('./server');
+    } catch (serverErr) {
+      console.error('Failed to start server.js:', serverErr);
+      console.error('All startup methods failed. Exiting.');
+      process.exit(1);
+    }
+  }
+}
+WRAPPERSCRIPT
+  chmod +x next-direct-start.js
+  echo \"Created Next.js direct start wrapper\"
+fi
+
+# Try multiple startup methods in order of preference
+echo \"Starting with Next.js direct start wrapper...\"
+node next-direct-start.js || {
+    echo \"Direct start wrapper failed, trying custom server...\"
     sleep 2
-    echo \"Retrying server start with default settings...\"
-    node server.js
+    echo \"Starting with custom server: node server.js\"
+    node --experimental-specifier-resolution=node server.js || {
+        echo \"ERROR: Failed to start server with experimental specifier resolution. Retrying with default...\"
+        sleep 2
+        echo \"Retrying server start with default settings...\"
+        node server.js
+    }
 }
 
 # Log successful startup

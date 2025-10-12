@@ -103,11 +103,14 @@ export NEXT_TELEMETRY_DISABLED=1
 export NEXT_IGNORE_FILESYSTEM_CHECK=1
 export NODE_OPTIONS="--max_old_space_size=512 --inspect=0.0.0.0:9229"
 
+# Make sure scripts directory exists
+mkdir -p scripts
+
 # Create the direct start wrapper if it doesn't exist
-if [ ! -f "scripts/next-direct-start.js" ]; then
-  echo "Creating Next.js direct start wrapper directly..."
+if [ ! -f "next-direct-start.js" ]; then
+  echo "Creating Next.js direct start wrapper directly in current directory..."
   # Create the script inline instead of using a separate generator
-  cat > scripts/next-direct-start.js << 'EOL'
+  cat > next-direct-start.js << 'EOL'
 #!/usr/bin/env node
 /**
  * Next.js direct start wrapper for Azure App Service
@@ -157,15 +160,18 @@ try {
   }
 }
 EOL
-  chmod +x scripts/next-direct-start.js
+  chmod +x next-direct-start.js
 elif [ -f "scripts/create-nextjs-wrapper.js" ]; then
   echo "Creating Next.js direct start wrapper using generator script..."
   node scripts/create-nextjs-wrapper.js || echo "Failed to run create-nextjs-wrapper.js"
 fi
 
 # Use the direct start wrapper if available
-if [ -f "scripts/next-direct-start.js" ]; then
+if [ -f "next-direct-start.js" ]; then
   echo "Starting Next.js using direct start wrapper..."
+  node next-direct-start.js -p $PORT
+elif [ -f "scripts/next-direct-start.js" ]; then
+  echo "Starting Next.js using direct start wrapper from scripts directory..."
   node scripts/next-direct-start.js -p $PORT
 else
   echo "Falling back to standard npx approach..."
