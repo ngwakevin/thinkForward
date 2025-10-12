@@ -105,8 +105,62 @@ export NODE_OPTIONS="--max_old_space_size=512 --inspect=0.0.0.0:9229"
 
 # Create the direct start wrapper if it doesn't exist
 if [ ! -f "scripts/next-direct-start.js" ]; then
-  echo "Creating Next.js direct start wrapper..."
-  node scripts/create-nextjs-wrapper.js
+  echo "Creating Next.js direct start wrapper directly..."
+  # Create the script inline instead of using a separate generator
+  cat > scripts/next-direct-start.js << 'EOL'
+#!/usr/bin/env node
+/**
+ * Next.js direct start wrapper for Azure App Service
+ * This script bypasses the build directory check that fails in Azure's read-only filesystem
+ */
+
+// Force environment variables to bypass checks
+process.env.NEXT_IGNORE_FILESYSTEM_CHECK = "1";
+process.env.NEXT_MANUAL_SIG_HANDLE = "true";
+process.env.NEXT_TELEMETRY_DISABLED = "1";
+
+console.log('Starting Next.js with direct server instantiation');
+try {
+  // Try to use server directly
+  const path = require('path');
+  const http = require('http');
+  
+  // Import the Next.js server (this may fail if the import structure changes)
+  const { default: createServer } = require('next/dist/server/next');
+  
+  const port = parseInt(process.env.PORT, 10) || 3000;
+  const app = createServer({
+    dir: process.cwd(),
+    dev: false,
+    quiet: false
+  });
+  
+  app.prepare().then(() => {
+    http.createServer(app.getRequestHandler()).listen(port, () => {
+      console.log(`> Ready on http://localhost:${port}`);
+    });
+  });
+} catch (error) {
+  console.error('Failed to start server directly:', error);
+  console.log('Falling back to CLI approach...');
+  
+  // Fallback to CLI approach
+  process.argv[1] = require.resolve('next/dist/bin/next');
+  process.argv.splice(2, 0, 'start');
+  console.log(`Starting Next.js with fallback CLI command: next ${process.argv.slice(2).join(' ')}`);
+  try {
+    require('next/dist/bin/next');
+  } catch (err) {
+    console.error('Failed to start with Next.js CLI:', err);
+    console.log('Trying to start with node server.js as last resort');
+    require('../server');
+  }
+}
+EOL
+  chmod +x scripts/next-direct-start.js
+elif [ -f "scripts/create-nextjs-wrapper.js" ]; then
+  echo "Creating Next.js direct start wrapper using generator script..."
+  node scripts/create-nextjs-wrapper.js || echo "Failed to run create-nextjs-wrapper.js"
 fi
 
 # Use the direct start wrapper if available

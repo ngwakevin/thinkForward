@@ -202,10 +202,129 @@ export default {
 EOL
 fi
 
+# Ensure all crucial Azure deployment scripts are in the package
+echo "Ensuring all Azure deployment scripts are available..."
+
+# Check and create the create-nextjs-wrapper.js script
+if [ ! -f "scripts/create-nextjs-wrapper.js" ]; then
+  echo "Creating create-nextjs-wrapper.js script..."
+  cat > scripts/create-nextjs-wrapper.js << 'EOL'
+#!/usr/bin/env node
+
+console.log('Next.js direct start wrapper for Azure...');
+
+// Create a simple wrapper script that runs Next.js
+const wrapperScript = `#!/usr/bin/env node
+/**
+ * Next.js direct start wrapper for Azure App Service
+ * This script bypasses the build directory check that fails in Azure's read-only filesystem
+ */
+
+// Force environment variables to bypass checks
+process.env.NEXT_IGNORE_FILESYSTEM_CHECK = "1";
+process.env.NEXT_MANUAL_SIG_HANDLE = "true";
+process.env.NEXT_TELEMETRY_DISABLED = "1";
+
+console.log('Starting Next.js with direct server instantiation');
+try {
+  // Try to use server directly
+  const path = require('path');
+  const http = require('http');
+  
+  // Import the Next.js server (this may fail if the import structure changes)
+  const { default: createServer } = require('next/dist/server/next');
+  
+  const port = parseInt(process.env.PORT, 10) || 3000;
+  const app = createServer({
+    dir: process.cwd(),
+    dev: false,
+    quiet: false
+  });
+  
+  app.prepare().then(() => {
+    http.createServer(app.getRequestHandler()).listen(port, () => {
+      console.log(\`> Ready on http://localhost:\${port}\`);
+    });
+  });
+} catch (error) {
+  console.error('Failed to start server directly:', error);
+  console.log('Falling back to CLI approach...');
+  
+  // Fallback to CLI approach
+  process.argv[1] = require.resolve('next/dist/bin/next');
+  process.argv.splice(2, 0, 'start');
+  console.log(\`Starting Next.js with fallback CLI command: next \${process.argv.slice(2).join(' ')}\`);
+  try {
+    require('next/dist/bin/next');
+  } catch (err) {
+    console.error('Failed to start with Next.js CLI:', err);
+    console.log('Trying to start with node server.js as last resort');
+    require('./server');
+  }
+}`;
+
+// Write the wrapper file to disk
+require('fs').writeFileSync('scripts/next-direct-start.js', wrapperScript, 'utf8');
+console.log('Created Next.js direct start wrapper at scripts/next-direct-start.js');
+EOL
+  chmod +x scripts/create-nextjs-wrapper.js
+fi
+
+# Check and create fix-nextjs-build-dir.sh script
+if [ ! -f "scripts/fix-nextjs-build-dir.sh" ]; then
+  echo "Creating fix-nextjs-build-dir.sh script..."
+  cat > scripts/fix-nextjs-build-dir.sh << 'EOL'
+#!/bin/bash
+# Fix Next.js build directory issue in Azure App Service
+
+echo "=== Next.js Azure Build Directory Fix Script ==="
+echo "Date: $(date)"
+echo "Current directory: $(pwd)"
+
+# Create the directory structure if it doesn't exist
+echo "Creating /home/site/next-temp/.next directory structure..."
+mkdir -p /home/site/next-temp/.next/server
+
+# Create minimal required files
+echo "Creating minimal required files in /home/site/next-temp/.next..."
+echo "$(date +%s)" > /home/site/next-temp/.next/BUILD_ID
+echo "{}" > /home/site/next-temp/.next/server/pages-manifest.json
+echo "{}" > /home/site/next-temp/.next/build-manifest.json
+
+# Copy files from .next if it exists
+if [ -d ".next" ] && [ -f ".next/BUILD_ID" ]; then
+  echo "Found valid .next directory, copying files to /home/site/next-temp/.next..."
+  cp -r .next/* /home/site/next-temp/.next/
+  echo "✅ Copied build files from .next to /home/site/next-temp/.next"
+fi
+
+# Create a symlink to ensure proper file access
+echo "Creating symlink from .next to /home/site/next-temp/.next..."
+rm -f .next
+ln -sf /home/site/next-temp/.next .next
+
+# Set permissions
+chmod -R 755 /home/site/next-temp/.next
+
+# Print directory contents
+echo "=== Contents of /home/site/next-temp/.next ==="
+ls -la /home/site/next-temp/.next/
+
+echo "=== Next.js build directory fix complete ==="
+EOL
+  chmod +x scripts/fix-nextjs-build-dir.sh
+fi
+
+# Make sure all scripts are executable
+chmod +x scripts/fix-nextjs-build-dir.sh
+chmod +x scripts/create-nextjs-wrapper.js
+chmod +x scripts/create-direct-startup.sh
+chmod +x scripts/diagnose-nextjs.sh
+
 # Create deployment package including all necessary files with maximum compression
 # Make sure to include next.js specific directories (.next, public) and our custom server
 echo "Creating optimized deployment package with maximum compression..."
-zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public scripts config lib app components data content startup.sh server.js tailwind.config.mjs postcss.config.mjs scripts/patch-nextjs.js
+zip -9 -r deploy.zip package.json package-lock.json next.config.mjs node_modules .next public config lib app components data content startup.sh server.js tailwind.config.mjs postcss.config.mjs scripts
 
 # Check the size of the deployment package
 PACKAGE_SIZE=$(du -h deploy.zip | cut -f1)
