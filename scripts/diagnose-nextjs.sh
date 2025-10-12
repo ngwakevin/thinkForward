@@ -65,6 +65,21 @@ elif [ ! -z "$NEXT_DIST_DIR" ]; then
   echo "❌ NEXT_DIST_DIR is set to $NEXT_DIST_DIR but directory doesn't exist"
 fi
 
+# Check location from error message
+if [ -d "/home/site/next-temp/.next" ]; then
+  echo "✅ Found .next directory in /home/site/next-temp/.next"
+  echo "Contents:"
+  ls -la /home/site/next-temp/.next/
+  
+  if [ -f "/home/site/next-temp/.next/BUILD_ID" ]; then
+    echo "✅ Found BUILD_ID: $(cat /home/site/next-temp/.next/BUILD_ID)"
+  else
+    echo "❌ BUILD_ID not found in /home/site/next-temp/.next"
+  fi
+else
+  echo "❌ No .next directory in /home/site/next-temp/.next"
+fi
+
 # Check for required server files
 echo "======= Critical Next.js Files ======="
 # Look for pages-manifest.json
