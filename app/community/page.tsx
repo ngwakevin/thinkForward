@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../lib/auth';
-import { Container } from '../../components/ui/container';
 import CommunityClient from './CommunityClient';
 import { communityService } from '../../lib/azure/community-service';
 
@@ -11,12 +10,30 @@ export const metadata: Metadata = {
   description: 'Join our vibrant community of learners and professionals. Share knowledge, ask questions, and collaborate with peers worldwide.',
 };
 
-interface Category {
+// Types that match CommunityClient component expectations
+type Category = {
   id: string;
-  name: string;
-  description: string;
   slug: string;
-}
+  name: string;
+  description: string | null;
+};
+
+type Thread = {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  category: Category;
+  user: {
+    id: string;
+    name: string;
+    profile?: {
+      displayName: string | null;
+      avatarUrl: string | null;
+    };
+  };
+  posts: { id: string }[];
+};
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions);
@@ -68,28 +85,60 @@ export default async function CommunityPage() {
     sortOrder: 'desc'
   });
   
-  // Get user info for each thread author
-  const threadsWithUserInfo = await Promise.all(threads.map(async (thread) => {
+  // Get user info for each thread author and format for client component
+  const threadsWithUserInfoPromises = await Promise.all(threads.map(async (thread) => {
     const { cosmosService } = await import('../../lib/azure/cosmos-service');
     const user = await cosmosService.getUserById(thread.authorId);
     
     // Get post count for this thread
     const posts = await communityService.getPostsByThreadId(thread.id);
     
+    // Get category info
+    const category = await communityService.getCategoryBySlug(thread.categoryId);
+    
+    // Skip threads with missing category
+    if (!category) {
+      console.warn(`Thread ${thread.id} has invalid category ID: ${thread.categoryId}`);
+      return null;
+    }
+    
+    // Format category to match client expectations
+    const formattedCategory: Category = {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description || null
+    };
+    
+    // Format thread to match client expectations
     return {
-      ...thread,
+      id: thread.id,
+      title: thread.title,
+      content: thread.content,
+      createdAt: thread.createdAt,
+      category: formattedCategory,
       user: {
-        id: user?.id,
-        name: user?.name,
+        id: user?.id || '',
+        name: user?.name || 'Anonymous',
         profile: {
-          displayName: user?.profile?.displayName || user?.name,
+          displayName: user?.profile?.displayName || user?.name || 'Anonymous',
           avatarUrl: user?.profile?.avatarUrl
         }
       },
-      posts: posts.map(p => ({ id: p.id })),
-      category: await communityService.getCategoryBySlug(thread.categoryId)
+      posts: posts.map(p => ({ id: p.id }))
     };
   }));
   
-  return <CommunityClient initialCategories={categories} initialThreads={threadsWithUserInfo} />;
+  // Filter out null entries and cast to Thread[]
+  const threadsWithUserInfo = threadsWithUserInfoPromises.filter(Boolean) as Thread[];
+  
+  // Format categories to match client expectations
+  const formattedCategories = categories.map(c => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    description: c.description || null
+  }));
+  
+  return <CommunityClient initialCategories={formattedCategories} initialThreads={threadsWithUserInfo} />;
 }
