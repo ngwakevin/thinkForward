@@ -17,16 +17,56 @@ export async function GET(req: Request) {
     console.warn('Failed to parse URL in threads API:', req.url);
   }
   
+  // Extract query parameters
   const categoryId = searchParams.get('categoryId') || undefined;
   const q = searchParams.get('q') || undefined;
+  const sort = searchParams.get('sort') || 'recent';
+  const limit = parseInt(searchParams.get('limit') || '50', 10);
+  
+  // Build the where clause
   const where: any = {};
   if (categoryId) where.categoryId = categoryId;
-  if (q) where.OR = [{ title: { contains: q, mode: 'insensitive' } }, { content: { contains: q, mode: 'insensitive' } }];
+  if (q) where.OR = [
+    { title: { contains: q, mode: 'insensitive' } },
+    { content: { contains: q, mode: 'insensitive' } }
+  ];
+  
+  // Determine the order based on sorting preference
+  const orderBy: any = sort === 'popular' 
+    ? [{ posts: { _count: 'desc' } }, { createdAt: 'desc' }]
+    : { createdAt: 'desc' };
+  
+  // Query with optimized includes
   const threads = await db.thread.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-    include: { category: true, user: { select: { id: true, name: true, profile: { select: { displayName: true, avatarUrl: true } } } }, posts: { select: { id: true }, where: { parentPostId: null } } },
+    orderBy,
+    take: limit,
+    include: { 
+      category: true, 
+      user: { 
+        select: { 
+          id: true, 
+          name: true, 
+          isMentor: true,
+          profile: { 
+            select: { 
+              displayName: true, 
+              avatarUrl: true 
+            } 
+          } 
+        } 
+      },
+      posts: { 
+        select: { id: true }, 
+        where: { parentPostId: null } 
+      },
+      tags: {
+        include: { tag: true }
+      },
+      _count: {
+        select: { posts: true }
+      }
+    },
   });
   return NextResponse.json(threads);
 }

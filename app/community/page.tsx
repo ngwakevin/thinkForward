@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '../../lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../lib/auth';
+import CommunityClient from './CommunityClient';
 
 export default async function CommunityHome() {
   const session = await getServerSession(authOptions);
@@ -35,35 +36,31 @@ export default async function CommunityHome() {
     }
     categories = await db.category.findMany({ orderBy: { name: 'asc' } });
   }
-  const threads = await db.thread.findMany({ orderBy: { createdAt: 'desc' }, take: 10, include: { category: true } });
-  return (
-    <div className="max-w-4xl mx-auto py-8 space-y-8">
-      <div>
-        <h1 className="font-display text-4xl font-bold">Community</h1>
-        <p className="text-fg-muted">Learn together. Ask questions. Share solutions.</p>
-      </div>
-      <section>
-        <h2 className="font-semibold mb-3">Categories</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {(categories as any[]).map((c: any) => (
-            <Link key={c.id} href={`/community/c/${c.slug}` as any} className="rounded-xl border border-border/60 p-4 hover:bg-bg-alt/60">
-              <div className="font-medium">{c.name}</div>
-              {c.description && <div className="text-xs text-fg-muted mt-1 line-clamp-2">{c.description}</div>}
-            </Link>
-          ))}
-        </div>
-      </section>
-      <section>
-        <h2 className="font-semibold mb-3">Latest Threads</h2>
-        <div className="divide-y divide-border/60 rounded-xl border border-border/60">
-          {(threads as any[]).map((t: any) => (
-            <Link key={t.id} href={`/community/t/${t.id}` as any} className="block p-4 hover:bg-bg-alt/60">
-              <div className="text-sm text-fg-muted">{t.category.name}</div>
-              <div className="font-medium">{t.title}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+  
+  // Fetch threads with more information for the client component
+  const threads = await db.thread.findMany({ 
+    orderBy: { createdAt: 'desc' }, 
+    take: 20, 
+    include: { 
+      category: true,
+      user: { 
+        select: { 
+          id: true, 
+          name: true, 
+          profile: { 
+            select: { 
+              displayName: true, 
+              avatarUrl: true 
+            } 
+          } 
+        }
+      },
+      posts: {
+        select: { id: true },
+        where: { parentPostId: null }
+      }
+    } 
+  });
+  
+  return <CommunityClient initialCategories={categories} initialThreads={threads} />;
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import prisma from '../../../../lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../lib/auth';
+import TagManager from '../../../../components/community/TagManager';
 
 async function getThread(id: string) {
   return (prisma as any).thread.findUnique({
@@ -30,6 +31,11 @@ export default async function ThreadPage({ params }: { params: { id: string } })
         <div>
           <div className="text-sm text-fg-muted">{thread.category.name}</div>
           <h1 className="font-display text-3xl font-bold">{thread.title}</h1>
+          <TagManager 
+            threadId={params.id} 
+            editable={thread.userId === me?.id || me?.isMentor}
+            initialTags={(thread as any).tags?.map((tt: any) => tt.tag) || []} 
+          />
         </div>
         <Link href={`/community/c/${thread.category.slug}` as any} className="text-sm text-accent">← Back</Link>
       </div>

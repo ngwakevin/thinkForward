@@ -2,6 +2,7 @@ import Link from 'next/link';
 import prisma from '../../../../lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../lib/auth';
+import TagSelector from '../../../../components/community/TagSelector';
 
 export default async function CategoryPage({ params }: { params: { slug: string } }) {
   const session = await getServerSession(authOptions);
@@ -22,13 +23,36 @@ export default async function CategoryPage({ params }: { params: { slug: string 
         'use server';
         const title = String(formData.get('title') || '');
         const content = String(formData.get('content') || '');
+        const tagIds = String(formData.get('tagIds') || '');
+        
         if (!title || !content) return;
         const userId = (session.user as any)?.id as string | undefined;
         if (!userId) return;
-        await (prisma as any).thread.create({ data: { categoryId: category.id, userId, title, content } });
+        
+        // Create the thread
+        const thread = await (prisma as any).thread.create({ 
+          data: { categoryId: category.id, userId, title, content } 
+        });
+        
+        // Add tags if selected
+        if (tagIds) {
+          const tagArray = tagIds.split(',').filter(Boolean);
+          if (tagArray.length > 0) {
+            const threadTags = tagArray.map(tagId => ({
+              threadId: thread.id,
+              tagId
+            }));
+            
+            await (prisma as any).threadTag.createMany({
+              data: threadTags,
+              skipDuplicates: true
+            });
+          }
+        }
       }} className="rounded-xl border border-border/60 p-4 space-y-3">
         <input name="title" placeholder="Start a new thread…" className="w-full rounded-md border border-border/60 bg-transparent px-3 py-2" />
         <textarea name="content" placeholder="Describe your question or topic" className="w-full rounded-md border border-border/60 bg-transparent px-3 py-2 h-28" />
+        <TagSelector />
         <button type="submit" className="rounded-full bg-accent px-4 py-2 text-white text-sm">Create Thread</button>
       </form>
       <div className="divide-y divide-border/60 rounded-xl border border-border/60">

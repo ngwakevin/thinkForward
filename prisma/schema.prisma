@@ -163,6 +163,7 @@ model Thread {
   category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   posts       Post[]
+  tags        ThreadTag[]
 
   @@index([categoryId, createdAt])
   @@index([userId, createdAt])
@@ -197,6 +198,27 @@ model PostLike {
 
   @@unique([postId, userId])
   @@index([userId])
+}
+
+model Tag {
+  id        String      @id @default(uuid())
+  name      String
+  slug      String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  threads   ThreadTag[]
+
+  @@index([name])
+}
+
+model ThreadTag {
+  threadId  String
+  tagId     String
+  createdAt DateTime @default(now())
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, tagId])
 }
 
 model Notification {
