@@ -161,7 +161,7 @@ export class CommunityService {
     };
     
     const { resource } = await categoryContainer.items.create(newCategory);
-    return resource;
+    return resource as Category;
   }
 
   // Thread Methods
@@ -232,7 +232,7 @@ export class CommunityService {
     };
     
     const { resource } = await threadContainer.items.create(newThread);
-    return resource;
+    return resource as Thread;
   }
   
   async incrementThreadViewCount(id: string): Promise<Thread | null> {
@@ -280,7 +280,7 @@ export class CommunityService {
     // Update the last reply info on the thread
     await this.updateThreadLastReply(post.threadId, newPost.id, post.authorId);
     
-    return resource;
+    return resource as Post;
   }
 
   private async updateThreadLastReply(threadId: string, postId: string, userId: string): Promise<void> {
@@ -419,7 +419,7 @@ export class CommunityService {
     };
     
     const { resource } = await notificationContainer.items.create(newNotification);
-    return resource;
+    return resource as Notification;
   }
   
   async markNotificationAsRead(id: string): Promise<Notification | null> {
@@ -433,7 +433,7 @@ export class CommunityService {
       };
       
       const { resource } = await notificationContainer.item(id, id).replace(updatedNotification);
-      return resource;
+      return resource as Notification;
     } catch (error) {
       console.error('Error marking notification as read:', error);
       return null;
