@@ -135,6 +135,10 @@ else
     cp scripts/minimal-next-starter.js $TEMP_DIR/minimal-next-starter.js
     chmod +x $TEMP_DIR/minimal-next-starter.js
     echo "✅ Copied minimal-next-starter.js to $TEMP_DIR"
+  elif [ -f "public/azure-backup/scripts/minimal-next-starter.js" ]; then
+    cp public/azure-backup/scripts/minimal-next-starter.js $TEMP_DIR/minimal-next-starter.js
+    chmod +x $TEMP_DIR/minimal-next-starter.js
+    echo "✅ Recovered minimal-next-starter.js from azure-backup"
   else
     echo "❌ ERROR: minimal-next-starter.js not found!"
   fi
@@ -143,6 +147,10 @@ else
     cp scripts/emergency-server.js $TEMP_DIR/emergency-server.js
     chmod +x $TEMP_DIR/emergency-server.js
     echo "✅ Copied emergency-server.js to $TEMP_DIR"
+  elif [ -f "public/azure-backup/scripts/emergency-server.js" ]; then
+    cp public/azure-backup/scripts/emergency-server.js $TEMP_DIR/emergency-server.js
+    chmod +x $TEMP_DIR/emergency-server.js
+    echo "✅ Recovered emergency-server.js from azure-backup"
   else
     echo "❌ ERROR: emergency-server.js not found!"
   fi
@@ -151,6 +159,10 @@ else
     cp scripts/comprehensive-nextjs-diagnostics.js $TEMP_DIR/comprehensive-nextjs-diagnostics.js
     chmod +x $TEMP_DIR/comprehensive-nextjs-diagnostics.js
     echo "✅ Copied comprehensive-nextjs-diagnostics.js to $TEMP_DIR"
+  elif [ -f "public/azure-backup/scripts/comprehensive-nextjs-diagnostics.js" ]; then
+    cp public/azure-backup/scripts/comprehensive-nextjs-diagnostics.js $TEMP_DIR/comprehensive-nextjs-diagnostics.js
+    chmod +x $TEMP_DIR/comprehensive-nextjs-diagnostics.js
+    echo "✅ Recovered comprehensive-nextjs-diagnostics.js from azure-backup"
   else
     echo "❌ ERROR: comprehensive-nextjs-diagnostics.js not found!"
   fi
