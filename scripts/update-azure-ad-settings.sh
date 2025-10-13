@@ -10,8 +10,8 @@ NC='\033[0m' # No Color
 
 # Default to development environment if not specified
 ENVIRONMENT=${1:-"development"}
-APP_NAME="thinkforward"
-RESOURCE_GROUP="thinkforward-rg"
+APP_NAME="thinkforward-dev"
+RESOURCE_GROUP="thinkforward-dev-rg"
 
 # Allow user to override resource group
 echo -e "${YELLOW}Enter Azure Resource Group name [${RESOURCE_GROUP}]:${NC}"
@@ -22,9 +22,9 @@ fi
 
 # Determine App Service name based on environment
 if [ "$ENVIRONMENT" == "production" ]; then
-  WEBAPP_NAME="${APP_NAME}"
+  WEBAPP_NAME="thinkforward" # Production uses name without -dev suffix
 else
-  WEBAPP_NAME="${APP_NAME}-dev"
+  WEBAPP_NAME="${APP_NAME}" # Development uses APP_NAME directly (which is already thinkforward-dev)
 fi
 
 # Check if Azure CLI is installed
