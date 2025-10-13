@@ -111,6 +111,25 @@ unzip -l deploy.zip | grep '\.next/standalone/server.js'
 
 If `standalone/server.js` or `scripts/minimal-next-starter.js` is missing from the listing, fix the build/packaging before deploying. The App Service will fall back to the placeholder HTML page if these files are absent.
 
+### One-command local deploy
+
+The `scripts/deploy-azure.sh` helper automates the entire Option 1 flow:
+
+```bash
+AZURE_RESOURCE_GROUP=thinkforward-dev-rg \
+AZURE_WEBAPP_NAME=thinkforward-dev \
+bash scripts/deploy-azure.sh
+```
+
+It will:
+
+1. Install dependencies with `npm ci`
+2. Run the production build
+3. Package the app via `scripts/zip-prebuild.sh`
+4. Set the App Service startup command to `startup.sh`
+5. Upload `deploy.zip`
+6. Restart the App Service so the new startup script is active
+
 ## Troubleshooting
 
 If you encounter issues with your deployment:
