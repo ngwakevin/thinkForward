@@ -35,6 +35,7 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   isEdited?: boolean;
+  parentPostId?: string;
 }
 
 export interface Tag {
@@ -446,6 +447,33 @@ export class CommunityService {
       return true;
     } catch (error) {
       console.error('Error deleting notification:', error);
+      return false;
+    }
+  }
+  
+  async markAllNotificationsAsRead(userId: string): Promise<boolean> {
+    try {
+      // Get all unread notifications for this user
+      const querySpec = {
+        query: 'SELECT * FROM c WHERE c.userId = @userId AND c.isRead = false',
+        parameters: [{ name: '@userId', value: userId }]
+      };
+      
+      const { resources: unreadNotifications } = await notificationContainer.items.query(querySpec).fetchAll();
+      
+      // Update each notification
+      const updatePromises = unreadNotifications.map(notification => {
+        const updatedNotification = {
+          ...notification,
+          isRead: true
+        };
+        return notificationContainer.item(notification.id, notification.id).replace(updatedNotification);
+      });
+      
+      await Promise.all(updatePromises);
+      return true;
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
       return false;
     }
   }

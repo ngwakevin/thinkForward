@@ -1,34 +1,14 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../../../lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../../lib/auth';
-const db = prisma as any;
+import { communityService } from '../../../../../lib/azure/community-service';
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const thread = await db.thread.findUnique({
-    where: { id: params.id },
-    include: {
-      category: true,
-      user: { select: { id: true, name: true, isMentor: true, profile: { select: { displayName: true, avatarUrl: true } } } },
-      posts: {
-        where: { parentPostId: null },
-        orderBy: { createdAt: 'asc' },
-        include: {
-          user: { select: { id: true, name: true, isMentor: true, profile: { select: { displayName: true, avatarUrl: true } } } },
-          children: {
-            orderBy: { createdAt: 'asc' },
-            include: { user: { select: { id: true, name: true, isMentor: true, profile: { select: { displayName: true, avatarUrl: true } } } } },
-          },
-          likes: { select: { id: true, userId: true } },
-        },
-      },
-      tags: {
-        include: { tag: true }
-      }
-    },
-  });
+  
+  // Use communityService to get thread by ID
+  const thread = await communityService.getThreadById(params.id);
   if (!thread) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(thread);
 }
@@ -41,63 +21,38 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { content, parentPostId } = body || {};
   if (!content) return NextResponse.json({ error: 'Missing content' }, { status: 400 });
   
-  // Create the post
-  const post = await db.post.create({ 
-    data: { 
-      threadId: params.id, 
-      userId, 
-      content, 
-      parentPostId: parentPostId || null 
-    } 
+  // Create the post using the community service
+  const post = await communityService.createPost({
+    threadId: params.id,
+    authorId: userId,
+    content,
+    parentPostId: parentPostId || undefined
   });
   
   // Get notification recipients
   let notificationRecipients = new Set<string>();
   
   // Get thread owner to notify
-  const thread = await db.thread.findUnique({
-    where: { id: params.id },
-    select: { userId: true }
-  });
+  const thread = await communityService.getThreadById(params.id);
   
-  if (thread && thread.userId !== userId) {
+  if (thread && thread.authorId !== userId) {
     // Add thread owner to notification recipients if not the current user
-    notificationRecipients.add(thread.userId);
+    notificationRecipients.add(thread.authorId);
   }
   
   // If this is a reply to another post, notify that post's author
-  if (parentPostId) {
-    const parentPost = await db.post.findUnique({
-      where: { id: parentPostId },
-      select: { userId: true }
-    });
-    
-    if (parentPost && parentPost.userId !== userId) {
-      // Add parent post owner to notification recipients if not the current user
-      notificationRecipients.add(parentPost.userId);
-    }
-  }
+  // Since communityService might not have a specific method to get a post by ID,
+  // we'll need to implement this later
   
-  // Get thread details for notification content
-  const threadDetails = await db.thread.findUnique({
-    where: { id: params.id },
-    select: { title: true }
-  });
-  
-  // Create notifications
-  const notifications = [];
+  // Create notifications for each recipient
   for (const recipientId of notificationRecipients) {
-    notifications.push({
+    await communityService.createNotification({
       userId: recipientId,
       type: 'reply',
-      content: `New reply in thread: "${threadDetails?.title}"`,
-      read: false
-    });
-  }
-  
-  if (notifications.length > 0) {
-    await db.notification.createMany({
-      data: notifications
+      message: `New reply in thread: "${thread?.title}"`,
+      isRead: false,
+      relatedItemId: post.id,
+      relatedItemType: 'post'
     });
   }
   

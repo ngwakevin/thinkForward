@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../../../lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../../lib/auth';
+import { communityService } from '../../../../../lib/azure/community-service';
 
 // Mark notification as read
 export async function PATCH(_req: Request, { params }: { params: { id: string } }) {
@@ -10,10 +10,9 @@ export async function PATCH(_req: Request, { params }: { params: { id: string } 
   const userId = (session.user as any)?.id;
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   
-  // First check if the notification belongs to the user
-  const notification = await (prisma as any).notification.findUnique({
-    where: { id: params.id },
-  });
+  // Get notifications for the user
+  const notifications = await communityService.getNotificationsByUserId(userId);
+  const notification = notifications.find(n => n.id === params.id);
   
   if (!notification) {
     return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
@@ -24,10 +23,7 @@ export async function PATCH(_req: Request, { params }: { params: { id: string } 
   }
   
   // Update the notification
-  await (prisma as any).notification.update({
-    where: { id: params.id },
-    data: { read: true },
-  });
+  await communityService.markNotificationAsRead(params.id);
   
   return NextResponse.json({ success: true });
 }
@@ -39,10 +35,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const userId = (session.user as any)?.id;
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   
-  // First check if the notification belongs to the user
-  const notification = await (prisma as any).notification.findUnique({
-    where: { id: params.id },
-  });
+  // Get notifications for the user
+  const notifications = await communityService.getNotificationsByUserId(userId);
+  const notification = notifications.find(n => n.id === params.id);
   
   if (!notification) {
     return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
@@ -53,9 +48,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   }
   
   // Delete the notification
-  await (prisma as any).notification.delete({
-    where: { id: params.id },
-  });
+  await communityService.deleteNotification(params.id);
   
   return NextResponse.json({ success: true });
 }
