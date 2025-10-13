@@ -204,23 +204,44 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // Create or update user in database when they sign in
       try {
-        if (account && user.email) {
-          // Store user in database or fallback to in-memory if DB is unavailable
+        if (account && user) {
+          const profileEmail =
+            user.email ??
+            (profile as any)?.email ??
+            (profile as any)?.preferred_username ??
+            (profile as any)?.userPrincipalName ??
+            (account?.idTokenClaims as any)?.preferred_username ??
+            null;
+
           const persistedUser = await ensureUserFromOidc({
-            email: user.email,
-            name: user.name || '',
+            email: profileEmail || undefined,
+            name: user.name || (profile as any)?.name || '',
             provider: account.provider,
             providerAccountId: account.providerAccountId,
-            oid: (user as any).objectId, // Add object ID if available
-            sub: (user as any).id, // Add subject ID if available
-            preferred_username: (user as any).email, // Fallback to email as UPN if needed
+            oid: (user as any).objectId || (profile as any)?.oid || undefined,
+            sub: (user as any).id,
+            preferred_username:
+              (profile as any)?.preferred_username ||
+              (profile as any)?.userPrincipalName ||
+              profileEmail ||
+              undefined,
+            given_name: (profile as any)?.given_name,
+            family_name: (profile as any)?.family_name,
           });
-          
-          // Log user persistence status
+
           if (persistedUser) {
-            console.log(`[auth] User authenticated: ${user.email} (Provider: ${account.provider})`);
+            // Normalize user object so downstream callbacks receive consistent identifiers
+            (user as any).id = persistedUser.id || user.id;
+            (user as any).providerAccountId = persistedUser.providerAccountId || account.providerAccountId;
+            (user as any).objectId = persistedUser.objectId || (user as any).objectId;
+            (user as any).email = persistedUser.email || profileEmail || user.email;
+            (user as any).name = persistedUser.name || user.name;
+            console.log(`[auth] User authenticated: ${(user as any).email || 'unknown email'} (Provider: ${account.provider})`);
           } else {
-            console.warn(`[auth] User authenticated but not persisted: ${user.email} (Provider: ${account.provider})`);
+            console.warn(
+              `[auth] User authenticated but not persisted: ${(user as any).email || 'unknown email'} (Provider: ${account.provider})`
+            );
+            (user as any).providerAccountId = (user as any).providerAccountId || account.providerAccountId;
           }
         }
         return true;
@@ -231,18 +252,31 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, account, user }: { token: any; account: any; user?: any }) {
-      // Add provider from account info, fallback to user if available
       if (account) {
         token.provider = account.provider;
         token.accessToken = account.access_token;
-      }
-      if (user) {
-        token.id = user.id;
-        // Access provider property safely with type assertion
-        if (user && typeof user === 'object' && 'provider' in user) {
-          token.provider = (user as any).provider;
+        token.providerAccountId = account.providerAccountId;
+        if (account.idTokenClaims?.oid) {
+          token.oid = account.idTokenClaims.oid;
         }
       }
+
+      if (user) {
+        token.id = (user as any).id || token.id;
+        if (user.email) {
+          token.email = user.email;
+        }
+        if ((user as any).provider) {
+          token.provider = (user as any).provider;
+        }
+        if ((user as any).providerAccountId) {
+          token.providerAccountId = (user as any).providerAccountId;
+        }
+        if ((user as any).objectId) {
+          token.oid = (user as any).objectId;
+        }
+      }
+
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
@@ -259,6 +293,9 @@ export const authOptions: NextAuthOptions = {
         
         if (token.oid) {
           session.user.oid = token.oid;
+        }
+        if (!session.user.email && token.email) {
+          session.user.email = token.email;
         }
       }
       return session;
