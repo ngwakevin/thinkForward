@@ -49,14 +49,12 @@ const nextConfig = {
   },
   // Force the server to ignore file system checks
   productionBrowserSourceMaps: true,
-  // Adjust output caching for Azure App Service (read-only file system)
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Always use standalone output for Azure App Service deployment
+  output: 'standalone',
   generateEtags: true,
   poweredByHeader: false,
-  // Configure temp directory for Azure App Service read-only filesystem
-  distDir: process.env.NODE_ENV === 'production' && isAzureAppService 
-    ? process.env.NEXT_DIST_DIR || path.join(tempDir, '.next') 
-    : '.next',
+  // Use default .next directory as standalone mode handles the read-only filesystem
+  distDir: '.next',
   // Allow Next.js to use custom dist directory in Azure
   useFileSystemPublicRoutes: true,
   // Disable file system caching in production for Azure App Service
