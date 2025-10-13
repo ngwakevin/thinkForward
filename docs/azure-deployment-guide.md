@@ -1,6 +1,6 @@
 # Azure Deployment Guide
 
-This guide explains how to deploy the ThinkForward application to Azure App Service using GitHub Actions.
+This guide explains Option 1 – deploying the prebuilt `.next` output directly to Azure App Service using GitHub Actions or manual ZIP deployment.
 
 ## Prerequisites
 
@@ -18,8 +18,8 @@ This guide explains how to deploy the ThinkForward application to Azure App Serv
 
 The GitHub Actions workflow will:
 1. Trigger on push to the `main` or `azure-deploy-clean` branch
-2. Build the Next.js application
-3. Create a deployment package (deploy.zip)
+2. Build the Next.js application in standalone mode (`output: "standalone"`)
+3. Create a deployment package (`deploy.zip`) that includes the `.next` folder, `startup.sh`, and helper scripts
 4. Deploy the package to Azure App Service
 
 ### Important: Ensure CI/CD Builds Before Deployment
@@ -41,10 +41,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Build Next.js app
+      - name: Build Next.js app (standalone)
         run: npm run build
-        
-      - name: Prepare deployment package
+
+      - name: Create Azure deploy zip (Option 1)
         run: bash scripts/zip-prebuild.sh
         
       - name: Deploy to Azure
@@ -60,11 +60,21 @@ jobs:
 If you prefer to deploy manually:
 
 ```bash
-# Build the application
-npm run zip:prebuild
+# ensure clean workspace
+git pull
+npm ci
 
-# Upload the deploy.zip file through Azure Portal or CLI
-az webapp deployment source config-zip --resource-group <resource-group> --name thinkforward-dev --src deploy.zip
+# build Next.js in standalone mode
+npm run build
+
+# produce deploy.zip (placed in repo root)
+bash scripts/zip-prebuild.sh
+
+# upload deploy.zip via Azure CLI
+az webapp deployment source config-zip \
+  --resource-group <resource-group> \
+  --name thinkforward-dev \
+  --src deploy.zip
 ```
 
 ## Environment Variables
@@ -78,38 +88,28 @@ Make sure the following environment variables are set in your Azure App Service:
 
 You can run the `scripts/check-azure-env.sh` script locally to verify if all required variables are set.
 
-## Improved Startup Configuration
+## Startup Configuration (Option 1)
 
-ThinkForward uses an improved startup approach designed to be more resilient in Azure App Service:
+The repository ships with a committed `startup.sh` designed for Azure App Service:
 
-1. **Direct Start Wrapper**: A custom wrapper script generated in `/home/site/temp/next-direct-start.js` that bypasses the Next.js CLI and starts the server directly, avoiding issues with the read-only filesystem in Azure.
+- Verifies that `.next/standalone/server.js` exists and exits early if the build output was not packaged.
+- Restores helper scripts from `public/azure-backup/scripts` if the originals are missing, preventing placeholder fallbacks in production.
+- Copies `.next/static` next to the standalone server and links the `public` directory so static assets are served correctly.
+- Runs the standalone server directly via `node .next/standalone/server.js`.
 
-2. **Writable Temp Directory**: All dynamic file operations use the `/home/site/temp` directory which remains writable even in Azure's read-only production environment.
+**App Service start command**: `startup.sh`
 
-3. **Automatic Recovery**: The startup script will automatically create minimal build files if the .next directory is missing or corrupted.
+No additional generation scripts are required; just ensure the committed `startup.sh` is included in the deployment ZIP.
 
-4. **Dynamic Startup Script**: The `scripts/create-direct-startup.sh` script generates a startup.sh file specifically for Azure App Service.
-
-To use this improved approach, set your App Service startup command to:
-
-```bash
-bash scripts/create-direct-startup.sh && bash startup.sh
-```
-
-## Testing Deployment Locally
-
-Before deploying to Azure, you can test the deployment process locally:
+## Validating the Package Locally
 
 ```bash
-# Run the deployment test script
-bash scripts/test-azure-deployment.sh
+npm run build
+bash scripts/zip-prebuild.sh
+unzip -l deploy.zip | grep '\.next/standalone/server.js'
 ```
 
-This script will:
-1. Generate the direct start wrapper
-2. Create the startup script
-3. Run diagnostics
-4. Test the direct start wrapper locally
+If `standalone/server.js` or `scripts/minimal-next-starter.js` is missing from the listing, fix the build/packaging before deploying. The App Service will fall back to the placeholder HTML page if these files are absent.
 
 ## Troubleshooting
 
