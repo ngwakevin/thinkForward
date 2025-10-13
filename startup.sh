@@ -45,15 +45,16 @@ STANDALONE_DIR=".next/standalone"
 RUNTIME_STANDALONE_DIR="$RUNTIME_ROOT/standalone"
 
 echo "Preparing writable runtime directory at $RUNTIME_ROOT"
-rm -rf "$RUNTIME_STANDALONE_DIR"
+rm -rf "$RUNTIME_ROOT"
 mkdir -p "$RUNTIME_STANDALONE_DIR"
 
 echo "Copying standalone server into runtime directory"
 cp -R "$STANDALONE_DIR/." "$RUNTIME_STANDALONE_DIR/"
 
-echo "Syncing static assets into runtime directory"
-rm -rf "$RUNTIME_STANDALONE_DIR/static"
-cp -R .next/static "$RUNTIME_STANDALONE_DIR/static"
+echo "Syncing static assets into runtime directory (.next/static)"
+mkdir -p "$RUNTIME_STANDALONE_DIR/.next"
+rm -rf "$RUNTIME_STANDALONE_DIR/.next/static"
+cp -R .next/static "$RUNTIME_STANDALONE_DIR/.next/"
 
 echo "Syncing public assets into runtime directory"
 rm -rf "$RUNTIME_STANDALONE_DIR/public"

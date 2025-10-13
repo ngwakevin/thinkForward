@@ -94,7 +94,7 @@ The repository ships with a committed `startup.sh` designed for Azure App Servic
 
 - Verifies that `.next/standalone/server.js` exists and exits early if the build output was not packaged.
 - Restores helper scripts from `public/azure-backup/scripts` if the originals are missing, preventing placeholder fallbacks in production.
-- Copies the standalone build, `.next/static`, and `public` assets into `/home/site/temp/thinkforward-runtime` so writes happen on a writable filesystem.
+- Copies the standalone build into `/home/site/temp/thinkforward-runtime/standalone` and places `.next/static` under that runtime directory so assets are served correctly from `_next/static`.
 - Runs the standalone server directly from that runtime folder via `node server.js`.
 
 **App Service start command**: `startup.sh`
