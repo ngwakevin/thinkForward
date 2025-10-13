@@ -1,24 +1,10 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../lib/auth';
+import { Container } from '../../components/ui/container';
 import CommunityClient from './CommunityClient';
 import { communityService } from '../../lib/azure/community-service';
-
-export default async function CommunityHome() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return (
-      <div className="max-w-3xl mx-auto py-10">
-        <h1 className="font-display text-3xl font-bold">Community</h1>
-        <p className="mt-2 text-fg-muted">Please sign in to access the community.</p>
-        <Link className="mt-4 inline-block text-accent underline" href="/auth/signin">Sign in</Link>
-      </div>
-    );
-  }
-  import type { Metadata } from 'next';
-import { communityService } from '../../lib/azure/community-service';
-import { Container } from '../../components/ui/container';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Community - ThinkForward',
@@ -33,8 +19,17 @@ interface Category {
 }
 
 export default async function CommunityPage() {
-  // Initialize containers if needed
-  await communityService.initialize();
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return (
+      <div className="max-w-3xl mx-auto py-10">
+        <h1 className="font-display text-3xl font-bold">Community</h1>
+        <p className="mt-2 text-fg-muted">Please sign in to access the community.</p>
+        <Link className="mt-4 inline-block text-accent underline" href="/auth/signin">Sign in</Link>
+      </div>
+    );
+  }
+  
   // Initialize containers if needed
   await communityService.initialize();
   
