@@ -40,17 +40,24 @@ ls -la .next/standalone || true
 ls -la .next/static || true
 ls -la public || true
 
-# Copy static assets next to standalone server if not already there
+RUNTIME_ROOT="/home/site/temp/thinkforward-runtime"
 STANDALONE_DIR=".next/standalone"
-if [ ! -d "$STANDALONE_DIR/static" ]; then
-  echo "Copying static assets into standalone directory"
-  cp -R .next/static "$STANDALONE_DIR/static"
-fi
+RUNTIME_STANDALONE_DIR="$RUNTIME_ROOT/standalone"
 
-if [ ! -d "$STANDALONE_DIR/public" ]; then
-  echo "Linking public assets into standalone directory"
-  ln -s ../public "$STANDALONE_DIR/public" 2>/dev/null || cp -R public "$STANDALONE_DIR/public"
-fi
+echo "Preparing writable runtime directory at $RUNTIME_ROOT"
+rm -rf "$RUNTIME_STANDALONE_DIR"
+mkdir -p "$RUNTIME_STANDALONE_DIR"
+
+echo "Copying standalone server into runtime directory"
+cp -R "$STANDALONE_DIR/." "$RUNTIME_STANDALONE_DIR/"
+
+echo "Syncing static assets into runtime directory"
+rm -rf "$RUNTIME_STANDALONE_DIR/static"
+cp -R .next/static "$RUNTIME_STANDALONE_DIR/static"
+
+echo "Syncing public assets into runtime directory"
+rm -rf "$RUNTIME_STANDALONE_DIR/public"
+cp -R public "$RUNTIME_STANDALONE_DIR/public"
 
 # Provide emergency scripts from backups if needed
 BACKUP_DIR="public/azure-backup/scripts"
@@ -73,8 +80,8 @@ ensure_helper_script "scripts/minimal-next-starter.js"
 ensure_helper_script "scripts/emergency-server.js"
 ensure_helper_script "scripts/comprehensive-nextjs-diagnostics.js"
 
-echo "Launching Next.js standalone server..."
-cd "$STANDALONE_DIR"
+echo "Launching Next.js standalone server from writable runtime..."
+cd "$RUNTIME_STANDALONE_DIR"
 exec node server.js
     echo "Direct start wrapper failed, trying custom server..."
     sleep 2
