@@ -5,11 +5,6 @@ on:
     branches: [ "azure-deploy-clean", "main" ]
   workflow_dispatch:
 
-env:
-  NODE_VERSION: '20.x'                   # Set Node.js version
-  AZURE_WEBAPP_NAME: thinkforward-dev    # Azure App Service name
-  AZURE_WEBAPP_PACKAGE_PATH: azure-deploy  # Set to the path to your deployment package
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,85 +14,23 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ env.NODE_VERSION }}
+        node-version: '20'
         cache: 'npm'
 
-    - name: Prepare deployment package
-      run: |
-        # Create deployment directory
-        mkdir -p ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        
-        # Copy necessary files (exclude dev files and node_modules)
-        rsync -av --exclude='.git/' --exclude='.github/' --exclude='node_modules/' --exclude='.next/cache/' --exclude='*.zip' --exclude='*.tar.gz' --exclude='terraform/' --exclude='infra/' --exclude='.env.local' . ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/
-        
-        # Create minimal package.json
-        node -e "
-          const pkg = require('./package.json');
-          const minPkg = {
-            name: pkg.name,
-            version: pkg.version,
-            private: pkg.private,
-            type: pkg.type,
-            engines: pkg.engines,
-            scripts: {
-              start: 'node server.js',
-              postinstall: pkg.scripts.postinstall
-            },
-            dependencies: pkg.dependencies
-          };
-          require('fs').writeFileSync('${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/package.json', JSON.stringify(minPkg, null, 2));
-        "
-        
-        # Run standardization script to create .env.azure
-        chmod +x ./scripts/standardize-env-vars.sh
-        ./scripts/standardize-env-vars.sh
-        
-        # Copy standardized .env.azure to deployment
-        if [ -f ".env.azure" ]; then
-          cp .env.azure "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/.env.production"
-          echo "Using standardized environment variables from .env.azure"
-        else
-          # Fallback if standardization script fails
-          cat > "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/.env.production" << EOL
-          # Production placeholders for Azure App Service
-          NODE_ENV=production
-          PORT=8080
-          # Auth placeholders - will be overridden by App Service settings
-          NEXTAUTH_URL=https://placeholder.azurewebsites.net
-          NEXTAUTH_SECRET=placeholder-for-build
-          AZURE_AD_CLIENT_ID=placeholder-client-id
-          AZURE_AD_TENANT_ID=common
-          AZURE_AD_CLIENT_SECRET=placeholder-secret
-          # Cosmos DB placeholders - will be overridden by App Service settings
-          # Using both variable naming conventions for compatibility
-          COSMOS_ENDPOINT=https://placeholder.documents.azure.com:443/
-          COSMOS_DB_ENDPOINT=https://placeholder.documents.azure.com:443/
-          COSMOS_KEY=placeholder-cosmos-key
-          COSMOS_DB_KEY=placeholder-cosmos-key
-          COSMOS_DATABASE=thinkforward
-          COSMOS_DB_DATABASE_ID=thinkforward
-          EOL
-          echo "Created default environment variables for production"
-        fi
-
     - name: Install dependencies
-      working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-      run: |
-        npm ci --only=production
-        # Pre-build if needed
-        npm run prisma:generate || true
-        npm run build || true
+      run: npm ci
 
-    - name: Create deployment package
-      run: |
-        cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        zip -r ../deploy.zip . -x "node_modules/.*" "*.git*"
+    - name: Build Next.js app (standalone)
+      run: npm run build
+
+    - name: Package deployment zip
+      run: bash scripts/zip-prebuild.sh
 
     - name: Deploy to Azure Web App
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
       with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        slot-name: production
+        app-name: thinkforward-dev
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: deploy.zip
+        startup-command: startup.sh
