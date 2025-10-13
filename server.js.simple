@@ -1,0 +1,76 @@
+/**
+ * Simple fallback server for Azure App Service
+ * This file is used as a last resort if the main server.js fails
+ */
+
+// Check if running in standalone mode
+const fs = require('fs');
+const path = require('path');
+
+// Try to start the server in order of preference
+console.log('Starting server with fallback options...');
+
+try {
+  // Option 1: Try standalone server from Next.js
+  const standalonePath = path.join(process.cwd(), '.next/standalone/server.js');
+  if (fs.existsSync(standalonePath)) {
+    console.log(`Found standalone server at: ${standalonePath}`);
+    require(standalonePath);
+  } 
+  // Option 2: Use Next.js start command
+  else {
+    console.log('No standalone server found, using Next.js directly');
+    const nextBin = require.resolve('next/dist/bin/next');
+    console.log(`Using Next.js binary at: ${nextBin}`);
+    
+    // Set the arguments for Next.js CLI
+    process.argv[1] = nextBin;
+    process.argv.splice(2, 0, 'start');
+    
+    // Start Next.js
+    require(nextBin);
+  }
+} catch (error) {
+  console.error('Failed to start server:', error);
+  
+  // Option 3: Create a basic HTTP server as last resort
+  console.log('Creating emergency HTTP server');
+  const http = require('http');
+  const port = process.env.PORT || 3000;
+  
+  http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>ThinkForward - Emergency Mode</title>
+          <style>
+            body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+            h1 { color: #1e3a8a; }
+            pre { background: #f1f5f9; padding: 1rem; border-radius: 0.25rem; }
+          </style>
+        </head>
+        <body>
+          <h1>ThinkForward - Emergency Server</h1>
+          <p>The application is running in emergency mode.</p>
+          <p>Server time: ${new Date().toISOString()}</p>
+          <p>Node version: ${process.version}</p>
+          <p>Current directory: ${process.cwd()}</p>
+          
+          <h2>Environment Information</h2>
+          <pre>
+NODE_ENV: ${process.env.NODE_ENV || 'Not set'}
+PORT: ${process.env.PORT || 'Not set'}
+NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'Not set'}
+          </pre>
+          
+          <p>This page will refresh every 30 seconds.</p>
+          <script>setTimeout(() => { window.location.reload(); }, 30000);</script>
+        </body>
+      </html>
+    `);
+  }).listen(port, () => {
+    console.log(`Emergency server running on port ${port}`);
+  });
+}
