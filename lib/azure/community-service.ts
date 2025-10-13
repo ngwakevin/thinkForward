@@ -331,7 +331,7 @@ export class CommunityService {
     };
     
     const { resource } = await tagContainer.items.create(newTag);
-    return resource;
+    return resource as Tag;
   }
 
   // Thread Tags Methods
