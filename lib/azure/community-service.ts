@@ -10,6 +10,7 @@ export interface Category {
   slug: string;
   createdAt: string;
   updatedAt: string;
+  createdById?: string;
 }
 
 export interface Thread {
