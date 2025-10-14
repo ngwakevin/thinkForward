@@ -1,13 +1,15 @@
-// Migration utility for transferring data from Prisma (SQLite) to Cosmos DB
-import prisma from '../prisma';
+// Migration utility for data migration to Cosmos DB
+// Note: Prisma functionality has been removed
 import { cosmosService } from './cosmos-service';
 import { verifyCosmosDBConnection } from './cosmos-config';
 
 /**
- * Migrate users from Prisma to Cosmos DB
+ * This function previously migrated users from Prisma to Cosmos DB.
+ * It has been updated to support alternate data sources for migration.
+ * @param users An array of user objects to migrate to Cosmos DB
  * @returns Number of users migrated
  */
-export async function migrateUsersToCosmos(): Promise<number> {
+export async function migrateDataToCosmos(users: any[]): Promise<number> {
   try {
     // Verify connection to Cosmos DB
     const isConnected = await verifyCosmosDBConnection();
@@ -15,9 +17,7 @@ export async function migrateUsersToCosmos(): Promise<number> {
       throw new Error('Could not connect to Cosmos DB');
     }
 
-    // Get all users from Prisma
-    const users = await prisma.user.findMany();
-    console.log(`Found ${users.length} users to migrate`);
+    console.log(`Preparing to migrate ${users.length} users`);
 
     // Migrate users to Cosmos DB
     let migratedCount = 0;
@@ -29,10 +29,8 @@ export async function migrateUsersToCosmos(): Promise<number> {
           console.log(`User ${user.id} already exists in Cosmos DB, updating...`);
           await cosmosService.updateUser(user.id, user);
         } else {
-          // Create user in Cosmos DB (without the id as it will be generated)
-          const { id, ...userData } = user;
-          // @ts-ignore - Type mismatch between Prisma User and Cosmos User
-          await cosmosService.createUser({ ...userData, id });
+          // Create user in Cosmos DB
+          await cosmosService.createUser(user);
         }
         migratedCount++;
       } catch (error) {
@@ -49,12 +47,13 @@ export async function migrateUsersToCosmos(): Promise<number> {
 }
 
 /**
- * Run the migration process
+ * Run the migration process with provided data
+ * @param users User data to migrate
  */
-export async function runMigration() {
+export async function runMigration(users: any[]) {
   try {
     console.log('Starting migration to Cosmos DB...');
-    const count = await migrateUsersToCosmos();
+    const count = await migrateDataToCosmos(users);
     console.log(`Migration completed. ${count} records migrated.`);
     return { success: true, count };
   } catch (error) {
@@ -66,6 +65,6 @@ export async function runMigration() {
 // Add more migration functions for other data types as needed
 
 export default {
-  migrateUsersToCosmos,
+  migrateDataToCosmos,
   runMigration,
 };
