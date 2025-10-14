@@ -6,7 +6,7 @@ import { communityService } from '../../../../lib/azure/community-service';
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const categories = await communityService.getCategories();
+  const categories = await communityService.getAllCategories();
   return NextResponse.json(categories);
 }
 
