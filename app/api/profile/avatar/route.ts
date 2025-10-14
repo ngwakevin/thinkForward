@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../../lib/auth';
-import prisma from '../../../../lib/prisma';
 import { cosmosService } from '../../../../lib/azure/cosmos-service';
 
 // Get presigned URL for avatar upload or handle direct uploads
@@ -48,16 +47,9 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       let user: any = null;
       
-      if (sessUser?.providerAccountId) {
-        user = await prisma.user.findUnique({ where: { providerAccountId: sessUser.providerAccountId } });
-      }
-      
-      if (!user && session.user.email) {
-        user = await prisma.user.findFirst({ where: { email: session.user.email.toLowerCase() } });
-      }
-      
-      if (!user && (sessUser as any)?.oid) {
-        user = await prisma.user.findFirst({ where: ({ objectId: (sessUser as any).oid } as any) });
+      // Try to find user by email
+      if (session.user.email) {
+        user = await cosmosService.getUserByEmail(session.user.email.toLowerCase());
       }
       
       if (user) {
@@ -68,10 +60,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Update user's profile with the new avatar URL
-    await prisma.profile.upsert({
-      where: { userId },
-      update: { avatarUrl: mockUrl },
-      create: { userId, avatarUrl: mockUrl }
+    await cosmosService.updateUser(userId, { 
+      profile: { avatarUrl: mockUrl } 
     });
 
     return NextResponse.json({
