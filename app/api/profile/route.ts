@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth';
-import prisma from '../../../lib/prisma';
 import { cosmosService } from '../../../lib/azure/cosmos-service';
 
 // Minimal version for build testing
@@ -37,19 +36,9 @@ export async function PATCH(req: NextRequest) {
     if (!userId) {
       let user: any = null;
       
-      // Try providerAccountId
-      if (sess?.providerAccountId) {
-        user = await prisma.user.findUnique({ where: { providerAccountId: sess.providerAccountId } });
-      }
-      
-      // Try email
-      if (!user && session.user.email) {
-        user = await prisma.user.findFirst({ where: { email: session.user.email.toLowerCase() } });
-      }
-      
-      // Try Azure objectId
-      if (!user && (sess as any)?.oid) {
-        user = await prisma.user.findFirst({ where: ({ objectId: (sess as any).oid } as any) });
+      // Try email (most reliable method)
+      if (session.user.email) {
+        user = await cosmosService.getUserByEmail(session.user.email.toLowerCase());
       }
       
       if (user) {
@@ -81,47 +70,25 @@ export async function PATCH(req: NextRequest) {
       receiveNotifications
     } = profileData;
 
-    // Update user record (scalar fields on user table)
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        firstName,
-        lastName,
-        phoneNumber,
-        preferredLanguage,
-        // Update profile relation with nested upsert
-        profile: {
-          upsert: {
-            create: {
-              displayName,
-              bio,
-              headline,
-              avatarUrl,
-              location,
-              timezone,
-              currentCompany,
-              currentTitle,
-              linkedinUrl,
-              githubUrl,
-              portfolioUrl
-              // Note: showProfilePublic, showEmailPublic, receiveNotifications are not in schema yet
-            },
-            update: {
-              displayName,
-              bio,
-              headline,
-              avatarUrl,
-              location,
-              timezone,
-              currentCompany,
-              currentTitle,
-              linkedinUrl,
-              githubUrl,
-              portfolioUrl
-              // Note: showProfilePublic, showEmailPublic, receiveNotifications are not in schema yet
-            }
-          }
-        }
+    // Update user record with Cosmos DB
+    await cosmosService.updateUser(userId, {
+      firstName,
+      lastName,
+      phoneNumber,
+      preferredLanguage,
+      profile: {
+        displayName,
+        bio,
+        headline,
+        avatarUrl,
+        location,
+        timezone,
+        currentCompany,
+        currentTitle,
+        linkedinUrl,
+        githubUrl,
+        portfolioUrl
+        // Note: showProfilePublic, showEmailPublic, receiveNotifications are not in schema yet
       }
     });
     
