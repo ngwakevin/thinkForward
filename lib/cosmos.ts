@@ -38,6 +38,7 @@ let cosmosAvailable = false;
 // Containers
 const USERS_CONTAINER = "users";
 const PROFILES_CONTAINER = "profiles";
+const BOOTCAMP_REGISTRATIONS_CONTAINER = "bootcampRegistrations";
 
 // Initialize the Cosmos client if configuration is valid
 let client: CosmosClient | null = null;
@@ -111,9 +112,10 @@ export async function initializeDatabase() {
       console.warn("Cosmos DB client is not initialized. Using mock containers.");
       cosmosAvailable = false;
       
-      // Create mock containers for fallback
-      containers[USERS_CONTAINER] = new MockContainer(USERS_CONTAINER);
-      containers[PROFILES_CONTAINER] = new MockContainer(PROFILES_CONTAINER);
+    // Create mock containers for fallback
+    containers[USERS_CONTAINER] = new MockContainer(USERS_CONTAINER);
+    containers[PROFILES_CONTAINER] = new MockContainer(PROFILES_CONTAINER);
+    containers[BOOTCAMP_REGISTRATIONS_CONTAINER] = new MockContainer(BOOTCAMP_REGISTRATIONS_CONTAINER);
       
       return false;
     }
@@ -137,6 +139,12 @@ export async function initializeDatabase() {
     });
     containers[PROFILES_CONTAINER] = profilesContainer;
 
+    const { container: bootcampRegistrationsContainer } = await database.containers.createIfNotExists({
+      id: BOOTCAMP_REGISTRATIONS_CONTAINER,
+      partitionKey: { paths: ["/id"] }
+    });
+    containers[BOOTCAMP_REGISTRATIONS_CONTAINER] = bootcampRegistrationsContainer;
+
     console.log("Database and containers initialized successfully");
     cosmosAvailable = true;
     return true;
@@ -147,6 +155,7 @@ export async function initializeDatabase() {
     // Create mock containers for fallback
     containers[USERS_CONTAINER] = new MockContainer(USERS_CONTAINER);
     containers[PROFILES_CONTAINER] = new MockContainer(PROFILES_CONTAINER);
+    containers[BOOTCAMP_REGISTRATIONS_CONTAINER] = new MockContainer(BOOTCAMP_REGISTRATIONS_CONTAINER);
     
     return false;
   }
@@ -174,6 +183,13 @@ export async function getUsersContainer(): Promise<Container | MockContainer> {
  */
 export async function getProfilesContainer(): Promise<Container | MockContainer> {
   return getContainer(PROFILES_CONTAINER);
+}
+
+/**
+ * Get the bootcamp registrations container
+ */
+export async function getBootcampRegistrationsContainer(): Promise<Container | MockContainer> {
+  return getContainer(BOOTCAMP_REGISTRATIONS_CONTAINER);
 }
 
 /**

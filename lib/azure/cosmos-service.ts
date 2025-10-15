@@ -6,6 +6,7 @@ export interface User {
   id: string;
   provider: string;
   providerAccountId: string;
+  username?: string | null;
   email?: string | null;
   name?: string | null;
   passwordHash?: string | null;

@@ -17,26 +17,66 @@ export function Hero() {
             <p className="mt-4 text-[11px] text-fg-muted uppercase tracking-[0.2em]">No spam • Cancel anytime</p>
           </div>
 
-          {/* Decorative / Illustration Column (discs only) */}
-          <div className="relative min-h-[480px] hidden lg:block">
-            {/* Gradient discs to match composition (vivid green) */}
-            <div className="absolute -top-2 left-6 h-56 w-56 rounded-full bg-[radial-gradient(circle_at_30%_30%,var(--color-accent),var(--color-accent-alt))] mix-blend-screen saturate-150" />
-            <div className="absolute -top-6 right-0 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_30%_30%,var(--color-accent),var(--color-accent-alt))] mix-blend-screen saturate-150" />
-            <div className="absolute bottom-2 left-12 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_30%_30%,var(--color-accent),var(--color-accent-alt))] mix-blend-screen saturate-150" />
+          {/* Decorative / Illustration Column (modern composition) */}
+          <div className="relative hidden md:flex items-center justify-center">
+            <div className="relative aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[40px] border border-white/10 bg-[rgba(6,24,33,0.88)] shadow-[0_38px_110px_-36px_rgba(0,196,140,0.5)]">
+              <div
+                aria-hidden
+                className="absolute inset-0 opacity-90"
+                style={{
+                  background:
+                    'radial-gradient(circle at 18% 18%, rgba(0,196,140,0.28) 0, rgba(0,196,140,0) 55%),' +
+                    'radial-gradient(circle at 84% 22%, rgba(0,167,119,0.22) 0, rgba(0,167,119,0) 60%),' +
+                    'radial-gradient(circle at 42% 78%, rgba(245,250,252,0.22) 0, rgba(245,250,252,0) 70%)'
+                }}
+              />
+              <div
+                aria-hidden
+                className="absolute -right-10 -top-14 h-64 w-64 rounded-full blur-3xl"
+                style={{
+                  background:
+                    'conic-gradient(from 120deg at 50% 50%, rgba(0,196,140,0.9), rgba(0,196,140,0.25), rgba(245,250,252,0.38), rgba(0,167,119,0.65), rgba(0,196,140,0.78))'
+                }}
+              />
+              <div
+                aria-hidden
+                className="absolute -left-16 bottom-[-120px] h-80 w-80 rounded-full blur-[85px]"
+                style={{
+                  background:
+                    'radial-gradient(circle at 42% 55%, rgba(0,196,140,0.75), rgba(0,196,140,0.18), rgba(0,196,140,0))'
+                }}
+              />
+              <div className="absolute inset-0 opacity-[0.22]">
+                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '34px 34px' }} />
+              </div>
 
-            {/* 8-ring cluster (outlined small circles) */}
-            <div className="pointer-events-none absolute left-[-1rem] top-1/2 -translate-y-1/2" aria-hidden>
-              {/* row 1 (bottom): 4 */}
-              <div className="absolute left-[0px] top-[120px] h-12 w-12 rounded-full border-2 border-border/70" />
-              <div className="absolute left-[56px] top-[120px] h-12 w-12 rounded-full border-2 border-border/70" />
-              <div className="absolute left-[112px] top-[120px] h-12 w-12 rounded-full border-2 border-border/70" />
-              <div className="absolute left-[168px] top-[120px] h-12 w-12 rounded-full border-2 border-border/70" />
-              {/* row 2 (middle): 3, offset right by half-step */}
-              <div className="absolute left-[28px] top-[64px] h-12 w-12 rounded-full border-2 border-border/70" />
-              <div className="absolute left-[84px] top-[64px] h-12 w-12 rounded-full border-2 border-border/70" />
-              <div className="absolute left-[140px] top-[64px] h-12 w-12 rounded-full border-2 border-border/70" />
-              {/* row 3 (top-left): 1 slightly offset left */}
-              <div className="absolute left-[-8px] top-[8px] h-12 w-12 rounded-full border-2 border-border/70" />
+              <div className="relative flex h-full flex-col justify-between p-7 md:p-8">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/18 backdrop-blur">
+                    <span className="h-6 w-6 rounded-full bg-gradient-to-br from-accent to-accent-alt shadow-[0_0_28px_rgba(0,196,140,0.6)]" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.38em] text-white/60">Elevate</p>
+                    <p className="text-sm text-white/80">Structured paths to accelerate your cloud growth.</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[26px] border border-white/15 bg-white/8 p-5 backdrop-blur-xl shadow-[0_24px_54px_-32px_rgba(0,196,140,0.88)]">
+                  <p className="text-base font-semibold text-white">Level up your cloud expertise.</p>
+                  <p className="mt-2 text-sm text-white/75">Hands-on labs, expert mentors, and real-world projects to accelerate your cloud career.</p>
+                  <div className="mt-4 flex items-center gap-3 text-[11px] uppercase tracking-[0.42em] text-accent/85">
+                    <span className="flex h-1.5 w-16 items-center">
+                      <span className="h-1.5 w-full rounded-full bg-gradient-to-r from-accent/90 via-white/85 to-accent-alt/85" />
+                    </span>
+                    Cloudegree
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 text-white/65">
+                  <span className="h-px w-10 rounded-full bg-gradient-to-r from-accent/70 via-white/70 to-accent-alt/70" />
+                  <p className="text-sm uppercase tracking-[0.42em]">Infinite Iterations</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
