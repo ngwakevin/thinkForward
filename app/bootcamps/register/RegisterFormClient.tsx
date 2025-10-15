@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 
 type RegisterResponse = {
   ok: boolean;
@@ -112,6 +113,23 @@ export function RegisterFormClient({ track }: Props) {
       event.currentTarget.reset();
       setPassword('');
       setConfirmPassword('');
+      
+      // If account was created, automatically log the user in
+      if (createAccount && json.createdUser && json.user?.email) {
+        try {
+          // Attempt to sign in with the newly created credentials
+          await signIn('credentials', { 
+            email: json.user.email, 
+            password: password,
+            redirect: false // Don't redirect, we'll handle this in the UI
+          });
+          console.log('Auto login successful after registration');
+          // We don't redirect here as we still want to show the registration success message
+        } catch (signInError) {
+          console.error('Auto login failed after registration:', signInError);
+          // We don't show an error to the user as registration was successful
+        }
+      }
     } catch (err: any) {
       console.error('Bootcamp registration submission failed', err);
       setError(err?.message || 'Unable to submit your registration. Please try again later.');
@@ -178,6 +196,17 @@ export function RegisterFormClient({ track }: Props) {
             <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/70">
               <span className="i-lucide-graduation-cap" />
               Track: {success.track}
+            </p>
+          )}
+          {createAccount && (
+            <p className="mt-2 text-white/80">
+              <span className="inline-flex items-center gap-1 text-success">
+                <span className="i-lucide-circle-check-big" />
+                Account successfully created!
+              </span> 
+              {' '}You're now signed in and can <a href="/profile" className="text-accent hover:text-accent-lighter underline">
+                visit your profile
+              </a> to track your bootcamp registration.
             </p>
           )}
         </div>

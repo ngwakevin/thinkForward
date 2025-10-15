@@ -204,6 +204,20 @@ export default function AccountTabs({ initialData, user }: AccountTabsProps) {
           >
             Privacy & Notifications
           </button>
+          <button
+            onClick={() => setActiveTab('bootcamps')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+              activeTab === 'bootcamps'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-fg-muted hover:text-fg hover:border-border'
+            }`}
+          >
+            <span>Bootcamps</span>
+            <span className="inline-flex items-center justify-center rounded-full bg-accent/15 px-1.5 py-0.5 text-xs font-medium text-accent">
+              <span className="i-lucide-graduation-cap h-3 w-3 mr-1" />
+              New
+            </span>
+          </button>
         </div>
       </div>
 
@@ -595,7 +609,11 @@ export default function AccountTabs({ initialData, user }: AccountTabsProps) {
 
         {/* Bootcamps Tab */}
         {activeTab === 'bootcamps' && (
-          <BootcampRegistrationsSection userId={(session?.user as any)?.id || initialData?.id} />
+          <BootcampRegistrationsSection 
+            userId={(session?.user as any)?.id || 
+                   initialData?.id || 
+                   (user?.email ? user.email : undefined)} 
+          />
         )}
 
         {/* Save Button (fixed at bottom) */}

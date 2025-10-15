@@ -13,22 +13,35 @@ interface BootcampRegistration {
   userId: string;
   name?: string;
   email?: string;
+  type?: string;
 }
 
 export default function BootcampRegistrationsSection({ userId }: { userId?: string }) {
+  // Note: userId can be either a user ID or email - the API will handle resolving it
   const [registrations, setRegistrations] = useState<BootcampRegistration[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   useEffect(() => {
     async function fetchBootcampRegistrations() {
       try {
+        setLoading(true);
         const response = await fetch('/api/profile/bootcamps');
+        
         if (!response.ok) {
           throw new Error('Failed to fetch bootcamp registrations');
         }
+        
         const data = await response.json();
-        setRegistrations(data.registrations || []);
+        console.log('Bootcamp registrations data:', data);
+        
+        if (Array.isArray(data.registrations)) {
+          setRegistrations(data.registrations);
+        } else {
+          console.warn('Bootcamp registrations response is not an array:', data.registrations);
+          setRegistrations([]);
+        }
       } catch (err) {
         console.error('Error fetching bootcamp registrations:', err);
         setError('Could not load your bootcamp registrations. Please try again later.');
@@ -38,7 +51,7 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
     }
 
     fetchBootcampRegistrations();
-  }, [userId]);
+  }, [userId, retryCount]);
 
   if (loading) {
     return (
@@ -63,12 +76,20 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         <div className="text-5xl">🎓</div>
         <h3 className="text-lg font-medium">No bootcamp registrations found</h3>
         <p className="text-sm text-fg-muted">You haven&apos;t registered for any bootcamps yet.</p>
-        <a
-          href="/bootcamps"
-          className="inline-block mt-4 px-5 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent/90 transition-colors"
-        >
-          Explore Bootcamps
-        </a>
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            onClick={() => setRetryCount(prev => prev + 1)}
+            className="px-5 py-2 bg-secondary text-white rounded-md text-sm font-medium hover:bg-secondary/90 transition-colors"
+          >
+            Refresh Registrations
+          </button>
+          <a
+            href="/bootcamps"
+            className="px-5 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent/90 transition-colors"
+          >
+            Explore Bootcamps
+          </a>
+        </div>
       </div>
     );
   }

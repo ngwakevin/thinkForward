@@ -12,14 +12,26 @@ export async function GET(req: NextRequest) {
     }
 
     // Get the user ID from the session
-    const sess: any = session.user;
-    let userId = sess?.id;
+    let userId: string | undefined;
     
-    if (!userId && session.user.email) {
-      // If the ID is not in the session, try to get the user by email
+    // First check if ID is in the session directly
+    const sess = session.user as any;
+    if (sess?.id) {
+      userId = sess.id;
+      console.log('Found user ID in session:', userId);
+    } 
+    // Check for ID in the session with type casting since NextAuth types don't include id
+    else if ((session.user as any)?.id) {
+      userId = (session.user as any).id;
+      console.log('Found user ID in session.user.id:', userId);
+    }
+    // Finally fall back to email lookup
+    else if (session.user?.email) {
+      console.log('Looking up user by email:', session.user.email);
       const user = await cosmosService.getUserByEmail(session.user.email.toLowerCase());
       if (user) {
         userId = user.id;
+        console.log('Found user ID by email lookup:', userId);
       }
     }
 
@@ -28,13 +40,46 @@ export async function GET(req: NextRequest) {
     }
 
     // Query bootcamp registrations using user ID
-    // Using the container directly as we haven't found an existing function for this
-    const { resources: registrations } = await container.items
+    // First try with the type field that's now being added to registrations
+    const { resources: registrationsWithType } = await container.items
       .query({
         query: "SELECT * FROM c WHERE c.type = 'bootcamp-registration' AND c.userId = @userId",
         parameters: [{ name: '@userId', value: userId }]
       })
       .fetchAll();
+      
+    // As a fallback for older registrations, also check records without a type but with bootcamp fields
+    const { resources: legacyRegistrations } = await container.items
+      .query({
+        query: "SELECT * FROM c WHERE c.userId = @userId AND IS_DEFINED(c.bootcampId) AND IS_DEFINED(c.paymentReference)",
+        parameters: [{ name: '@userId', value: userId }]
+      })
+      .fetchAll();
+      
+    // Log query results for debugging
+    console.log(`Found ${registrationsWithType.length} registrations with type='bootcamp-registration'`);
+    console.log(`Found ${legacyRegistrations.length} legacy registrations without type field`);
+    
+    // Combine and deduplicate results by id
+    const registrationMap = new Map();
+    [...registrationsWithType, ...legacyRegistrations].forEach(reg => {
+      registrationMap.set(reg.id, { ...reg, type: reg.type || 'bootcamp-registration' });
+    });
+    
+    const registrations = Array.from(registrationMap.values());
+    console.log(`Total combined registrations: ${registrations.length}`);
+    
+    // Log the first registration for debugging if available
+    if (registrations.length > 0) {
+      console.log('Example registration:', JSON.stringify({
+        id: registrations[0].id,
+        userId: registrations[0].userId,
+        bootcampId: registrations[0].bootcampId,
+        bootcampName: registrations[0].bootcampName,
+        type: registrations[0].type,
+        paymentStatus: registrations[0].paymentStatus
+      }));
+    }
 
     return NextResponse.json({ registrations }, { status: 200 });
   } catch (error) {
