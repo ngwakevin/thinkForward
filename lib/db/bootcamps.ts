@@ -114,6 +114,35 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
   }
 }
 
+export async function getBootcampRegistrationsByUserId(userId: string): Promise<BootcampRegistration[]> {
+  if (!isCosmosAvailable()) {
+    return Array.from(memoryRegistrationStore.values())
+      .filter(reg => reg.userId === userId);
+  }
+  
+  try {
+    const container = await getWritableContainer();
+    if (!('items' in container)) {
+      return Array.from(memoryRegistrationStore.values())
+        .filter(reg => reg.userId === userId);
+    }
+    
+    const querySpec = {
+      query: "SELECT * FROM c WHERE c.userId = @userId",
+      parameters: [
+        { name: "@userId", value: userId }
+      ]
+    };
+    
+    const { resources } = await container.items.query(querySpec).fetchAll();
+    return resources as unknown as BootcampRegistration[];
+  } catch (error) {
+    console.error('Failed to fetch bootcamp registrations by user ID:', error);
+    return Array.from(memoryRegistrationStore.values())
+      .filter(reg => reg.userId === userId);
+  }
+}
+
 export async function listBootcampRegistrations(limit = 100): Promise<BootcampRegistration[]> {
   if (!isCosmosAvailable()) {
     return Array.from(memoryRegistrationStore.values()).slice(0, limit);

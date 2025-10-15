@@ -2,11 +2,30 @@
 import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import BootcampRegistrationsSection from './BootcampRegistrationsSection';
 
 export interface AccountTabsProps {
   initialData: any;
-  user?: {
-    name?: string | null;
+  us          <button
+            onClick={() => setActiveTab('privacy')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'privacy'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-fg-muted hover:text-fg hover:border-border'
+            }`}
+          >
+            Privacy
+          </button>
+          <button
+            onClick={() => setActiveTab('bootcamps')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'bootcamps'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-fg-muted hover:text-fg hover:border-border'
+            }`}
+          >
+            Bootcamps
+          </button> name?: string | null;
     email?: string | null;
     image?: string | null;
   };
@@ -590,6 +609,11 @@ export default function AccountTabs({ initialData, user }: AccountTabsProps) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Bootcamps Tab */}
+        {activeTab === 'bootcamps' && (
+          <BootcampRegistrationsSection userId={session?.user?.id || initialData?.id} />
         )}
 
         {/* Save Button (fixed at bottom) */}

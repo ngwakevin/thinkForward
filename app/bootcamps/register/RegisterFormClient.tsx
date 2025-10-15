@@ -33,6 +33,10 @@ export function RegisterFormClient({ track }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<RegisterResponse['registration'] | null>(null);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const hiddenTrackValue = track ?? '';
 
@@ -41,6 +45,7 @@ export function RegisterFormClient({ track }: Props) {
     if (submitting) return;
 
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
 
     try {
@@ -50,20 +55,63 @@ export function RegisterFormClient({ track }: Props) {
         payload[key] = value;
       });
 
-      const response = await fetch('/api/bootcamps/register', {
+      // Validate password fields if creating an account
+      if (createAccount) {
+        if (!password) {
+          setFieldErrors(prev => ({ ...prev, password: 'Password is required' }));
+          throw new Error('Password is required');
+        }
+        if (password !== confirmPassword) {
+          setFieldErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+          throw new Error('Passwords do not match');
+        }
+        // Add password to payload
+        payload.password = password;
+        payload.confirmPassword = confirmPassword;
+      }
+
+      // Use the register-bootcamp API if creating an account, otherwise use bootcamps/register
+      const endpoint = createAccount ? '/api/register-bootcamp' : '/api/bootcamps/register';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const json: RegisterResponse = await response.json();
+      const json = await response.json();
 
-      if (!response.ok || !json.ok || !json.registration) {
+      if (!response.ok || !json.ok) {
+        // Handle field-specific errors
+        if (json.fieldErrors && Object.keys(json.fieldErrors).length > 0) {
+          setFieldErrors(json.fieldErrors);
+          throw new Error('Please correct the highlighted fields.');
+        }
         throw new Error(json.error || 'Something went wrong while submitting the form.');
       }
 
-      setSuccess(json.registration);
+      if (!json.registration && !createAccount) {
+        throw new Error('No registration information received from the server.');
+      }
+
+      // If registering with account creation, the API returns a different response structure
+      const registration = json.registration || (json.createdUser ? { 
+        id: json.user?.id, 
+        paymentReference: json.registration?.paymentReference, 
+        createdAt: json.registration?.createdAt,
+        status: json.registration?.paymentStatus,
+        track: json.registration?.track,
+        name: json.user?.name,
+        email: json.user?.email
+      } : null);
+
+      if (!registration) {
+        throw new Error('Registration information is missing from the response.');
+      }
+      
+      setSuccess(registration);
       event.currentTarget.reset();
+      setPassword('');
+      setConfirmPassword('');
     } catch (err: any) {
       console.error('Bootcamp registration submission failed', err);
       setError(err?.message || 'Unable to submit your registration. Please try again later.');
@@ -77,11 +125,37 @@ export function RegisterFormClient({ track }: Props) {
     return (
       <div className="space-y-8 rounded-3xl border border-success/30 bg-success/10 p-8 text-sm text-white/90">
         <div className="space-y-3">
-          <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-success">
-            <span className="i-lucide-badge-check" />
-            Registration Received
-          </p>
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-white">You&apos;re almost there!</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-success">
+              <span className="i-lucide-badge-check" />
+              Registration Received
+            </p>
+            <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase ${
+              success.status === 'Confirmed' 
+                ? 'bg-emerald-500/20 text-emerald-300' 
+                : success.status === 'Rejected'
+                ? 'bg-red-500/20 text-red-300'
+                : 'bg-amber-500/20 text-amber-300'
+            }`}>
+              <span className={`${
+                success.status === 'Confirmed' 
+                  ? 'i-lucide-check-circle' 
+                  : success.status === 'Rejected'
+                  ? 'i-lucide-x-circle'
+                  : 'i-lucide-clock'
+              }`} />
+              {success.status === 'Confirmed' 
+                ? 'Payment Confirmed' 
+                : success.status === 'Rejected'
+                ? 'Payment Rejected'
+                : 'Awaiting Payment'}
+            </div>
+          </div>
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-white">
+            {success.status === 'Confirmed' 
+              ? 'You\'re all set!' 
+              : 'You\'re almost there!'}
+          </h2>
           <p className="text-white/80">
             {(() => {
               const metadata = (success as any)?.metadata ?? {};
@@ -113,6 +187,32 @@ export function RegisterFormClient({ track }: Props) {
             <span className="text-xs font-semibold uppercase tracking-wide text-white/60">Payment Reference</span>
             <span className="text-lg font-mono tracking-[0.2em] text-white">{success.paymentReference}</span>
           </div>
+          
+          {/* Payment Status Badge */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-white/60">Payment Status</span>
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+              success.status === 'paid' 
+                ? 'bg-emerald-500/20 text-emerald-300' 
+                : success.status === 'processing' 
+                ? 'bg-amber-500/20 text-amber-300'
+                : 'bg-white/10 text-white/70'
+            }`}>
+              <span className={`${
+                success.status === 'paid' 
+                  ? 'i-lucide-check-circle' 
+                  : success.status === 'processing' 
+                  ? 'i-lucide-clock'
+                  : 'i-lucide-circle-alert'
+              }`} />
+              {success.status === 'paid' 
+                ? 'Paid' 
+                : success.status === 'processing' 
+                ? 'Processing'
+                : 'Pending'}
+            </span>
+          </div>
+          
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-white/60">Beneficiary</dt>
@@ -185,10 +285,13 @@ export function RegisterFormClient({ track }: Props) {
             name="email"
             type="email"
             required
-            className="w-full rounded-lg border border-border/60 bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className={`w-full rounded-lg border ${
+              fieldErrors.email ? 'border-error' : 'border-border/60'
+            } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
             placeholder="you@example.com"
             disabled={submitting}
           />
+          {fieldErrors.email && <p className="text-xs text-error">{fieldErrors.email}</p>}
         </div>
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="phone">Phone Number</label>
@@ -199,6 +302,65 @@ export function RegisterFormClient({ track }: Props) {
             placeholder="+1 555 123 4567"
             disabled={submitting}
           />
+        </div>
+        
+        <div className="col-span-1 md:col-span-2 mt-4 mb-2">
+          <div className="flex items-center gap-3">
+            <input
+              id="createAccount"
+              name="createAccount"
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
+              checked={createAccount}
+              onChange={(e) => setCreateAccount(e.target.checked)}
+              disabled={submitting}
+            />
+            <label htmlFor="createAccount" className="text-sm text-fg-muted">
+              Create a ThinkForward account for future access to bootcamp materials and progress tracking
+            </label>
+          </div>
+        </div>
+        
+        {createAccount && (
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`w-full rounded-lg border ${
+                  fieldErrors.password ? 'border-error' : 'border-border/60'
+                } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
+                placeholder="Choose a secure password"
+                disabled={submitting}
+              />
+              {fieldErrors.password ? (
+                <p className="text-xs text-error">{fieldErrors.password}</p>
+              ) : (
+                <p className="text-xs text-fg-muted">Password must be at least 8 characters and include letters and numbers</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`w-full rounded-lg border ${
+                  fieldErrors.confirmPassword ? 'border-error' : 'border-border/60'
+                } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
+                placeholder="Confirm your password"
+                disabled={submitting}
+              />
+              {fieldErrors.confirmPassword && <p className="text-xs text-error">{fieldErrors.confirmPassword}</p>}
+            </div>
+          </>
+        )}
         </div>
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="provider">Preferred Cloud Provider</label>

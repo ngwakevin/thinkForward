@@ -12,6 +12,21 @@ function validateEmail(email: string) {
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
+    
+    // If createAccount flag is true, forward to the register-bootcamp endpoint
+    if (payload.createAccount === true || payload.createAccount === 'true') {
+      // Forward the request to the register-bootcamp endpoint
+      const registerBotcampResponse = await fetch(new URL('/api/register-bootcamp', req.url), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      return registerBotcampResponse;
+    }
+    
     const missing = REQUIRED_FIELDS.filter(field => !payload?.[field]);
 
     if (missing.length > 0) {
