@@ -30,6 +30,7 @@ export type BootcampRegistrationInput = {
 
 export type BootcampRegistration = BootcampRegistrationInput & {
   id: string;
+  type: string; // Add type field to interface
   paymentStatus: PaymentStatus;
   paymentConfirmedAt: string | null;
   completionStatus: CompletionStatus;
@@ -67,6 +68,7 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
   const fallbackStartDate = input.bootcampStartDate ?? new Date().toISOString();
   const registration: BootcampRegistration = {
     id,
+    type: 'bootcamp-registration', // Add type field for querying
     userId: fallbackUserId,
     bootcampId: fallbackBootcampId,
     bootcampName: fallbackBootcampName,
@@ -151,7 +153,7 @@ export async function getBootcampRegistrationsByUserId(userId: string): Promise<
     }
 
     const query = {
-      query: 'SELECT * FROM c WHERE c.userId = @userId ORDER BY c.createdAt DESC',
+      query: "SELECT * FROM c WHERE c.type = 'bootcamp-registration' AND c.userId = @userId ORDER BY c.createdAt DESC",
       parameters: [{ name: '@userId', value: userId }]
     };
 
