@@ -171,8 +171,8 @@ export function RegisterFormClient({ track }: Props) {
           </div>
           <h2 className="font-display text-2xl font-semibold tracking-tight text-white">
             {success.status === 'Confirmed' 
-              ? 'You\'re all set!' 
-              : 'You\'re almost there!'}
+              ? 'You&apos;re all set!' 
+              : 'You&apos;re almost there!'}
           </h2>
           <p className="text-white/80">
             {(() => {
@@ -204,7 +204,7 @@ export function RegisterFormClient({ track }: Props) {
                 <span className="i-lucide-circle-check-big" />
                 Account successfully created!
               </span> 
-              {' '}You're now signed in and can <a href="/profile" className="text-accent hover:text-accent-lighter underline">
+              {' '}You&apos;re now signed in and can <a href="/profile" className="text-accent hover:text-accent-lighter underline">
                 visit your profile
               </a> to track your bootcamp registration.
             </p>
@@ -476,7 +476,7 @@ export function RegisterFormClient({ track }: Props) {
           name="exposure"
           rows={4}
           className="w-full rounded-lg border border-border/60 bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-          placeholder="Briefly describe tools, platforms, or scenarios you've worked with."
+          placeholder="Briefly describe tools, platforms, or scenarios you&apos;ve worked with."
           disabled={submitting}
         />
       </div>
