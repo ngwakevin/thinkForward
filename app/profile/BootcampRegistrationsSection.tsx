@@ -62,7 +62,7 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
       <div className="py-10 text-center space-y-4">
         <div className="text-5xl">🎓</div>
         <h3 className="text-lg font-medium">No bootcamp registrations found</h3>
-        <p className="text-sm text-fg-muted">You haven't registered for any bootcamps yet.</p>
+        <p className="text-sm text-fg-muted">You haven&apos;t registered for any bootcamps yet.</p>
         <a
           href="/bootcamps"
           className="inline-block mt-4 px-5 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent/90 transition-colors"

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { NextResponse, NextRequest } from 'next/server';
 import { authOptions } from '../../../../lib/auth';
 import cosmosService from '../../../../lib/azure/cosmos-service';
+import { container } from '../../../../lib/azure/cosmos-config';
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     // Query bootcamp registrations using user ID
     // Using the container directly as we haven't found an existing function for this
-    const { resources: registrations } = await cosmosService.container.items
+    const { resources: registrations } = await container.items
       .query({
         query: "SELECT * FROM c WHERE c.type = 'bootcamp-registration' AND c.userId = @userId",
         parameters: [{ name: '@userId', value: userId }]

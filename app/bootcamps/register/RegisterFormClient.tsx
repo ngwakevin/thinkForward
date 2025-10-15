@@ -361,7 +361,7 @@ export function RegisterFormClient({ track }: Props) {
             </div>
           </>
         )}
-        </div>
+        
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="provider">Preferred Cloud Provider</label>
           <select
@@ -462,7 +462,7 @@ export function RegisterFormClient({ track }: Props) {
           disabled={submitting}
         />
       </div>
-  <input type="hidden" name="track" value={hiddenTrackValue} readOnly />
+      <input type="hidden" name="track" value={hiddenTrackValue} readOnly />
       {error && (
         <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-xs text-error">
           {error}

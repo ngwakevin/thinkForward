@@ -6,26 +6,8 @@ import BootcampRegistrationsSection from './BootcampRegistrationsSection';
 
 export interface AccountTabsProps {
   initialData: any;
-  us          <button
-            onClick={() => setActiveTab('privacy')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'privacy'
-                ? 'border-accent text-accent'
-                : 'border-transparent text-fg-muted hover:text-fg hover:border-border'
-            }`}
-          >
-            Privacy
-          </button>
-          <button
-            onClick={() => setActiveTab('bootcamps')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'bootcamps'
-                ? 'border-accent text-accent'
-                : 'border-transparent text-fg-muted hover:text-fg hover:border-border'
-            }`}
-          >
-            Bootcamps
-          </button> name?: string | null;
+  user?: {
+    name?: string | null;
     email?: string | null;
     image?: string | null;
   };
@@ -613,7 +595,7 @@ export default function AccountTabs({ initialData, user }: AccountTabsProps) {
 
         {/* Bootcamps Tab */}
         {activeTab === 'bootcamps' && (
-          <BootcampRegistrationsSection userId={session?.user?.id || initialData?.id} />
+          <BootcampRegistrationsSection userId={(session?.user as any)?.id || initialData?.id} />
         )}
 
         {/* Save Button (fixed at bottom) */}
