@@ -14,6 +14,18 @@ export type BootcampRegistrationInput = {
   completionStatus?: CompletionStatus;
   certificateUrl?: string | null;
   metadata?: Record<string, unknown>;
+  // User information
+  name?: string;
+  email?: string;
+  phone?: string;
+  provider?: string;
+  inIt?: string;
+  currentRole?: string;
+  experience?: string;
+  goal?: string;
+  exposure?: string;
+  notes?: string;
+  track?: string;
 };
 
 export type BootcampRegistration = BootcampRegistrationInput & {
@@ -67,6 +79,18 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
     paymentReference: generatePaymentReference(fallbackBootcampId, fallbackUserId),
     createdAt: now,
     updatedAt: now,
+    // Include user information fields
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    provider: input.provider,
+    inIt: input.inIt,
+    currentRole: input.currentRole,
+    experience: input.experience,
+    goal: input.goal,
+    exposure: input.exposure,
+    notes: input.notes,
+    track: input.track,
   };
 
   try {
@@ -82,7 +106,7 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
     }
 
     const { resource } = await container.items.create(registration);
-    return (resource as BootcampRegistration) ?? registration;
+    return (resource as unknown as BootcampRegistration) ?? registration;
   } catch (error) {
     console.error('Failed to persist bootcamp registration, falling back to memory store:', error);
     memoryRegistrationStore.set(id, registration);
@@ -181,7 +205,8 @@ export async function updateBootcampRegistrationStatus(
     };
 
     const { resource: updated } = await container.items.upsert(next);
-    return (updated as BootcampRegistration) ?? next;
+    // Cast through unknown first to avoid type issues
+    return (updated as unknown as BootcampRegistration) ?? next;
   } catch (error) {
     console.error('Failed to update bootcamp registration status', error);
     return null;
