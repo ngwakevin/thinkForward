@@ -4,6 +4,9 @@ import { authOptions } from '../../../../../lib/auth';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
 
+// Mark route as dynamic since it uses searchParams and cookies
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;

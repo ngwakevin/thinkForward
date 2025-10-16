@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '../../../../lib/azure/cosmos-config';
 
+// Mark route as dynamic since it uses searchParams
+export const dynamic = 'force-dynamic';
+
 // This is a simple API endpoint that doesn't require authentication
 // It's used to look up a bootcamp registration by its ID or email
 export async function GET(req: NextRequest) {

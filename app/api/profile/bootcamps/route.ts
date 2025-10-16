@@ -3,6 +3,9 @@ import { NextResponse, NextRequest } from 'next/server';
 import { authOptions } from '../../../../lib/auth';
 import { container } from '../../../../lib/azure/cosmos-config';
 
+// Mark route as dynamic since it uses server session and headers
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     // Get user session first
