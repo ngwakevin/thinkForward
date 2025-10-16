@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface BootcampRegistration {
   id: string;
@@ -22,50 +23,88 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     async function fetchBootcampRegistrations() {
       try {
         setLoading(true);
+        setError(null);
+        console.log('Fetching bootcamp registrations...');
+        
         const response = await fetch('/api/profile/bootcamps');
         
         if (!response.ok) {
-          throw new Error('Failed to fetch bootcamp registrations');
+          console.error('Failed to fetch bootcamp registrations. Status:', response.status);
+          throw new Error(`Failed to fetch bootcamp registrations: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('Bootcamp registrations data:', data);
+        console.log('Bootcamp registrations data received:', data);
         
-        if (Array.isArray(data.registrations)) {
-          setRegistrations(data.registrations);
-        } else {
-          console.warn('Bootcamp registrations response is not an array:', data.registrations);
-          setRegistrations([]);
+        if (!data || !Array.isArray(data.registrations)) {
+          console.error('Unexpected data format:', data);
+          throw new Error('Unexpected data format from the server');
         }
-      } catch (err) {
+        
+        setRegistrations(data.registrations);
+      } catch (err: any) {
         console.error('Error fetching bootcamp registrations:', err);
-        setError('Could not load your bootcamp registrations. Please try again later.');
+        setError(err.message || 'Failed to load bootcamp registrations');
       } finally {
         setLoading(false);
       }
     }
 
-    fetchBootcampRegistrations();
-  }, [userId, retryCount]);
+    // Only fetch data if the user is authenticated
+    if (status === 'authenticated' && session) {
+      fetchBootcampRegistrations();
+    }
+  }, [status, session, userId, retryCount]);
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="py-10 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
-        <p className="mt-2 text-sm text-fg-muted">Loading your bootcamp registrations...</p>
+        <div className="inline-block animate-spin h-8 w-8 border-4 border-gray-200 rounded-full border-t-blue-600"></div>
+        <p className="mt-2 text-sm text-gray-600">Loading your registrations...</p>
+      </div>
+    );
+  }
+  
+  const handleRefresh = () => {
+    console.log('Manually refreshing bootcamp registrations');
+    setRetryCount(prev => prev + 1);
+  };
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="py-10 text-center space-y-4">
+        <div className="text-5xl">🔐</div>
+        <h3 className="text-lg font-semibold">Authentication Required</h3>
+        <p className="text-gray-600 max-w-md mx-auto">
+          You need to be signed in to view your bootcamp registrations.
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-        {error}
+      <div className="py-6 space-y-4">
+        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+          {error}
+        </div>
+        <div className="text-center">
+          <button
+            onClick={handleRefresh}
+            className="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -74,21 +113,26 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
     return (
       <div className="py-10 text-center space-y-4">
         <div className="text-5xl">🎓</div>
-        <h3 className="text-lg font-medium">No bootcamp registrations found</h3>
-        <p className="text-sm text-fg-muted">You haven&apos;t registered for any bootcamps yet.</p>
-        <div className="flex justify-center gap-4 mt-4">
-          <button
-            onClick={() => setRetryCount(prev => prev + 1)}
-            className="px-5 py-2 bg-secondary text-white rounded-md text-sm font-medium hover:bg-secondary/90 transition-colors"
+        <h3 className="text-lg font-semibold">No Bootcamp Registrations</h3>
+        <p className="text-gray-600 max-w-md mx-auto">
+          You haven&apos;t registered for any bootcamps yet, or your registrations are still processing. Explore our available bootcamps or refresh to check again.
+        </p>
+        <div className="flex flex-wrap gap-3 justify-center">
+          <a 
+            href="/bootcamps" 
+            className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/80"
           >
-            Refresh Registrations
-          </button>
-          <a
-            href="/bootcamps"
-            className="px-5 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent/90 transition-colors"
-          >
-            Explore Bootcamps
+            Browse Bootcamps
           </a>
+          <button
+            onClick={handleRefresh}
+            className="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
         </div>
       </div>
     );
