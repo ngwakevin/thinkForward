@@ -203,8 +203,15 @@ export async function POST(req: NextRequest) {
       bootcampName,
       bootcampStartDate,
       metadata,
-      track: bootcampSlug // Include track to match the bootcampId
+      track: bootcampSlug, // Include track to match the bootcampId
+      type: 'bootcamp-registration', // Explicitly set the type field
+      paymentStatus: 'Pending',
+      completionStatus: 'Not Started',
     });
+
+    // Generate a session token or other authentication artifact if needed
+    // Note: We're not actually signing in here as that happens client-side
+    // We're just providing the necessary information for the client to handle auto-login
 
     return NextResponse.json(
       {
@@ -216,7 +223,18 @@ export async function POST(req: NextRequest) {
           name: user.name,
           username: user.username ?? buildUsername(user.name ?? null, user.email ?? email!)
         },
-        registration,
+        registration: {
+          ...registration,
+          userId: user.id, // Ensure userId is included
+          type: 'bootcamp-registration', // Ensure type is included
+          bootcampId: bootcampSlug!, // Ensure bootcampId is included
+        },
+        // Add session info for auto-login
+        auth: {
+          email: user.email,
+          timestamp: new Date().toISOString(),
+          callbackUrl: '/profile?tab=bootcamps',
+        }
       },
       { status: 201 }
     );

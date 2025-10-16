@@ -127,13 +127,22 @@ export function RegisterFormClient({ track }: Props) {
           localStorage.removeItem('autoLoginAttempt');
           localStorage.removeItem('registrationId');
           
-          // Then set fresh data
+          // Then set fresh data with all necessary information for auto-login
           localStorage.setItem('userLoggedIn', 'true');
           localStorage.setItem('userEmail', json.user.email);
           localStorage.setItem('autoLoginPassword', password); // Store temporarily for auto-login
           localStorage.setItem('autoLoginAttempt', Date.now().toString());
           localStorage.setItem('registrationId', json.registration?.id || '');
           localStorage.setItem('userId', json.user?.id || '');
+          // Store additional information to ensure proper auto-login
+          localStorage.setItem('bootcampId', json.registration?.bootcampId || '');
+          localStorage.setItem('registrationType', json.registration?.type || 'bootcamp-registration');
+          
+          // Store auth info if provided
+          if (json.auth) {
+            localStorage.setItem('authTimestamp', json.auth.timestamp || '');
+            localStorage.setItem('authCallbackUrl', json.auth.callbackUrl || '/profile?tab=bootcamps');
+          }
           
           // Attempt direct sign-in first with minimal delay
           console.log('Attempting direct sign-in first...');

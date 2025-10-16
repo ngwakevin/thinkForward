@@ -6,6 +6,7 @@ export type CompletionStatus = 'Not Started' | 'In Progress' | 'Completed';
 
 export type BootcampRegistrationInput = {
   userId?: string;
+  type?: string; // Add type field to allow setting it explicitly
   bootcampId?: string;
   bootcampName?: string;
   bootcampStartDate?: string;
@@ -96,7 +97,8 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
   // Create a fully-validated registration object with all required fields
   const registration: BootcampRegistration = {
     id,
-    type: 'bootcamp-registration', // Required type field for querying
+    // Use input.type if provided, otherwise default to 'bootcamp-registration'
+    type: input.type || 'bootcamp-registration', // Required type field for querying
     userId: fallbackUserId,
     bootcampId: fallbackBootcampId,
     bootcampName: fallbackBootcampName,

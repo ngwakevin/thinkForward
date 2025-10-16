@@ -13,19 +13,26 @@ export default function AutoLogin() {
   const [debug, setDebug] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const email = searchParams.get('email');
-    const callbackUrl = searchParams.get('callbackUrl') || '/profile?tab=bootcamps';
+    const email = searchParams.get('email') || localStorage.getItem('userEmail');
+    const callbackUrl = searchParams.get('callbackUrl') || localStorage.getItem('authCallbackUrl') || '/profile?tab=bootcamps';
     const registrationId = searchParams.get('registrationId') || localStorage.getItem('registrationId');
+    const userId = searchParams.get('userId') || localStorage.getItem('userId');
+    const bootcampId = localStorage.getItem('bootcampId');
+    const registrationType = localStorage.getItem('registrationType');
     const state = searchParams.get('state');
     
-    // Add these debugging logs
+    // Add these debugging logs with enhanced information
     console.log('Auto-login page initialized with:', {
       email,
       callbackUrl,
       registrationId,
+      userId,
+      bootcampId,
+      registrationType,
       state,
       autoLoginPassword: localStorage.getItem('autoLoginPassword') ? 'exists' : 'missing',
-      autoLoginAttempt: localStorage.getItem('autoLoginAttempt')
+      autoLoginAttempt: localStorage.getItem('autoLoginAttempt'),
+      authTimestamp: localStorage.getItem('authTimestamp')
     });
     
     const autoLogin = async () => {
@@ -75,11 +82,29 @@ export default function AutoLogin() {
           localStorage.removeItem('autoLoginPassword');
           localStorage.removeItem('autoLoginAttempt');
           
-          // Store registration ID for profile page to use
+          // Store registration ID and other important data for profile page to use
           if (registrationId) {
             localStorage.setItem('lastRegistrationId', registrationId);
             localStorage.setItem('userRegistered', 'true');
             localStorage.setItem('registeredEmail', email);
+            
+            // Ensure we have the bootcamp info for proper linking
+            const bootcampId = localStorage.getItem('bootcampId');
+            if (bootcampId) {
+              localStorage.setItem('lastBootcampId', bootcampId);
+            }
+            
+            // Preserve the registration type for schema consistency
+            const registrationType = localStorage.getItem('registrationType');
+            if (registrationType) {
+              localStorage.setItem('lastRegistrationType', registrationType);
+            }
+            
+            // Store userId for linking if available
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+              localStorage.setItem('lastUserId', userId);
+            }
           }
           
           // Use a delay with notification to ensure the session is established
