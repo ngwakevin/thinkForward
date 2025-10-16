@@ -193,12 +193,16 @@ export async function POST(req: NextRequest) {
 
     const metadata = buildMetadata(payload);
 
+    // Make sure we include email and name in the registration to pass validation
     const registration = await createBootcampRegistration({
       userId: user.id,
+      email: user.email || email!, // Use user's email or the provided email (non-null assertion as we validate earlier)
+      name: user.name || name || 'Bootcamp User', // Provide fallback for name
       bootcampId: bootcampSlug!,
       bootcampName,
       bootcampStartDate,
-      metadata
+      metadata,
+      track: bootcampSlug // Include track to match the bootcampId
     });
 
     return NextResponse.json(
@@ -217,6 +221,19 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('register-bootcamp error', error);
+    
+    // Provide more specific error messages based on the type of error
+    if (error instanceof Error && error.message.includes('Email is required')) {
+      return NextResponse.json({ 
+        ok: false, 
+        fieldErrors: { email: 'Email address is required for registration' },
+        error: 'Email validation failed' 
+      }, { status: 400 });
+    }
+    
+    // Log basic diagnostic information without accessing possibly undefined variables
+    console.log('Registration attempt failed. Please check the error log above for details.');
+    
     return NextResponse.json({ ok: false, error: 'Unable to process registration right now.' }, { status: 500 });
   }
 }
