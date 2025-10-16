@@ -1,87 +1,123 @@
 import { getServerSession } from 'next-auth';
 import { NextResponse, NextRequest } from 'next/server';
 import { authOptions } from '../../../../lib/auth';
-import cosmosService from '../../../../lib/azure/cosmos-service';
 import { container } from '../../../../lib/azure/cosmos-config';
 
 export async function GET(req: NextRequest) {
   try {
+    // Get user session first
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Check URL parameters (for cases where the session might not have all data yet)
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'User email not found in session' }, { status: 401 });
+    }
+
+    // Normalize the email from session
+    const email = session.user.email.trim().toLowerCase();
+    
+    console.log('Fetching bootcamp registrations for:', email);
+
+    // Check for optional query parameters
     const searchParams = req.nextUrl.searchParams;
-    const emailParam = searchParams.get('email')?.toLowerCase();
     const registrationId = searchParams.get('registrationId');
-    const userIdParam = searchParams.get('userId');
-    
-    // Log all available parameters and headers for debugging
-    console.log('Search parameters:', {
-      email: emailParam,
-      registrationId,
-      userId: userIdParam,
-      headers: {
-        cookie: req.headers.get('cookie') ? 'exists' : 'missing',
-        authorization: req.headers.get('authorization') ? 'exists' : 'missing'
-      },
-      session: session ? 'exists' : 'missing'
-    });
+    const userId = (session.user as any)?.id;
 
-    // Get the user ID from all possible sources
-    let userId: string | undefined;
-    let userEmail: string | undefined;
-    
-    // First check if ID is in the session directly
-    const sess = session?.user as any;
-    if (sess?.id) {
-      userId = sess.id;
-      console.log('Found user ID in session:', userId);
-    } 
-    // Check for ID in the session with type casting since NextAuth types don't include id
-    else if ((session?.user as any)?.id) {
-      userId = (session.user as any).id;
-      console.log('Found user ID in session.user.id:', userId);
-    }
-    // Check URL param
-    else if (userIdParam) {
-      userId = userIdParam;
-      console.log('Found user ID in URL parameter:', userId);
-    }
-    
-    // Set email from all possible sources
-    userEmail = session?.user?.email?.toLowerCase() || emailParam;
-    console.log('Using email for lookup:', userEmail);
-    
-    // Print session data for debugging
-    console.log('Session data:', {
-      hasUser: !!session?.user,
-      email: session?.user?.email,
-      name: session?.user?.name,
-      expires: session?.expires
-    });
-    
-    // Look up user by email if we don't have a userId
-    if (!userId && userEmail) {
-      console.log('Looking up user by email:', userEmail);
-      const user = await cosmosService.getUserByEmail(userEmail);
-      if (user) {
-        userId = user.id;
-        console.log('Found user ID by email lookup:', userId);
+    // Construct the query
+    const querySpec = {
+      query: `
+        SELECT * FROM c
+        WHERE LOWER(c.email) = @email AND 
+        (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId))
+      `,
+      parameters: [{ name: '@email', value: email }]
+    };
+
+    try {
+      // Execute the query
+      const { resources: results } = await container.items.query(querySpec).fetchAll();
+      
+      console.log(`Found ${results.length} registrations for email ${email}`);
+      
+      // If we have a userId and found no results by email, try with userId
+      let userIdResults: any[] = [];
+      if (userId && results.length === 0) {
+        console.log(`No results with email, trying userId: ${userId}`);
+        const userIdQuerySpec = {
+          query: `
+            SELECT * FROM c
+            WHERE c.userId = @userId AND 
+            (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId))
+          `,
+          parameters: [{ name: '@userId', value: userId }]
+        };
+        
+        const { resources } = await container.items.query(userIdQuerySpec).fetchAll();
+        userIdResults = resources;
+        console.log(`Found ${userIdResults.length} registrations by userId`);
       }
-    }
+      
+      // If registration ID was provided, look it up directly
+      let idResults: any[] = [];
+      if (registrationId) {
+        console.log(`Looking up specific registration: ${registrationId}`);
+        const idQuerySpec = {
+          query: "SELECT * FROM c WHERE c.id = @id",
+          parameters: [{ name: '@id', value: registrationId }]
+        };
+        
+        const { resources } = await container.items.query(idQuerySpec).fetchAll();
+        idResults = resources;
+        console.log(`Found ${idResults.length} registrations by ID`);
+      }
+      
+      // Combine all results, preferring email matches first
+      const allResults = [...results, ...userIdResults, ...idResults];
+      
+      // Deduplicate by ID and add missing properties
+      const registrationMap = new Map();
+      allResults.forEach(reg => {
+        registrationMap.set(reg.id, {
+          ...reg,
+          // Ensure the type field exists
+          type: reg.type || 'bootcamp-registration',
+          // Ensure email is set
+          email: reg.email || email,
+          // Ensure userId is set
+          userId: reg.userId || userId || `user-${reg.id}`
+        });
+      });
+      
+      // Convert Map back to array
+      const registrations = Array.from(registrationMap.values());
+      
+      // Log result summary
+      if (registrations.length > 0) {
+        console.log(`Returning ${registrations.length} total registrations`);
+        console.log('Sample registration:', JSON.stringify({
+          id: registrations[0].id,
+          type: registrations[0].type,
+          email: registrations[0].email,
+          bootcampId: registrations[0].bootcampId,
+          bootcampName: registrations[0].bootcampName
+        }, null, 2));
+      } else {
+        console.log('No registrations found for user');
+      }
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ registrations });
+    } catch (err) {
+      console.error('Error querying Cosmos DB:', err);
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
-
-    // Log the user details for debugging
-    console.log('Fetching bootcamp registrations for user:', {
-      userId,
-      email: session.user?.email,
-      name: session.user?.name
-    });
+  } catch (error) {
+    console.error('Error in bootcamp registrations endpoint:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+}
 
     // Query bootcamp registrations using user ID or email
     // First try with the type field that's now being added to registrations
