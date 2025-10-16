@@ -304,7 +304,7 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
               Thank you for registering! Your bootcamp registration is being processed and should appear here shortly.
             </p>
             <p className="text-sm">
-              If you don't see your registration after a minute, please try refreshing this page.
+              If you don&apos;t see your registration after a minute, please try refreshing this page.
             </p>
           </div>
         ) : (
