@@ -29,17 +29,41 @@ export async function GET(req: NextRequest) {
     const registrationId = searchParams.get('registrationId');
     const userId = (session.user as any)?.id;
 
-    // Construct the query
-    const querySpec = {
-      query: `
-        SELECT * FROM c
-        WHERE LOWER(c.email) = @email AND 
-        (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId))
-      `,
-      parameters: [{ name: '@email', value: email }]
+    // First, try a broader query without any filters to see what's in the container
+    const debugQuerySpec = {
+      query: `SELECT * FROM c WHERE CONTAINS(LOWER(c.email), @emailPart) OR (IS_DEFINED(c.userId) AND c.userId = @userId)`,
+      parameters: [
+        { name: '@emailPart', value: email.split('@')[0].toLowerCase() },
+        { name: '@userId', value: userId || '' }
+      ]
     };
 
     try {
+      // Execute the debug query
+      const { resources: debugResults } = await container.items.query(debugQuerySpec).fetchAll();
+      
+      console.log(`DEBUG: Found ${debugResults.length} potential matching records`);
+      debugResults.forEach((item, index) => {
+        console.log(`DEBUG: Item ${index + 1}:`, 
+          `id: ${item.id}`,
+          `type: ${item.type || 'undefined'}`, 
+          `email: ${item.email || 'undefined'}`, 
+          `userId: ${item.userId || 'undefined'}`,
+          `bootcampId: ${item.bootcampId || 'undefined'}`
+        );
+      });
+      
+      // Now perform the normal query but with more flexible conditions
+      const querySpec = {
+        query: `
+          SELECT * FROM c
+          WHERE LOWER(c.email) = @email 
+          OR (IS_DEFINED(c.type) AND c.type = 'bootcamp-registration')
+          OR (IS_DEFINED(c.bootcampId) AND IS_DEFINED(c.email) AND LOWER(c.email) = @email)
+        `,
+        parameters: [{ name: '@email', value: email }]
+      };
+
       // Execute the query
       const { resources: results } = await container.items.query(querySpec).fetchAll();
       
@@ -52,8 +76,8 @@ export async function GET(req: NextRequest) {
         const userIdQuerySpec = {
           query: `
             SELECT * FROM c
-            WHERE c.userId = @userId AND 
-            (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId))
+            WHERE c.userId = @userId 
+            OR (IS_DEFINED(c.type) AND c.type = 'bootcamp-registration' AND IS_DEFINED(c.userId) AND c.userId = @userId)
           `,
           parameters: [{ name: '@userId', value: userId }]
         };

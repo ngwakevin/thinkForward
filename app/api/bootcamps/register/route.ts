@@ -44,9 +44,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Add userId from session if available
+    const session = req.cookies.get('next-auth.session-token')?.value;
+    let userId;
+    
+    if (session) {
+      try {
+        // This is a simple attempt to extract userId, not full JWT validation
+        const sessionData = JSON.parse(Buffer.from(session.split('.')[1], 'base64').toString());
+        userId = sessionData?.user?.id || sessionData?.id || undefined;
+        console.log("Found userId in session:", userId);
+      } catch (e) {
+        console.log("Could not extract userId from session:", e);
+      }
+    }
+    
+    // Extract bootcamp ID if provided
+    const bootcampId = payload.bootcampId ? String(payload.bootcampId) : 
+                       payload.track ? String(payload.track).toLowerCase().replace(/\s+/g, '-') :
+                       'default-bootcamp';
+    
+    console.log(`Creating bootcamp registration for ${normalizedEmail}, bootcamp: ${bootcampId}, userId: ${userId || 'none'}`);
+    
     const registration = await createBootcampRegistration({
       name: String(payload.name),
       email: normalizedEmail,
+      userId: userId, // Add userId if found from session
+      bootcampId: bootcampId, // Ensure bootcampId is set
+      bootcampName: payload.bootcampName ? String(payload.bootcampName) : undefined,
       phone: payload.phone ? String(payload.phone) : undefined,
       provider: payload.provider ? String(payload.provider) : undefined,
       inIt: payload.inIt ? String(payload.inIt) : undefined,
@@ -56,6 +81,15 @@ export async function POST(req: NextRequest) {
       exposure: payload.exposure ? String(payload.exposure) : undefined,
       notes: payload.notes ? String(payload.notes) : undefined,
       track: payload.track ? String(payload.track) : undefined
+    });
+
+    console.log('Created bootcamp registration:', {
+      id: registration.id,
+      email: registration.email,
+      userId: registration.userId,
+      bootcampId: registration.bootcampId,
+      type: registration.type,
+      paymentReference: registration.paymentReference
     });
 
     // Send notification email to bootcamp admin

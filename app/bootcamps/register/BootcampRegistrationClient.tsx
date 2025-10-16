@@ -57,6 +57,19 @@ export default function BootcampRegistrations() {
     setRegistering(bootcamp.id);
     
     try {
+      // Include user information from session if available
+      const userData = {
+        name: session.user?.name || '',
+        email: session.user?.email || '',
+        userId: (session.user as any)?.id || undefined
+      };
+      
+      console.log('Registering user for bootcamp with data:', { 
+        bootcampId: bootcamp.id, 
+        bootcampName: bootcamp.name,
+        userData
+      });
+      
       const response = await fetch('/api/bootcamps/register', {
         method: 'POST',
         headers: {
@@ -65,7 +78,11 @@ export default function BootcampRegistrations() {
         body: JSON.stringify({ 
           bootcampId: bootcamp.id,
           bootcampName: bootcamp.name,
-          bootcampStartDate: bootcamp.startDate
+          bootcampStartDate: bootcamp.startDate,
+          name: userData.name,
+          email: userData.email,
+          userId: userData.userId,
+          track: bootcamp.track
         })
       });
       
@@ -74,9 +91,23 @@ export default function BootcampRegistrations() {
       }
       
       const data = await response.json();
+      console.log('Registration successful:', data);
       
       // Update user registrations
-      setUserRegistrations([...userRegistrations, data.registration]);
+      if (data.registration) {
+        setUserRegistrations([...userRegistrations, data.registration]);
+      }
+      
+      // Refresh registrations data to ensure we have the latest
+      try {
+        const refreshResponse = await fetch('/api/profile/bootcamps');
+        const refreshData = await refreshResponse.json();
+        if (refreshData.registrations) {
+          setUserRegistrations(refreshData.registrations);
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing registrations:', refreshError);
+      }
       
       alert(`Successfully registered for ${bootcamp.name}!`);
     } catch (error) {
