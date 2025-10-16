@@ -37,9 +37,62 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         const email = localStorage.getItem('userEmail');
         const justRegistered = localStorage.getItem('autoLoginAttempt');
         const registrationId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
+        const localUserId = localStorage.getItem('userId');
         
-        console.log('Using email from localStorage:', email);
-        console.log('Using registrationId from localStorage:', registrationId);
+        console.log('Registration data from localStorage:', { 
+          email, 
+          registrationId,
+          userId: localUserId,
+          justRegistered: !!justRegistered
+        });
+        
+        let foundRegistrations: any[] = [];
+        
+        // First try the unauthenticated lookup API if we have a registration ID or email
+        // This is useful especially right after registration when the session might not be fully established
+        if (registrationId || email || localUserId) {
+          try {
+            console.log('Trying unauthenticated lookup API first');
+            const params = new URLSearchParams();
+            
+            if (registrationId) params.append('id', registrationId);
+            if (email) params.append('email', email);
+            if (localUserId) params.append('userId', localUserId);
+            
+            const lookupUrl = `/api/bootcamps/lookup?${params.toString()}`;
+            console.log('Lookup URL:', lookupUrl);
+            
+            const lookupResponse = await fetch(lookupUrl);
+            if (lookupResponse.ok) {
+              const lookupData = await lookupResponse.json();
+              console.log('Lookup API response:', lookupData);
+              
+              if (lookupData.registrations?.length > 0) {
+                console.log('Found registrations through lookup API');
+                foundRegistrations = lookupData.registrations;
+              }
+            }
+          } catch (lookupErr) {
+            console.error('Error using lookup API:', lookupErr);
+            // Continue to authenticated API if lookup fails
+          }
+        }
+        
+        // If we found registrations via the lookup API, use those
+        if (foundRegistrations.length > 0) {
+          console.log('Using registrations from lookup API:', foundRegistrations);
+          setRegistrations(foundRegistrations);
+          setLoading(false);
+          
+          // Clear the temporary data if we successfully found registrations
+          if (justRegistered) {
+            localStorage.removeItem('autoLoginAttempt');
+          }
+          return;
+        }
+        
+        // If lookup API didn't return results, try the authenticated API
+        console.log('Trying authenticated API');
         
         // Construct URL with parameters if available
         let url = '/api/profile/bootcamps';
@@ -53,6 +106,10 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
           params.append('registrationId', registrationId);
         }
         
+        if (localUserId) {
+          params.append('userId', localUserId);
+        }
+        
         if (params.toString()) {
           url += '?' + params.toString();
         }
@@ -62,6 +119,15 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         
         if (!response.ok) {
           console.error('Failed to fetch bootcamp registrations. Status:', response.status);
+          
+          // If this is the first attempt and we're getting an auth error,
+          // it might be that the session isn't established yet, so retry
+          if (attempt === 1 && (response.status === 401 || response.status === 403)) {
+            console.log('Authentication error. Will retry after delay...');
+            setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), 3000);
+            return;
+          }
+          
           throw new Error(`Failed to fetch bootcamp registrations: ${response.statusText}`);
         }
         

@@ -118,25 +118,42 @@ export function RegisterFormClient({ track }: Props) {
       if (createAccount && json.createdUser && json.user?.email) {
         try {
           console.log('Attempting auto-login for new user:', json.user.email);
+          console.log('Registration data:', json.registration);
           
-          // Save credentials temporarily for auto-login
-          // This will be cleared after successful login
+          // Clear any existing login-related data first
+          localStorage.removeItem('userLoggedIn');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('autoLoginPassword');
+          localStorage.removeItem('autoLoginAttempt');
+          localStorage.removeItem('registrationId');
+          
+          // Then set fresh data
           localStorage.setItem('userLoggedIn', 'true');
           localStorage.setItem('userEmail', json.user.email);
           localStorage.setItem('autoLoginPassword', password); // Store temporarily for auto-login
           localStorage.setItem('autoLoginAttempt', Date.now().toString());
           localStorage.setItem('registrationId', json.registration?.id || '');
+          localStorage.setItem('userId', json.user?.id || '');
           
-          // Attempt direct sign-in first
+          // Attempt direct sign-in first with minimal delay
+          console.log('Attempting direct sign-in first...');
+          await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for stability
+          
           const result = await signIn('credentials', {
             email: json.user.email,
             password: password,
             redirect: false,
+            callbackUrl: '/profile?tab=bootcamps',
           });
+          
+          console.log('Direct sign-in result:', result);
           
           if (result?.ok) {
             console.log('Direct sign-in successful, redirecting to profile');
-            window.location.href = '/profile?tab=bootcamps';
+            // Use a small delay to ensure session is established
+            setTimeout(() => {
+              window.location.href = '/profile?tab=bootcamps';
+            }, 1000);
             return;
           }
           
@@ -145,8 +162,17 @@ export function RegisterFormClient({ track }: Props) {
           // Use the auto-login route as fallback
           const callbackUrl = encodeURIComponent('/profile?tab=bootcamps');
           
+          // Add additional params for better diagnosis
+          const params = new URLSearchParams();
+          params.append('email', json.user.email);
+          params.append('callbackUrl', '/profile?tab=bootcamps');
+          params.append('registrationId', json.registration?.id || '');
+          params.append('timestamp', Date.now().toString());
+          params.append('userId', json.user?.id || '');
+          
           // Redirect to our custom auto-login page
-          window.location.href = `/auth/auto-login?email=${encodeURIComponent(json.user.email)}&callbackUrl=${callbackUrl}&registrationId=${json.registration?.id || ''}`;
+          console.log(`Redirecting to auto-login page with params: ${params.toString()}`);
+          window.location.href = `/auth/auto-login?${params.toString()}`;
           
           // This prevents the success message from showing, since we're redirecting
           return;

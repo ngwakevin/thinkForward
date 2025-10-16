@@ -15,32 +15,52 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const emailParam = searchParams.get('email')?.toLowerCase();
     const registrationId = searchParams.get('registrationId');
+    const userIdParam = searchParams.get('userId');
     
-    // Log all available parameters for debugging
+    // Log all available parameters and headers for debugging
     console.log('Search parameters:', {
       email: emailParam,
-      registrationId: registrationId
+      registrationId,
+      userId: userIdParam,
+      headers: {
+        cookie: req.headers.get('cookie') ? 'exists' : 'missing',
+        authorization: req.headers.get('authorization') ? 'exists' : 'missing'
+      },
+      session: session ? 'exists' : 'missing'
     });
 
-    // Get the user ID from the session
+    // Get the user ID from all possible sources
     let userId: string | undefined;
     let userEmail: string | undefined;
     
     // First check if ID is in the session directly
-    const sess = session.user as any;
+    const sess = session?.user as any;
     if (sess?.id) {
       userId = sess.id;
       console.log('Found user ID in session:', userId);
     } 
     // Check for ID in the session with type casting since NextAuth types don't include id
-    else if ((session.user as any)?.id) {
+    else if ((session?.user as any)?.id) {
       userId = (session.user as any).id;
       console.log('Found user ID in session.user.id:', userId);
     }
+    // Check URL param
+    else if (userIdParam) {
+      userId = userIdParam;
+      console.log('Found user ID in URL parameter:', userId);
+    }
     
-    // Set email from session or param
-    userEmail = session.user?.email?.toLowerCase() || emailParam;
+    // Set email from all possible sources
+    userEmail = session?.user?.email?.toLowerCase() || emailParam;
     console.log('Using email for lookup:', userEmail);
+    
+    // Print session data for debugging
+    console.log('Session data:', {
+      hasUser: !!session?.user,
+      email: session?.user?.email,
+      name: session?.user?.name,
+      expires: session?.expires
+    });
     
     // Look up user by email if we don't have a userId
     if (!userId && userEmail) {
