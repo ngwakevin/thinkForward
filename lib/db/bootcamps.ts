@@ -60,15 +60,35 @@ async function getWritableContainer() {
 }
 
 export async function createBootcampRegistration(input: BootcampRegistrationInput): Promise<BootcampRegistration> {
+  // Validate required fields
+  if (!input.email) {
+    throw new Error('Email is required for bootcamp registration');
+  }
+  
   const now = new Date().toISOString();
   const id = uuidv4();
+  
+  // Ensure critical fields have values with clear fallbacks
   const fallbackUserId = input.userId ?? `anon-${id}`;
-  const fallbackBootcampId = input.bootcampId ?? (typeof input.metadata?.bootcampSlug === 'string' ? input.metadata.bootcampSlug : 'bootcamp');
-  const fallbackBootcampName = input.bootcampName ?? (typeof input.metadata?.bootcampName === 'string' ? input.metadata.bootcampName : 'Bootcamp Registration');
+  const fallbackBootcampId = input.bootcampId ?? (typeof input.metadata?.bootcampSlug === 'string' ? 
+    input.metadata.bootcampSlug : (input.track ? `${input.track}`.toLowerCase().replace(/\s+/g, '-') : 'cloud-foundation'));
+  
+  // Format bootcamp name from bootcampId if not provided
+  const fallbackBootcampName = input.bootcampName ?? (typeof input.metadata?.bootcampName === 'string' ? 
+    input.metadata.bootcampName : fallbackBootcampId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+    
   const fallbackStartDate = input.bootcampStartDate ?? new Date().toISOString();
+  
+  console.log(`Creating bootcamp registration with validated fields:
+    - email: ${input.email}
+    - bootcampId: ${fallbackBootcampId}
+    - userId: ${fallbackUserId}
+  `);
+  
+  // Create a fully-validated registration object with all required fields
   const registration: BootcampRegistration = {
     id,
-    type: 'bootcamp-registration', // Add type field for querying
+    type: 'bootcamp-registration', // Required type field for querying
     userId: fallbackUserId,
     bootcampId: fallbackBootcampId,
     bootcampName: fallbackBootcampName,

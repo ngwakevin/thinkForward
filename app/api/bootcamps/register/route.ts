@@ -13,8 +13,17 @@ export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
     
+    console.log('Received bootcamp registration request with payload:', {
+      name: payload.name,
+      email: payload.email,
+      bootcampId: payload.bootcampId,
+      track: payload.track,
+      createAccount: payload.createAccount
+    });
+    
     // If createAccount flag is true, forward to the register-bootcamp endpoint
     if (payload.createAccount === true || payload.createAccount === 'true') {
+      console.log('Forwarding to register-bootcamp endpoint for account creation');
       // Forward the request to the register-bootcamp endpoint
       const registerBotcampResponse = await fetch(new URL('/api/register-bootcamp', req.url), {
         method: 'POST',
@@ -27,9 +36,20 @@ export async function POST(req: NextRequest) {
       return registerBotcampResponse;
     }
     
-    const missing = REQUIRED_FIELDS.filter(field => !payload?.[field]);
+    // Expanded required fields check
+    const required = [...REQUIRED_FIELDS];
+    
+    // Add bootcampId as required if we're registering from the client component
+    if (req.headers.get('referer')?.includes('/bootcamps')) {
+      if (!payload.bootcampId) {
+        required.push('bootcampId');
+      }
+    }
+    
+    const missing = required.filter(field => !payload?.[field]);
 
     if (missing.length > 0) {
+      console.error(`Registration validation failed. Missing fields: ${missing.join(', ')}`);
       return NextResponse.json(
         { ok: false, error: `Missing required fields: ${missing.join(', ')}` },
         { status: 400 }
@@ -138,6 +158,16 @@ Notes: ${payload.notes ? String(payload.notes) : 'None'}
       // Continue with the registration response even if email fails
     }
 
+    // Add enhanced logging before response
+    console.log('Registration complete with all fields:', {
+      id: registration.id,
+      email: registration.email,
+      userId: registration.userId,
+      bootcampId: registration.bootcampId,
+      bootcampName: registration.bootcampName,
+      type: registration.type,
+    });
+
     return NextResponse.json(
       {
         ok: true,
@@ -146,7 +176,12 @@ Notes: ${payload.notes ? String(payload.notes) : 'None'}
           paymentReference: registration.paymentReference,
           createdAt: registration.createdAt,
           paymentStatus: registration.paymentStatus,
+          completionStatus: registration.completionStatus,
           track: registration.track,
+          bootcampId: registration.bootcampId,
+          bootcampName: registration.bootcampName,
+          type: registration.type,
+          userId: registration.userId,
           name: registration.name,
           email: registration.email
         }
