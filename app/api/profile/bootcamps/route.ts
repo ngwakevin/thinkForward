@@ -109,12 +109,16 @@ export async function GET(req: NextRequest) {
       allResults.forEach(reg => {
         registrationMap.set(reg.id, {
           ...reg,
-          // Ensure the type field exists
+          // Ensure all required fields exist with proper values
           type: reg.type || 'bootcamp-registration',
-          // Ensure email is set
           email: reg.email || email,
-          // Ensure userId is set
-          userId: reg.userId || userId || `user-${reg.id}`
+          userId: reg.userId || userId || `user-${reg.id}`,
+          bootcampId: reg.bootcampId || reg.track || 'cloud-foundation',
+          bootcampName: reg.bootcampName || (reg.bootcampId ? `${reg.bootcampId}`.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Cloud Foundation'),
+          paymentStatus: reg.paymentStatus || 'Pending',
+          completionStatus: reg.completionStatus || 'Not Started',
+          createdAt: reg.createdAt || new Date().toISOString(),
+          updatedAt: reg.updatedAt || new Date().toISOString(),
         });
       });
       

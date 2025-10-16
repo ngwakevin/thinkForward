@@ -194,9 +194,10 @@ export async function POST(req: NextRequest) {
     const metadata = buildMetadata(payload);
 
     // Make sure we include email and name in the registration to pass validation
+    // The email field must be present and not undefined to pass validation
     const registration = await createBootcampRegistration({
       userId: user.id,
-      email: user.email || email!, // Use user's email or the provided email (non-null assertion as we validate earlier)
+      email: user.email || email!, // Use user's email or the provided email (email! is safe as we validated earlier)
       name: user.name || name || 'Bootcamp User', // Provide fallback for name
       bootcampId: bootcampSlug!,
       bootcampName,

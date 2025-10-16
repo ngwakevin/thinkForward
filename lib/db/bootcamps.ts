@@ -60,9 +60,15 @@ async function getWritableContainer() {
 }
 
 export async function createBootcampRegistration(input: BootcampRegistrationInput): Promise<BootcampRegistration> {
-  // Validate required fields
+  // Enhanced validation for required fields
   if (!input.email) {
     throw new Error('Email is required for bootcamp registration');
+  }
+  
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(input.email)) {
+    throw new Error('Valid email format is required for bootcamp registration');
   }
   
   const now = new Date().toISOString();
@@ -79,10 +85,12 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
     
   const fallbackStartDate = input.bootcampStartDate ?? new Date().toISOString();
   
+  // Log all validated fields for better debugging
   console.log(`Creating bootcamp registration with validated fields:
     - email: ${input.email}
     - bootcampId: ${fallbackBootcampId}
     - userId: ${fallbackUserId}
+    - name: ${input.name || 'Not provided'}
   `);
   
   // Create a fully-validated registration object with all required fields
@@ -178,7 +186,19 @@ export async function getBootcampRegistrationsByUserId(userId: string): Promise<
     };
 
     const { resources } = await container.items.query(query).fetchAll();
-    return (resources as BootcampRegistration[]) ?? [];
+    
+    // Ensure all returned records have the required fields with defaults if needed
+    const registrations = (resources as BootcampRegistration[])?.map(reg => ({
+      ...reg,
+      type: reg.type || 'bootcamp-registration',
+      bootcampId: reg.bootcampId || reg.track || 'cloud-foundation',
+      bootcampName: reg.bootcampName || (reg.bootcampId ? `${reg.bootcampId}`.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Cloud Foundation'),
+      userId: reg.userId || userId,
+      paymentStatus: reg.paymentStatus || 'Pending',
+      completionStatus: reg.completionStatus || 'Not Started',
+    })) ?? [];
+    
+    return registrations;
   } catch (error) {
     console.error('Failed to fetch bootcamp registrations by user, returning memory results:', error);
     return Array.from(memoryRegistrationStore.values()).filter((reg) => reg.userId === userId);
