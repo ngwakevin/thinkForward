@@ -125,8 +125,24 @@ export function RegisterFormClient({ track }: Props) {
           localStorage.setItem('userEmail', json.user.email);
           localStorage.setItem('autoLoginPassword', password); // Store temporarily for auto-login
           localStorage.setItem('autoLoginAttempt', Date.now().toString());
+          localStorage.setItem('registrationId', json.registration?.id || '');
           
-          // Use the auto-login route
+          // Attempt direct sign-in first
+          const result = await signIn('credentials', {
+            email: json.user.email,
+            password: password,
+            redirect: false,
+          });
+          
+          if (result?.ok) {
+            console.log('Direct sign-in successful, redirecting to profile');
+            window.location.href = '/profile?tab=bootcamps';
+            return;
+          }
+          
+          console.log('Direct sign-in failed, using auto-login page instead');
+          
+          // Use the auto-login route as fallback
           const callbackUrl = encodeURIComponent('/profile?tab=bootcamps');
           
           // Redirect to our custom auto-login page

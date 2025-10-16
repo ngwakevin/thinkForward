@@ -11,9 +11,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if there's an email parameter in the URL (for cases where the session might not have all data yet)
+    // Check URL parameters (for cases where the session might not have all data yet)
     const searchParams = req.nextUrl.searchParams;
     const emailParam = searchParams.get('email')?.toLowerCase();
+    const registrationId = searchParams.get('registrationId');
+    
+    // Log all available parameters for debugging
+    console.log('Search parameters:', {
+      email: emailParam,
+      registrationId: registrationId
+    });
 
     // Get the user ID from the session
     let userId: string | undefined;
@@ -143,9 +150,24 @@ export async function GET(req: NextRequest) {
       console.log(`Total registrations with email ${session.user.email}:`, exactEmailCount[0]?.total || 0);
     }
     
+    // If registrationId was provided, look it up directly
+    let specificRegistration: any[] = [];
+    if (registrationId) {
+      console.log(`Looking up specific registration by ID: ${registrationId}`);
+      const { resources: regById } = await container.items
+        .query({
+          query: "SELECT * FROM c WHERE c.id = @id",
+          parameters: [{ name: '@id', value: registrationId }]
+        })
+        .fetchAll();
+      
+      console.log(`Found ${regById.length} registrations by ID`);
+      specificRegistration = regById;
+    }
+    
     // Combine and deduplicate results by id
     const registrationMap = new Map();
-    [...registrationsWithType, ...legacyRegistrations, ...emailRegistrations].forEach(reg => {
+    [...registrationsWithType, ...legacyRegistrations, ...emailRegistrations, ...specificRegistration].forEach(reg => {
       registrationMap.set(reg.id, { 
         ...reg, 
         type: reg.type || 'bootcamp-registration',

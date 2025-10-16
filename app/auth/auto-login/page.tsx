@@ -9,11 +9,14 @@ export default function AutoLogin() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState('Initializing automatic login...');
+  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
     const email = searchParams.get('email');
     const callbackUrl = searchParams.get('callbackUrl') || '/profile?tab=bootcamps';
+    const registrationId = searchParams.get('registrationId') || localStorage.getItem('registrationId');
     const state = searchParams.get('state');
+    
     const autoLogin = async () => {
       try {
         setStatus('Retrieving auto-login credentials...');
@@ -22,11 +25,13 @@ export default function AutoLogin() {
         const password = localStorage.getItem('autoLoginPassword');
         
         if (!email || !password) {
+          console.error('Missing login credentials:', { hasEmail: !!email, hasPassword: !!password });
           setError('Missing required login information');
           return;
         }
         
         setStatus('Signing you in automatically...');
+        console.log('Attempting sign-in with credentials provider');
         
         // Attempt to sign in
         const result = await signIn('credentials', {
@@ -37,18 +42,36 @@ export default function AutoLogin() {
         
         if (result?.ok) {
           setStatus('Login successful! Redirecting to your profile...');
+          console.log('Auto-login successful, redirecting to:', callbackUrl);
           
-          // Clear the temporary password from localStorage for security
+          // Clear the temporary data from localStorage for security
           localStorage.removeItem('autoLoginPassword');
+          localStorage.removeItem('autoLoginAttempt');
+          
+          // Store registration ID for profile page to use
+          if (registrationId) {
+            localStorage.setItem('lastRegistrationId', registrationId);
+          }
           
           // Use a small delay to ensure the session is established
           setTimeout(() => {
             window.location.href = callbackUrl;
           }, 1000);
         } else {
+          console.error('Auto-login failed:', result?.error);
           setError(`Automatic login failed: ${result?.error || 'Unknown error'}`);
           
-          // Fall back to regular login page after a delay
+          // Retry up to 3 times with increasing delays
+          if (attempts < 3) {
+            setStatus(`Login attempt failed. Retrying in ${(attempts + 1) * 2} seconds...`);
+            setTimeout(() => {
+              setAttempts(prev => prev + 1);
+              autoLogin();
+            }, (attempts + 1) * 2000);
+            return;
+          }
+          
+          // Fall back to regular login page after all retries fail
           setTimeout(() => {
             window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(email || '')}`;
           }, 3000);
@@ -60,7 +83,7 @@ export default function AutoLogin() {
     };
 
     autoLogin();
-  }, [searchParams, router]);
+  }, [searchParams, router, attempts]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg">

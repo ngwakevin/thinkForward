@@ -27,7 +27,7 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
 
   useEffect(() => {
     // Function to fetch registrations with exponential backoff
-    async function fetchWithRetry(attempt = 1, maxAttempts = 3) {
+    async function fetchWithRetry(attempt = 1, maxAttempts = 5) {
       try {
         setLoading(true);
         setError(null);
@@ -36,14 +36,28 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         // Get from localStorage if available from the registration process
         const email = localStorage.getItem('userEmail');
         const justRegistered = localStorage.getItem('autoLoginAttempt');
+        const registrationId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
         
         console.log('Using email from localStorage:', email);
+        console.log('Using registrationId from localStorage:', registrationId);
         
-        // Construct URL with email parameter if available
-        const url = email 
-          ? `/api/profile/bootcamps?email=${encodeURIComponent(email)}`
-          : '/api/profile/bootcamps';
+        // Construct URL with parameters if available
+        let url = '/api/profile/bootcamps';
+        const params = new URLSearchParams();
         
+        if (email) {
+          params.append('email', email);
+        }
+        
+        if (registrationId) {
+          params.append('registrationId', registrationId);
+        }
+        
+        if (params.toString()) {
+          url += '?' + params.toString();
+        }
+        
+        console.log('Fetching registrations from URL:', url);
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -62,32 +76,40 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         if (data.registrations.length > 0) {
           setRegistrations(data.registrations);
           
-          // Clear the temporary email and auto login flag if we successfully found registrations
+          // Clear the temporary data if we successfully found registrations
           if (justRegistered) {
             localStorage.removeItem('autoLoginAttempt');
           }
           return;
         } else if (attempt < maxAttempts) {
-          // If no registrations found and we have retries left, try again
-          console.log(`No registrations found. Retrying in ${attempt * 2} seconds...`);
-          setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), attempt * 2000);
+          // If no registrations found and we have retries left, try again with increasing delay
+          const delay = Math.min(attempt * attempt * 1000, 10000); // Exponential backoff with 10s cap
+          console.log(`No registrations found. Retrying in ${delay/1000} seconds...`);
+          setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), delay);
           return;
         }
         
         // If we've reached max attempts with no registrations, still set the empty array
         setRegistrations(data.registrations);
+        
+        // Clear localStorage data after all attempts to prevent stale data
+        localStorage.removeItem('registrationId');
       } catch (err: any) {
         console.error('Error fetching bootcamp registrations:', err);
         setError(err.message || 'Failed to load bootcamp registrations');
         
-        // If we have retries left, try again
+        // If we have retries left, try again with exponential backoff
         if (attempt < maxAttempts) {
-          console.log(`Error occurred. Retrying in ${attempt * 2} seconds...`);
-          setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), attempt * 2000);
+          const delay = Math.min(attempt * attempt * 1000, 10000); // Exponential backoff with 10s cap
+          console.log(`Error occurred. Retrying in ${delay/1000} seconds...`);
+          setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), delay);
         }
       } finally {
         if (attempt >= maxAttempts) {
           setLoading(false);
+          // After all attempts, clear registration-specific data
+          localStorage.removeItem('registrationId');
+          localStorage.removeItem('lastRegistrationId');
         }
       }
     }
