@@ -93,10 +93,12 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
     }
 
     // Only fetch data if the user is authenticated
-    if (status === 'authenticated' && session) {
-      fetchWithRetry();
-    } else if (status === 'authenticated') {
-      console.error('Session is authenticated but session data is missing');
+    if (status === 'authenticated') {
+      if (session) {
+        fetchWithRetry();
+      } else {
+        console.error('Session is authenticated but session data is missing');
+      }
     }
   }, [status, session, userId, retryCount]);
 
