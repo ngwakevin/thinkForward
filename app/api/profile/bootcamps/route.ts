@@ -107,10 +107,10 @@ export async function GET(req: NextRequest) {
     // Additional fallback - try to find by email (always try this even if we have userId)
     let emailRegistrations: any[] = [];
     if (userEmail) {
-      // Query for exact email match
+      // Query for exact email match - with broader criteria
       const { resources: emailResults } = await container.items
         .query({
-          query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND c.email = @email",
+          query: "SELECT * FROM c WHERE c.email = @email AND IS_DEFINED(c.bootcampId)",
           parameters: [{ name: '@email', value: userEmail }]
         })
         .fetchAll();
@@ -121,8 +121,8 @@ export async function GET(req: NextRequest) {
       if (emailRegistrations.length === 0) {
         const { resources: fuzzyEmailResults } = await container.items
           .query({
-            query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND CONTAINS(LOWER(c.email), @emailPart)",
-            parameters: [{ name: '@emailPart', value: userEmail }]
+            query: "SELECT * FROM c WHERE IS_DEFINED(c.bootcampId) AND CONTAINS(LOWER(c.email), @emailPart)",
+            parameters: [{ name: '@emailPart', value: userEmail.toLowerCase() }]
           })
           .fetchAll();
         emailRegistrations = fuzzyEmailResults;
@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
         const emailDomain = userEmail.split('@')[1];
         const { resources: domainResults } = await container.items
           .query({
-            query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND CONTAINS(LOWER(c.email), @domain)",
+            query: "SELECT * FROM c WHERE IS_DEFINED(c.bootcampId) AND CONTAINS(LOWER(c.email), @domain)",
             parameters: [{ name: '@domain', value: '@' + emailDomain }]
           })
           .fetchAll();
@@ -168,6 +168,21 @@ export async function GET(req: NextRequest) {
         })
         .fetchAll();
       console.log(`Total registrations with email ${session.user.email}:`, exactEmailCount[0]?.total || 0);
+      
+      // If there are registrations, retrieve one sample to examine its structure
+      if (exactEmailCount[0]?.total > 0) {
+        const { resources: sampleReg } = await container.items
+          .query({
+            query: "SELECT TOP 1 * FROM c WHERE c.email = @email",
+            parameters: [{ name: '@email', value: session.user.email.toLowerCase() }]
+          })
+          .fetchAll();
+          
+        if (sampleReg.length > 0) {
+          console.log('SAMPLE REGISTRATION STRUCTURE:', JSON.stringify(sampleReg[0], null, 2));
+          console.log('SAMPLE REGISTRATION KEYS:', Object.keys(sampleReg[0]));
+        }
+      }
     }
     
     // If registrationId was provided, look it up directly
@@ -185,9 +200,38 @@ export async function GET(req: NextRequest) {
       specificRegistration = regById;
     }
     
+    // EMERGENCY FALLBACK: If we still don't have registrations but know they exist, try a direct lookup
+    let directEmailRegistrations: any[] = [];
+    if (userEmail && (emailRegistrations.length === 0 && legacyRegistrations.length === 0 && registrationsWithType.length === 0)) {
+      console.log('*** EMERGENCY FALLBACK: No registrations found with standard queries, trying direct lookup ***');
+      
+      // Try with an extremely simple query
+      const { resources: directResults } = await container.items
+        .query({
+          query: "SELECT * FROM c WHERE c.email = @email",
+          parameters: [{ name: '@email', value: userEmail.toLowerCase() }]
+        })
+        .fetchAll();
+      
+      // Filter client-side for bootcamp-related entries
+      directEmailRegistrations = directResults.filter(item => {
+        return item.bootcampId || 
+               item.bootcampName || 
+               (item.type && item.type.includes('bootcamp')) ||
+               (item.paymentReference && item.paymentStatus);
+      });
+      
+      console.log(`EMERGENCY DIRECT LOOKUP: Found ${directResults.length} total items, ${directEmailRegistrations.length} look bootcamp-related`);
+      
+      // If we found items, log the first one for debugging
+      if (directEmailRegistrations.length > 0) {
+        console.log('EMERGENCY DIRECT LOOKUP EXAMPLE:', JSON.stringify(directEmailRegistrations[0], null, 2));
+      }
+    }
+    
     // Combine and deduplicate results by id
     const registrationMap = new Map();
-    [...registrationsWithType, ...legacyRegistrations, ...emailRegistrations, ...specificRegistration].forEach(reg => {
+    [...registrationsWithType, ...legacyRegistrations, ...emailRegistrations, ...specificRegistration, ...directEmailRegistrations].forEach(reg => {
       registrationMap.set(reg.id, { 
         ...reg, 
         type: reg.type || 'bootcamp-registration',

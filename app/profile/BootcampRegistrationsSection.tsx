@@ -23,7 +23,20 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [justRegistered, setJustRegistered] = useState<boolean>(false);
   const { data: session, status } = useSession();
+  
+  // Check if user just registered
+  useEffect(() => {
+    const autoLoginAttempt = localStorage.getItem('autoLoginAttempt');
+    const regId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
+    
+    // If we have these items in localStorage, the user likely just registered
+    if (autoLoginAttempt && regId) {
+      localStorage.setItem('justRegistered', 'true');
+      setJustRegistered(true);
+    }
+  }, []);
 
   useEffect(() => {
     // Function to fetch registrations with exponential backoff
@@ -190,11 +203,24 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
     }
   }, [status, session, userId, retryCount]);
 
+  // Function to manually trigger a retry
+  const handleManualRetry = () => {
+    console.log('Manually triggering retry');
+    setRetryCount(prev => prev + 1);
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="py-10 text-center">
         <div className="inline-block animate-spin h-8 w-8 border-4 border-gray-200 rounded-full border-t-blue-600"></div>
         <p className="mt-2 text-sm text-gray-600">Loading your registrations...</p>
+        
+        {/* Add retry button after a few seconds */}
+        {retryCount > 0 && (
+          <p className="mt-1 text-xs text-gray-500">
+            Retry attempt {retryCount} in progress...
+          </p>
+        )}
       </div>
     );
   }
@@ -217,12 +243,24 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
   }
 
   if (error) {
+    // Extract any registration-related data from localStorage for debugging
+    const email = localStorage.getItem('userEmail');
+    const registrationId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
+    const userId = localStorage.getItem('userId');
+    const autoLoginAttempt = localStorage.getItem('autoLoginAttempt');
+    
     return (
       <div className="py-6 space-y-4">
         <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-          {error}
+          <p className="font-semibold">Error loading bootcamp registrations</p>
+          <p className="mt-1">{error}</p>
+          
+          <div className="mt-3 text-xs border-t border-error/20 pt-2">
+            <p>If you just registered for a bootcamp, your registration may take a moment to appear.</p>
+          </div>
         </div>
-        <div className="text-center">
+        
+        <div className="text-center space-y-3">
           <button
             onClick={handleRefresh}
             className="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
@@ -230,21 +268,52 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Try Again
+            Retry Now (Attempt #{retryCount + 1})
           </button>
+          
+          {(email || registrationId || userId) && (
+            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-200">
+              <p className="mb-1 font-semibold">Debug Information:</p>
+              {email && <p>Email: {email}</p>}
+              {userId && <p>User ID: {userId}</p>}
+              {registrationId && <p>Registration ID: {registrationId}</p>}
+              {autoLoginAttempt && <p>Auto Login: Yes (timestamp: {autoLoginAttempt})</p>}
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
   if (registrations.length === 0) {
+    // Extract any registration-related data from localStorage for debugging
+    const email = localStorage.getItem('userEmail');
+    const registrationId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
+    const userId = localStorage.getItem('userId');
+    const autoLoginAttempt = localStorage.getItem('autoLoginAttempt');
+    const justRegistered = localStorage.getItem('justRegistered');
+    
     return (
       <div className="py-10 text-center space-y-4">
         <div className="text-5xl">🎓</div>
-        <h3 className="text-lg font-semibold">No Bootcamp Registrations</h3>
-        <p className="text-gray-600 max-w-md mx-auto">
-          You haven&apos;t registered for any bootcamps yet, or your registrations are still processing. Explore our available bootcamps or refresh to check again.
-        </p>
+        <h3 className="text-lg font-semibold">No Bootcamp Registrations Found</h3>
+        
+        {justRegistered ? (
+          <div className="text-gray-600 max-w-md mx-auto space-y-2">
+            <p>
+              Thank you for registering! Your bootcamp registration is being processed and should appear here shortly.
+            </p>
+            <p className="text-sm">
+              If you don't see your registration after a minute, please try refreshing this page.
+            </p>
+          </div>
+        ) : (
+          <p className="text-gray-600 max-w-md mx-auto">
+            You haven&apos;t registered for any bootcamps yet, or your registrations are still processing. 
+            Explore our available bootcamps or refresh to check again.
+          </p>
+        )}
+        
         <div className="flex flex-wrap gap-3 justify-center">
           <a 
             href="/bootcamps" 
@@ -259,9 +328,24 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Refresh
+            Refresh (Attempt #{retryCount + 1})
           </button>
         </div>
+        
+        {(email || registrationId || userId || autoLoginAttempt) && (
+          <div className="text-xs text-left bg-gray-50 p-3 rounded border border-gray-200 max-w-md mx-auto">
+            <p className="font-semibold mb-1 text-center">Debug Information</p>
+            <div className="space-y-1 text-gray-500">
+              {session?.user?.email && <p>Session Email: {session.user.email}</p>}
+              {session?.user && (session.user as any)?.id && <p>Session User ID: {(session.user as any).id}</p>}
+              {email && <p>Stored Email: {email}</p>}
+              {userId && <p>Stored User ID: {userId}</p>}
+              {registrationId && <p>Registration ID: {registrationId}</p>}
+              {autoLoginAttempt && <p>Auto Login: Yes ({new Date(parseInt(autoLoginAttempt)).toLocaleTimeString()})</p>}
+              {justRegistered && <p>Just Registered: Yes</p>}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
