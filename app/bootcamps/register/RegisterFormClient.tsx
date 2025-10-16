@@ -117,23 +117,29 @@ export function RegisterFormClient({ track }: Props) {
       // If account was created, automatically log the user in
       if (createAccount && json.createdUser && json.user?.email) {
         try {
+          console.log('Attempting auto-login for new user:', json.user.email);
+          
           // Attempt to sign in with the newly created credentials
           const signInResult = await signIn('credentials', { 
             email: json.user.email, 
             password: password,
-            redirect: false, // Don't redirect, we'll handle this in the UI
-            callbackUrl: '/profile?tab=bootcamps' // Set callback URL for later redirection
+            redirect: true, // Redirect the user after successful login
+            callbackUrl: '/profile?tab=bootcamps' // Set callback URL for redirection
           });
           
+          // This code will only execute if redirect is false
           if (signInResult?.ok) {
-            console.log('Auto login successful after registration');
+            console.log('Auto login successful after registration, redirecting manually');
+            
             // We'll wait a short time to ensure the session is fully established
-            // This helps prevent session inconsistencies
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Store login information in localStorage for persistence
             localStorage.setItem('userLoggedIn', 'true');
             localStorage.setItem('userEmail', json.user.email);
+            
+            // Manual redirect as a fallback
+            window.location.href = '/profile?tab=bootcamps';
           } else {
             console.error('Auto login failed:', signInResult?.error);
           }
@@ -216,9 +222,10 @@ export function RegisterFormClient({ track }: Props) {
                 <span className="i-lucide-circle-check-big" />
                 Account successfully created!
               </span> 
-              {' '}You&apos;re now signed in and can <a href="/profile?tab=bootcamps" className="text-accent hover:text-accent-lighter underline font-bold">
-                visit your profile
-              </a> to track your bootcamp registration.
+              {' '}You will be automatically redirected to your profile page. 
+              If you are not redirected, please <a href="/profile?tab=bootcamps" className="text-accent hover:text-accent-lighter underline font-bold">
+                click here
+              </a> to view your bootcamp registration.
             </p>
           )}
         </div>

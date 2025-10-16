@@ -39,6 +39,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Log the user details for debugging
+    console.log('Fetching bootcamp registrations for user:', {
+      userId,
+      email: session.user?.email,
+      name: session.user?.name
+    });
+
     // Query bootcamp registrations using user ID or email
     // First try with the type field that's now being added to registrations
     const { resources: registrationsWithType } = await container.items
@@ -47,6 +54,8 @@ export async function GET(req: NextRequest) {
         parameters: [{ name: '@userId', value: userId }]
       })
       .fetchAll();
+    
+    console.log('Registrations with type field query result:', registrationsWithType.length);
       
     // As a fallback for older registrations, also check records without a type but with bootcamp fields
     const { resources: legacyRegistrations } = await container.items
@@ -55,10 +64,13 @@ export async function GET(req: NextRequest) {
         parameters: [{ name: '@userId', value: userId }]
       })
       .fetchAll();
+    
+    console.log('Legacy registrations query result:', legacyRegistrations.length);
       
     // Additional fallback - try to find by email if userId didn't work
     let emailRegistrations: any[] = [];
     if (session.user?.email) {
+      // Query for exact email match
       const { resources: emailResults } = await container.items
         .query({
           query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND c.email = @email",
@@ -66,12 +78,43 @@ export async function GET(req: NextRequest) {
         })
         .fetchAll();
       emailRegistrations = emailResults;
-      console.log(`Found ${emailRegistrations.length} registrations by email: ${session.user.email}`);
+      console.log(`Found ${emailRegistrations.length} registrations by email match: ${session.user.email}`);
+      
+      // If no results, try with CONTAINS for case-insensitive matching
+      if (emailRegistrations.length === 0) {
+        const { resources: fuzzyEmailResults } = await container.items
+          .query({
+            query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND CONTAINS(LOWER(c.email), @emailPart)",
+            parameters: [{ name: '@emailPart', value: session.user.email.toLowerCase() }]
+          })
+          .fetchAll();
+        emailRegistrations = fuzzyEmailResults;
+        console.log(`Found ${emailRegistrations.length} registrations by fuzzy email match: ${session.user.email}`);
+      }
     }
       
     // Log query results for debugging
     console.log(`Found ${registrationsWithType.length} registrations with type='bootcamp-registration'`);
     console.log(`Found ${legacyRegistrations.length} legacy registrations without type field`);
+    
+    // For debugging: Check if any bootcamp registrations exist at all in the system
+    const { resources: anyRegistrations } = await container.items
+      .query({
+        query: "SELECT COUNT(1) as total FROM c WHERE c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)",
+      })
+      .fetchAll();
+    console.log('Total bootcamp registrations in database:', anyRegistrations[0]?.total || 0);
+    
+    // For debugging: Check if any registrations exist with this user's exact email
+    if (session.user?.email) {
+      const { resources: exactEmailCount } = await container.items
+        .query({
+          query: "SELECT COUNT(1) as total FROM c WHERE c.email = @email",
+          parameters: [{ name: '@email', value: session.user.email.toLowerCase() }]
+        })
+        .fetchAll();
+      console.log(`Total registrations with email ${session.user.email}:`, exactEmailCount[0]?.total || 0);
+    }
     
     // Combine and deduplicate results by id
     const registrationMap = new Map();
