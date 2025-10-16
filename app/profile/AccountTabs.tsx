@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import BootcampRegistrationsSection from './BootcampRegistrationsSection';
@@ -18,6 +18,19 @@ export default function AccountTabs({ initialData, user }: AccountTabsProps) {
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  
+  // Get tab from URL query parameter
+  useEffect(() => {
+    // Check for URL parameters that might specify which tab to show
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    
+    // Set active tab if a valid tab parameter is provided
+    if (tabParam === 'profile' || tabParam === 'account' || 
+        tabParam === 'privacy' || tabParam === 'bootcamps') {
+      setActiveTab(tabParam);
+    }
+  }, []);
 
   // Function to save profile data
   const saveProfile = async (profileData: any) => {

@@ -118,13 +118,25 @@ export function RegisterFormClient({ track }: Props) {
       if (createAccount && json.createdUser && json.user?.email) {
         try {
           // Attempt to sign in with the newly created credentials
-          await signIn('credentials', { 
+          const signInResult = await signIn('credentials', { 
             email: json.user.email, 
             password: password,
-            redirect: false // Don't redirect, we'll handle this in the UI
+            redirect: false, // Don't redirect, we'll handle this in the UI
+            callbackUrl: '/profile?tab=bootcamps' // Set callback URL for later redirection
           });
-          console.log('Auto login successful after registration');
-          // We don't redirect here as we still want to show the registration success message
+          
+          if (signInResult?.ok) {
+            console.log('Auto login successful after registration');
+            // We'll wait a short time to ensure the session is fully established
+            // This helps prevent session inconsistencies
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Store login information in localStorage for persistence
+            localStorage.setItem('userLoggedIn', 'true');
+            localStorage.setItem('userEmail', json.user.email);
+          } else {
+            console.error('Auto login failed:', signInResult?.error);
+          }
         } catch (signInError) {
           console.error('Auto login failed after registration:', signInError);
           // We don't show an error to the user as registration was successful
@@ -204,7 +216,7 @@ export function RegisterFormClient({ track }: Props) {
                 <span className="i-lucide-circle-check-big" />
                 Account successfully created!
               </span> 
-              {' '}You&apos;re now signed in and can <a href="/profile" className="text-accent hover:text-accent-lighter underline">
+              {' '}You&apos;re now signed in and can <a href="/profile?tab=bootcamps" className="text-accent hover:text-accent-lighter underline font-bold">
                 visit your profile
               </a> to track your bootcamp registration.
             </p>
