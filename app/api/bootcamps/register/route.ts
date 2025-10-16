@@ -80,9 +80,23 @@ export async function POST(req: NextRequest) {
     }
     
     // Extract bootcamp ID if provided
-    const bootcampId = payload.bootcampId ? String(payload.bootcampId) : 
-                       payload.track ? String(payload.track).toLowerCase().replace(/\s+/g, '-') :
-                       'default-bootcamp';
+    let bootcampId = 'default-bootcamp';
+    
+    if (payload.bootcampId) {
+      bootcampId = String(payload.bootcampId);
+      // Ensure bootcampId is in kebab-case format without spaces
+      if (bootcampId.includes(' ')) {
+        bootcampId = bootcampId.toLowerCase().replace(/\s+/g, '-');
+        console.log(`Converted bootcampId from "${payload.bootcampId}" to "${bootcampId}"`);
+      }
+    } else if (payload.track) {
+      bootcampId = String(payload.track).toLowerCase().replace(/\s+/g, '-');
+      console.log(`Using track as bootcampId: "${payload.track}" → "${bootcampId}"`);
+    }
+    
+    // Add debug log to ensure clarity
+    console.log(`Final bootcampId value: "${bootcampId}"`);
+    
     
     console.log(`Creating bootcamp registration for ${normalizedEmail}, bootcamp: ${bootcampId}, userId: ${userId || 'none'}`);
     

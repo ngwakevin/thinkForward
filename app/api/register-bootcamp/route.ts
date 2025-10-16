@@ -101,8 +101,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Service temporarily unavailable.' }, { status: 503 });
     }
 
-    const bootcamp = findBootcamp(bootcampSlug);
-    const bootcampName = bootcamp?.title ?? sanitizeString(payload.bootcampName) ?? 'Bootcamp';
+    // Handle track name formats correctly
+    let formattedSlug = bootcampSlug;
+    if (bootcampSlug && bootcampSlug.includes(' ')) {
+      // If bootcampSlug has spaces (like "Cloud Foundation"), convert to kebab-case for ID
+      formattedSlug = bootcampSlug.toLowerCase().replace(/\s+/g, '-');
+      console.log(`Converting track "${bootcampSlug}" to bootcampId: "${formattedSlug}"`);
+    }
+
+    const bootcamp = findBootcamp(formattedSlug);
+    const bootcampName = bootcamp?.title ?? sanitizeString(payload.bootcampName) ?? bootcampSlug ?? 'Bootcamp';
     const bootcampStartDate = bootcamp?.startDate ?? new Date().toISOString();
 
     const existingUser = email ? await cosmosService.getUserByEmail(email) : null;
@@ -195,15 +203,21 @@ export async function POST(req: NextRequest) {
 
     // Make sure we include email and name in the registration to pass validation
     // The email field must be present and not undefined to pass validation
+    // Make sure bootcampId is properly formatted (kebab-case without spaces)
+    const normalizedBootcampId = formattedSlug || 
+      (bootcampSlug ? bootcampSlug.toLowerCase().replace(/\s+/g, '-') : 'cloud-foundation');
+    
+    console.log(`Creating registration with userId: ${user.id}, bootcampId: ${normalizedBootcampId}`);
+    
     const registration = await createBootcampRegistration({
       userId: user.id,
       email: user.email || email!, // Use user's email or the provided email (email! is safe as we validated earlier)
       name: user.name || name || 'Bootcamp User', // Provide fallback for name
-      bootcampId: bootcampSlug!,
+      bootcampId: normalizedBootcampId,
       bootcampName,
       bootcampStartDate,
       metadata,
-      track: bootcampSlug, // Include track to match the bootcampId
+      track: normalizedBootcampId, // Include track to match the bootcampId
       type: 'bootcamp-registration', // Explicitly set the type field
       paymentStatus: 'Pending',
       completionStatus: 'Not Started',
