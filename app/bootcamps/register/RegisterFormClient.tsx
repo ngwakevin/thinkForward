@@ -119,33 +119,24 @@ export function RegisterFormClient({ track }: Props) {
         try {
           console.log('Attempting auto-login for new user:', json.user.email);
           
-          // Attempt to sign in with the newly created credentials
-          const signInResult = await signIn('credentials', { 
-            email: json.user.email, 
-            password: password,
-            redirect: true, // Redirect the user after successful login
-            callbackUrl: '/profile?tab=bootcamps' // Set callback URL for redirection
-          });
+          // Save credentials temporarily for auto-login
+          // This will be cleared after successful login
+          localStorage.setItem('userLoggedIn', 'true');
+          localStorage.setItem('userEmail', json.user.email);
+          localStorage.setItem('autoLoginPassword', password); // Store temporarily for auto-login
+          localStorage.setItem('autoLoginAttempt', Date.now().toString());
           
-          // This code will only execute if redirect is false
-          if (signInResult?.ok) {
-            console.log('Auto login successful after registration, redirecting manually');
-            
-            // We'll wait a short time to ensure the session is fully established
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Store login information in localStorage for persistence
-            localStorage.setItem('userLoggedIn', 'true');
-            localStorage.setItem('userEmail', json.user.email);
-            
-            // Manual redirect as a fallback
-            window.location.href = '/profile?tab=bootcamps';
-          } else {
-            console.error('Auto login failed:', signInResult?.error);
-          }
+          // Use the auto-login route
+          const callbackUrl = encodeURIComponent('/profile?tab=bootcamps');
+          
+          // Redirect to our custom auto-login page
+          window.location.href = `/auth/auto-login?email=${encodeURIComponent(json.user.email)}&callbackUrl=${callbackUrl}&registrationId=${json.registration?.id || ''}`;
+          
+          // This prevents the success message from showing, since we're redirecting
+          return;
         } catch (signInError) {
-          console.error('Auto login failed after registration:', signInError);
-          // We don't show an error to the user as registration was successful
+          console.error('Auto login redirect failed after registration:', signInError);
+          // Continue to show the success message
         }
       }
     } catch (err: any) {

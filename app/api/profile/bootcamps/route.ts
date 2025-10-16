@@ -11,8 +11,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check if there's an email parameter in the URL (for cases where the session might not have all data yet)
+    const searchParams = req.nextUrl.searchParams;
+    const emailParam = searchParams.get('email')?.toLowerCase();
+
     // Get the user ID from the session
     let userId: string | undefined;
+    let userEmail: string | undefined;
     
     // First check if ID is in the session directly
     const sess = session.user as any;
@@ -25,10 +30,15 @@ export async function GET(req: NextRequest) {
       userId = (session.user as any).id;
       console.log('Found user ID in session.user.id:', userId);
     }
-    // Finally fall back to email lookup
-    else if (session.user?.email) {
-      console.log('Looking up user by email:', session.user.email);
-      const user = await cosmosService.getUserByEmail(session.user.email.toLowerCase());
+    
+    // Set email from session or param
+    userEmail = session.user?.email?.toLowerCase() || emailParam;
+    console.log('Using email for lookup:', userEmail);
+    
+    // Look up user by email if we don't have a userId
+    if (!userId && userEmail) {
+      console.log('Looking up user by email:', userEmail);
+      const user = await cosmosService.getUserByEmail(userEmail);
       if (user) {
         userId = user.id;
         console.log('Found user ID by email lookup:', userId);
@@ -67,29 +77,46 @@ export async function GET(req: NextRequest) {
     
     console.log('Legacy registrations query result:', legacyRegistrations.length);
       
-    // Additional fallback - try to find by email if userId didn't work
+    // Additional fallback - try to find by email (always try this even if we have userId)
     let emailRegistrations: any[] = [];
-    if (session.user?.email) {
+    if (userEmail) {
       // Query for exact email match
       const { resources: emailResults } = await container.items
         .query({
           query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND c.email = @email",
-          parameters: [{ name: '@email', value: session.user.email.toLowerCase() }]
+          parameters: [{ name: '@email', value: userEmail }]
         })
         .fetchAll();
       emailRegistrations = emailResults;
-      console.log(`Found ${emailRegistrations.length} registrations by email match: ${session.user.email}`);
+      console.log(`Found ${emailRegistrations.length} registrations by email match: ${userEmail}`);
       
       // If no results, try with CONTAINS for case-insensitive matching
       if (emailRegistrations.length === 0) {
         const { resources: fuzzyEmailResults } = await container.items
           .query({
             query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND CONTAINS(LOWER(c.email), @emailPart)",
-            parameters: [{ name: '@emailPart', value: session.user.email.toLowerCase() }]
+            parameters: [{ name: '@emailPart', value: userEmail }]
           })
           .fetchAll();
         emailRegistrations = fuzzyEmailResults;
-        console.log(`Found ${emailRegistrations.length} registrations by fuzzy email match: ${session.user.email}`);
+        console.log(`Found ${emailRegistrations.length} registrations by fuzzy email match: ${userEmail}`);
+      }
+      
+      // If still no results, do a very broad search for the email domain
+      if (emailRegistrations.length === 0 && userEmail.includes('@')) {
+        const emailDomain = userEmail.split('@')[1];
+        const { resources: domainResults } = await container.items
+          .query({
+            query: "SELECT * FROM c WHERE (c.type = 'bootcamp-registration' OR IS_DEFINED(c.bootcampId)) AND CONTAINS(LOWER(c.email), @domain)",
+            parameters: [{ name: '@domain', value: '@' + emailDomain }]
+          })
+          .fetchAll();
+        console.log(`Found ${domainResults.length} registrations by email domain: @${emailDomain}`);
+        
+        // Only use domain results if there are a reasonable number (less than 10)
+        if (domainResults.length > 0 && domainResults.length < 10) {
+          emailRegistrations = domainResults;
+        }
       }
     }
       

@@ -26,13 +26,25 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    async function fetchBootcampRegistrations() {
+    // Function to fetch registrations with exponential backoff
+    async function fetchWithRetry(attempt = 1, maxAttempts = 3) {
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching bootcamp registrations...');
+        console.log(`Fetching bootcamp registrations (attempt ${attempt} of ${maxAttempts})...`);
         
-        const response = await fetch('/api/profile/bootcamps');
+        // Get from localStorage if available from the registration process
+        const email = localStorage.getItem('userEmail');
+        const justRegistered = localStorage.getItem('autoLoginAttempt');
+        
+        console.log('Using email from localStorage:', email);
+        
+        // Construct URL with email parameter if available
+        const url = email 
+          ? `/api/profile/bootcamps?email=${encodeURIComponent(email)}`
+          : '/api/profile/bootcamps';
+        
+        const response = await fetch(url);
         
         if (!response.ok) {
           console.error('Failed to fetch bootcamp registrations. Status:', response.status);
@@ -47,18 +59,44 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
           throw new Error('Unexpected data format from the server');
         }
         
+        if (data.registrations.length > 0) {
+          setRegistrations(data.registrations);
+          
+          // Clear the temporary email and auto login flag if we successfully found registrations
+          if (justRegistered) {
+            localStorage.removeItem('autoLoginAttempt');
+          }
+          return;
+        } else if (attempt < maxAttempts) {
+          // If no registrations found and we have retries left, try again
+          console.log(`No registrations found. Retrying in ${attempt * 2} seconds...`);
+          setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), attempt * 2000);
+          return;
+        }
+        
+        // If we've reached max attempts with no registrations, still set the empty array
         setRegistrations(data.registrations);
       } catch (err: any) {
         console.error('Error fetching bootcamp registrations:', err);
         setError(err.message || 'Failed to load bootcamp registrations');
+        
+        // If we have retries left, try again
+        if (attempt < maxAttempts) {
+          console.log(`Error occurred. Retrying in ${attempt * 2} seconds...`);
+          setTimeout(() => fetchWithRetry(attempt + 1, maxAttempts), attempt * 2000);
+        }
       } finally {
-        setLoading(false);
+        if (attempt >= maxAttempts) {
+          setLoading(false);
+        }
       }
     }
 
     // Only fetch data if the user is authenticated
     if (status === 'authenticated' && session) {
-      fetchBootcampRegistrations();
+      fetchWithRetry();
+    } else if (status === 'authenticated') {
+      console.error('Session is authenticated but session data is missing');
     }
   }, [status, session, userId, retryCount]);
 
