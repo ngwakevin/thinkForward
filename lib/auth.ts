@@ -76,11 +76,27 @@ if (!process.env.NEXTAUTH_URL && typeof window === 'undefined') {
 }
 
 export const authOptions: NextAuthOptions = {
+  // Using NextAuth v4 configuration compatible with Azure App Service
+  
   session: {
     strategy: 'jwt',
     // Adjust session max age as needed (default: 30 days)
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  
+  // Ensure cookies are properly configured for Azure's reverse proxy
+  cookies: {
+    sessionToken: {
+      name: "__Secure-next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
+  
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error',
