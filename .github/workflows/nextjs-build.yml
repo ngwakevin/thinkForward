@@ -27,6 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Clean previous builds and cache
+        run: |
+          echo "Cleaning all build artifacts..."
+          rm -rf .next node_modules/.cache node_modules/.next .turbo
+          find . -type d -name ".next" -exec rm -rf {} +
+
       - name: Make scripts executable
         run: chmod +x scripts/ci-build-fixed.sh
 
