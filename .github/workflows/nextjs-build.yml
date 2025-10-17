@@ -28,14 +28,10 @@ jobs:
     
     - name: Make scripts executable
       run: |
-        chmod +x scripts/ci-build.sh
-        chmod +x scripts/ci-prebuild-patch.sh
+        chmod +x scripts/ci-build-no-pages.sh
     
-    - name: Apply pre-build patches
-      run: ./scripts/ci-prebuild-patch.sh
-      
-    - name: Build with custom CI script
-      run: ./scripts/ci-build.sh
+    - name: Build with "no Pages Router" approach
+      run: ./scripts/ci-build-no-pages.sh
       
     - name: Archive build artifacts
       uses: actions/upload-artifact@v3
