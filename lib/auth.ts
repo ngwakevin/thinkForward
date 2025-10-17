@@ -77,6 +77,7 @@ if (!process.env.NEXTAUTH_URL && typeof window === 'undefined') {
 
 export const authOptions: NextAuthOptions = {
   // Using NextAuth v4 configuration compatible with Azure App Service
+  trustHost: true, // ensures correct proxy handling on Azure
   
   session: {
     strategy: 'jwt',

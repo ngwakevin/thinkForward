@@ -5,7 +5,7 @@ import { authOptions } from '../../../../lib/auth';
 
 // Configure NextAuth to work with Azure App Service's reverse proxy
 // This helps ensure NextAuth properly detects HTTPS behind Azure's proxy
-process.env.NEXTAUTH_URL_INTERNAL = process.env.NEXTAUTH_URL;
+process.env.NEXTAUTH_URL_INTERNAL = process.env.NEXTAUTH_URL || `https://${process.env.WEBSITE_HOSTNAME}`;
 
 // For Azure App Service, we need to ensure correct proxy handling
 if (process.env.WEBSITE_HOSTNAME) {
