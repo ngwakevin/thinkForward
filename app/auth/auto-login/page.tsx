@@ -13,6 +13,8 @@ export default function AutoLogin() {
   const [debug, setDebug] = useState<Record<string, any>>({});
 
   useEffect(() => {
+    if (!searchParams) return; // Return early if searchParams is null
+    
     const email = searchParams.get('email') || localStorage.getItem('userEmail');
     const callbackUrl = searchParams.get('callbackUrl') || localStorage.getItem('authCallbackUrl') || '/profile?tab=bootcamps';
     const registrationId = searchParams.get('registrationId') || localStorage.getItem('registrationId');
@@ -182,7 +184,7 @@ export default function AutoLogin() {
     };
 
     autoLogin();
-  }, [searchParams, router, attempts]);
+  }, [searchParams?.toString(), router, attempts]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg">

@@ -53,9 +53,9 @@ export default function CommunityClient({
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [threads, setThreads] = useState<Thread[]>(initialThreads);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'recent');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
+  const [searchTerm, setSearchTerm] = useState(searchParams?.get('q') || '');
+  const [sortBy, setSortBy] = useState(searchParams?.get('sort') || 'recent');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams?.get('category') || 'all');
 
   // Fetch threads based on filters
   useEffect(() => {

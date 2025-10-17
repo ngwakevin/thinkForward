@@ -214,8 +214,8 @@ const emptyProgress = (monthTasks: string[], sixTasks: string[]): ProgressData =
 
 export default function RoadmapsPage() {
   const searchParams = useSearchParams();
-  const goal = searchParams.get('goal') || undefined;
-  const level = searchParams.get('level') || undefined;
+  const goal = searchParams?.get('goal') || undefined;
+  const level = searchParams?.get('level') || undefined;
 
   // Core task arrays (before splitting)
   const monthTasks = useMemo(() => goal ? goalHints[goal] || [] : defaultMonth, [goal]);
