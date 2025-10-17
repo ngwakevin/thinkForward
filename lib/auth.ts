@@ -278,7 +278,12 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (user) {
+        // Ensure the user's ID is set in the sub claim for consistency
+        token.sub = (user as any).id || token.sub;
+        
+        // Also keep as id for backward compatibility
         token.id = (user as any).id || token.id;
+        
         if (user.email) {
           token.email = user.email;
         }
@@ -298,8 +303,10 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: { session: any; token: any }) {
       // Add additional info to session
       if (session.user) {
-        // Add ID and provider directly to user object
-        session.user.id = token.id;
+        // Always ensure user ID is set from the token's sub claim
+        session.user.id = token.sub || token.id;
+        
+        // Add provider information
         session.user.provider = token.provider;
         
         // These fields are needed for proper user identification
@@ -310,9 +317,17 @@ export const authOptions: NextAuthOptions = {
         if (token.oid) {
           session.user.oid = token.oid;
         }
+        
         if (!session.user.email && token.email) {
           session.user.email = token.email;
         }
+        
+        // Add access token if available
+        if (token.accessToken) {
+          session.accessToken = token.accessToken;
+        }
+
+        console.log('[auth] Session user ID set to:', session.user.id);
       }
       return session;
     }
