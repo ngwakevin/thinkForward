@@ -4,11 +4,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { ensureUserFromOidc } from "@/app/api/auth/db/users";
+import { ensureUserFromOidc } from "../db/users";
 
 // Import your Cosmos DB service dynamically for CredentialsProvider
 const getCosmosService = async () => {
-  const { cosmosService } = await import("@/app/api/auth/azure/cosmos-service");
+  const { cosmosService } = await import("../azure/cosmos-service");
   return cosmosService;
 };
 
@@ -77,7 +77,7 @@ const providers = [
 ];
 
 // NextAuth options
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers,
   pages: {
     signIn: "/auth/signin",
@@ -132,7 +132,9 @@ export const authOptions: NextAuthOptions = {
         token.provider = account.provider;
         token.accessToken = account.access_token;
         token.providerAccountId = account.providerAccountId;
-        if (account.idTokenClaims?.oid) token.oid = account.idTokenClaims.oid;
+        // Type casting for Azure AD specific claims
+        const azureAccount = account as any;
+        if (azureAccount.idTokenClaims?.oid) token.oid = azureAccount.idTokenClaims.oid;
       }
       if (user) {
         token.sub = (user as any).id || token.sub;
@@ -142,16 +144,24 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub || token.id;
-        session.user.email = token.email || session.user.email;
-        session.user.provider = token.provider;
-        session.user.providerAccountId = token.providerAccountId;
-        session.user.oid = token.oid;
-        session.accessToken = token.accessToken;
+      // Type cast to allow for custom properties
+      const extendedSession = session as any;
+      const extendedToken = token as any;
+      
+      if (extendedSession.user) {
+        extendedSession.user.id = extendedToken.sub || extendedToken.id;
+        extendedSession.user.email = extendedToken.email || extendedSession.user.email;
+        extendedSession.user.provider = extendedToken.provider;
+        extendedSession.user.providerAccountId = extendedToken.providerAccountId;
+        extendedSession.user.oid = extendedToken.oid;
+        extendedSession.accessToken = extendedToken.accessToken;
       }
-      console.log("[auth] Session user ID set to:", session.user.id);
-      return session;
+      
+      if (extendedSession.user?.id) {
+        console.log("[auth] Session user ID set to:", extendedSession.user.id);
+      }
+      
+      return extendedSession;
     },
   },
   events: {

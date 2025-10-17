@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone', // keep for Azure
-  experimental: {
-    appDir: true, // ensures correct app router build
-  },
   // prevent missing webpack-runtime references
   webpack(config) {
     config.output.filename = 'static/chunks/[name].js';
@@ -11,4 +8,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
