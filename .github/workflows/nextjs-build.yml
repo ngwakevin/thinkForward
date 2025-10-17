@@ -28,10 +28,10 @@ jobs:
     
     - name: Make scripts executable
       run: |
-        chmod +x scripts/ci-build-no-pages.sh
+        chmod +x scripts/ci-build-fixed.sh
     
-    - name: Build with "no Pages Router" approach
-      run: ./scripts/ci-build-no-pages.sh
+    - name: Build with module resolution fix
+      run: ./scripts/ci-build-fixed.sh
       
     - name: Archive build artifacts
       uses: actions/upload-artifact@v3
