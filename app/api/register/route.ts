@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { CosmosClient } from "@azure/cosmos";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth"; // Adjusted to match project structure
-
-// Cosmos setup
-const client = new CosmosClient(process.env.COSMOS_CONNECTION_STRING!);
-const database = client.database("thinkforward");
-const container = database.container("bootcamp-registrations");
-const usersContainer = database.container("users");
+import { isCosmosAvailable, getBootcampRegistrationsContainer, getUsersContainer } from "../../../lib/cosmos";
+import { verifyCosmosDBConnection } from "../../../lib/azure/cosmos-config";
 
 // Bootcamp ID map
 const BOOTCAMPS = {
@@ -49,11 +44,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid bootcamp track" }, { status: 400 });
     }
 
-    // Connect Cosmos
-    console.log("Connected to Cosmos DB database: thinkforward");
+    // Verify Cosmos DB connection
+    try {
+      const connected = await verifyCosmosDBConnection();
+      if (!connected && !isCosmosAvailable()) {
+        throw new Error('Cosmos DB unavailable');
+      }
+      console.log("Connected to Cosmos DB database: thinkforward");
+    } catch (connectionError) {
+      console.error('Failed Cosmos DB connectivity check', connectionError);
+      return NextResponse.json({ ok: false, error: 'Database service temporarily unavailable.' }, { status: 503 });
+    }
 
+    const registrationsContainer = await getBootcampRegistrationsContainer();
+    
     // Check if already registered
-    const { resources: existing } = await container.items
+    const { resources: existing } = await registrationsContainer.items
       .query({
         query: "SELECT * FROM c WHERE c.email = @email AND c.bootcampId = @bootcampId",
         parameters: [
@@ -86,12 +92,14 @@ export async function POST(req: Request) {
       updatedAt: new Date().toISOString()
     };
 
-    await container.items.create(registration);
+    // Create the registration
+    await registrationsContainer.items.create(registration);
     console.log("✅ Bootcamp registration created:", registration);
 
     // Auto-create user if needed
     let userId: string | undefined;
-
+    
+    const usersContainer = await getUsersContainer();
     const { resources: existingUsers } = await usersContainer.items
       .query({
         query: "SELECT * FROM c WHERE c.email = @email",
@@ -119,7 +127,7 @@ export async function POST(req: Request) {
       userId = newUser.id;
 
       // Update registration with userId
-      await container.item(registration.id).replace({
+      await registrationsContainer.items.upsert({
         ...registration,
         userId
       });
@@ -129,7 +137,7 @@ export async function POST(req: Request) {
       console.log(`Existing user found: ${userId}`);
       
       // Update registration with userId
-      await container.item(registration.id).replace({
+      await registrationsContainer.items.upsert({
         ...registration,
         userId
       });
