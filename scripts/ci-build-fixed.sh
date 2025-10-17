@@ -43,6 +43,9 @@ const nextConfig = {
   // Always use standalone output for Azure App Service deployment
   output: 'standalone',
   
+  // Explicitly disable Pages Router
+  pageExtensions: [],
+  
   // Disable source maps in CI for faster builds
   productionBrowserSourceMaps: false,
   
@@ -68,11 +71,19 @@ EOL
 
 # No need to handle Pages Router since it's removed
 echo "🛠️ CI Build: Building Next.js application (App Router only)..."
+
+# Extra cleanup to ensure no Pages Router artifacts exist
+echo "🧹 CI Build: Extra cleanup of Pages Router artifacts..."
+rm -rf .next/server/pages
+rm -rf .next/server/tic/chunks/pages
+
 # Run the build with increased memory and simplified settings
 # Set environment variables to ensure App Router only mode
 export NEXT_PRIVATE_PREBUNDLED_REACT="next"
 export NEXT_PRIVATE_STANDALONE="1"
-NODE_OPTIONS="--max_old_space_size=4096" NEXT_TELEMETRY_DISABLED=1 npx next build
+export NEXT_TELEMETRY_DISABLED=1
+export NODE_ENV=production
+NODE_OPTIONS="--max_old_space_size=4096" npx next build
 
 # Restore project files
 echo "📁 CI Build: Restoring project files..."

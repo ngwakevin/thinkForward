@@ -24,8 +24,15 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Deep clean environment
+        run: |
+          echo "Performing complete environment cleanup..."
+          rm -rf .next node_modules package-lock.json
+          npm cache clean --force
+          echo "Removed node_modules, package-lock.json, and cleared npm cache"
+
+      - name: Reinstall dependencies
+        run: npm install
 
       - name: Clean previous builds and cache
         run: |
@@ -42,12 +49,56 @@ jobs:
         run: chmod +x scripts/ci-build-fixed.sh
 
       - name: Build with App Router only
-        run: ./scripts/ci-build-fixed.sh
+        run: |
+          # Create a simplified temporary next.config.js that explicitly disables Pages Router
+          cat > next.config.js << 'EOL'
+          /** @type {import('next').NextConfig} */
+          const nextConfig = {
+            reactStrictMode: true,
+            output: 'standalone',
+            productionBrowserSourceMaps: false,
+            // Disable any Pages Router handling
+            pageExtensions: [],
+            webpack: (config, { isServer }) => {
+              if (!isServer) {
+                config.resolve.fallback = {
+                  ...config.resolve.fallback,
+                  fs: false,
+                  path: false,
+                  os: false,
+                  net: false,
+                  tls: false,
+                  child_process: false,
+                };
+              }
+              return config;
+            },
+          };
+          module.exports = nextConfig;
+          EOL
+          
+          # Now run the build script with special environment variables
+          ./scripts/ci-build-fixed.sh
         env:
           # Explicitly tell Next.js we're using App Router only
           NEXT_PRIVATE_PREBUNDLED_REACT: "next"
           NEXT_PRIVATE_STANDALONE: "1"
+          NODE_ENV: "production"
+          NEXT_TELEMETRY_DISABLED: "1"
           NODE_OPTIONS: "--max_old_space_size=4096"
+
+      - name: Cleanup temporary files
+        run: |
+          # Remove any temporary config files
+          if [ -f "next.config.js" ]; then
+            rm -f next.config.js
+          fi
+          
+          # Additional debugging information
+          echo "Final build structure:"
+          ls -la .next/
+          echo "Server directory structure:"
+          ls -la .next/server/ || echo "No server directory found"
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
