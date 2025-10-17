@@ -63,9 +63,10 @@ export async function handleAutoLogin(email: string, password: string, callbackU
   }
 }
 
-/**
+/* 
  * Usage example in a React component:
  * 
+ * ```tsx
  * function LoginForm() {
  *   const [email, setEmail] = useState('');
  *   const [password, setPassword] = useState('');
@@ -88,7 +89,7 @@ export async function handleAutoLogin(email: string, password: string, callbackU
  *   
  *   return (
  *     <form onSubmit={onSubmit}>
- *       {/* Form fields */}
+ *       {/\* Form fields *\/}
  *       {error && <div className="error">{error}</div>}
  *       <button type="submit" disabled={loading}>
  *         {loading ? 'Logging in...' : 'Log in'}
@@ -96,4 +97,5 @@ export async function handleAutoLogin(email: string, password: string, callbackU
  *     </form>
  *   );
  * }
+ * ```
  */
