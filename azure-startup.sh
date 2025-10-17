@@ -1,5 +1,5 @@
 #!/bin/bash
-# azure-startup.sh - A simplified startup script for Azure App Service
+# azure-startup.sh - Optimized startup script for Azure App Service with Next.js standalone mode
 
 echo "=== ThinkForward Azure App Service Startup Script ==="
 echo "Starting at: $(date)"
@@ -11,13 +11,18 @@ if [ -z "$NODE_ENV" ]; then
 fi
 
 # Create necessary directory structure
-echo "Creating directory structure..."
-NEXT_DIR="/home/site/next-temp/.next"
-mkdir -p "$NEXT_DIR"
+echo "Creating standalone directories..."
+mkdir -p ./standalone
+mkdir -p ./standalone/.next/static
+
+# Copy standalone server files
+echo "Copying standalone server files..."
+cp -R .next/standalone/* ./standalone/
+cp -R .next/static ./standalone/.next/
 
 echo "Current directory: $(pwd)"
-echo "Listing files in current directory:"
-ls -la
+echo "Listing standalone directory:"
+ls -la ./standalone
 
 # Look for build files in the expected locations
 echo "Checking for Next.js build in expected locations..."
@@ -118,7 +123,8 @@ echo "NODE_ENV: $NODE_ENV"
 echo "NEXT_DIST_DIR: $NEXT_DIST_DIR"
 echo "WEBSITE_SITE_NAME: $WEBSITE_SITE_NAME"
 
-# Start the application
-echo "=== Starting Node.js Server ==="
+# Start the application from standalone directory
+echo "=== Starting Node.js Server in Standalone Mode ==="
 echo "Start time: $(date)"
+cd ./standalone
 exec node server.js
