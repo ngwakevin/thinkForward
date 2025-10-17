@@ -5,19 +5,16 @@ const Head = Document.Head;
 const Main = Document.Main;
 const NextScript = Document.NextScript;
 
-// Create Document component as a class for CommonJS compatibility
-class MyDocument extends Document {
-  render() {
-    return (
-      <Html lang="en">
-        <Head />
-        <body>
-          <Main />
-          <NextScript />
-        </body>
-      </Html>
-    );
-  }
+function MyDocument() {
+  return (
+    <Html lang="en">
+      <Head />
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  );
 }
 
 // Use CommonJS exports
