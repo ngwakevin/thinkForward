@@ -66,32 +66,17 @@ const nextConfig = {
 module.exports = nextConfig;
 EOL
 
-# Completely remove Pages Router during build
-echo "📁 CI Build: Temporarily removing pages directory to avoid conflicts..."
-if [ -d "pages" ]; then
-  mv pages pages.bak
-fi
-
-# Remove next.config.mjs to avoid confusion
-if [ -f "next.config.mjs" ]; then
-  mv next.config.mjs next.config.mjs.bak
-fi
-
+# No need to handle Pages Router since it's removed
 echo "🛠️ CI Build: Building Next.js application (App Router only)..."
 # Run the build with increased memory and simplified settings
 NODE_OPTIONS="--max_old_space_size=4096" NEXT_TELEMETRY_DISABLED=1 npx next build
 
-# Restore pages directory after build
+# Restore project files
 echo "📁 CI Build: Restoring project files..."
 # Restore package.json
 mv package.json.bak package.json
 
-# Restore pages directory
-if [ -d "pages.bak" ]; then
-  mv pages.bak pages
-fi
-
-# Restore next.config.mjs
+# Remove next.config.mjs to avoid confusion
 if [ -f "next.config.mjs.bak" ]; then
   mv next.config.mjs.bak next.config.mjs
 fi
