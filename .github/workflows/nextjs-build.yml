@@ -32,12 +32,22 @@ jobs:
           echo "Cleaning all build artifacts..."
           rm -rf .next node_modules/.cache node_modules/.next .turbo
           find . -type d -name ".next" -exec rm -rf {} +
+          
+          # Ensure no Pages Router artifacts remain
+          echo "Removing any Pages Router artifacts..."
+          rm -rf .next/server/tic/chunks/pages
+          rm -rf .next/server/pages
 
       - name: Make scripts executable
         run: chmod +x scripts/ci-build-fixed.sh
 
-      - name: Build with module resolution fix
+      - name: Build with App Router only
         run: ./scripts/ci-build-fixed.sh
+        env:
+          # Explicitly tell Next.js we're using App Router only
+          NEXT_PRIVATE_PREBUNDLED_REACT: "next"
+          NEXT_PRIVATE_STANDALONE: "1"
+          NODE_OPTIONS: "--max_old_space_size=4096"
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3

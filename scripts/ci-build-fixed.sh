@@ -69,6 +69,9 @@ EOL
 # No need to handle Pages Router since it's removed
 echo "🛠️ CI Build: Building Next.js application (App Router only)..."
 # Run the build with increased memory and simplified settings
+# Set environment variables to ensure App Router only mode
+export NEXT_PRIVATE_PREBUNDLED_REACT="next"
+export NEXT_PRIVATE_STANDALONE="1"
 NODE_OPTIONS="--max_old_space_size=4096" NEXT_TELEMETRY_DISABLED=1 npx next build
 
 # Restore project files
