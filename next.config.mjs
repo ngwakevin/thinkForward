@@ -1,98 +1,35 @@
-// Load build configuration
-import './lib/build-config.js';
-import path from 'path';
-import fs from 'fs';
-
-// Detect if we're running in Azure App Service
-const isAzureAppService = !!process.env.WEBSITE_SITE_NAME;
-
-// Determine the appropriate temp directory
-let tempDir = '/tmp';
-if (isAzureAppService) {
-  // In Azure App Service, use a writable directory
-  tempDir = process.env.NEXT_TEMP_DIR || '/home/site/next-temp';
-  
-  // Create the temp directory if it doesn't exist
-  try {
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-      console.log(`Created temp directory: ${tempDir}`);
-    }
-    
-    // Also create .next directory inside it
-    const nextDir = path.join(tempDir, '.next');
-    if (!fs.existsSync(nextDir)) {
-      fs.mkdirSync(nextDir, { recursive: true });
-      console.log(`Created .next directory: ${nextDir}`);
-    }
-  } catch (error) {
-    console.warn(`Failed to create temp directory: ${error.message}`);
-  }
-}
-
-// Log the directory that will be used
-console.log(`Using temp directory: ${tempDir}`);
-
 /** @type {import('next').NextConfig} */
+
+// Special CI configuration that completely disables Pages Router
 const nextConfig = {
   reactStrictMode: true,
-  // These options have been moved out of experimental in Next.js 14.2.5
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
-  experimental: {
-    typedRoutes: true,
-    mdxRs: true,
-    // Configure a writable temp directory for Azure App Service
-    serverComponentsExternalPackages: ['sharp'],
-    // Disable optimized loading for Azure
-    disableOptimizedLoading: true
-  },
-  // Force the server to ignore file system checks
-  productionBrowserSourceMaps: true,
+  
   // Always use standalone output for Azure App Service deployment
   output: 'standalone',
-  generateEtags: true,
-  poweredByHeader: false,
-  // Use default .next directory as standalone mode handles the read-only filesystem
-  distDir: '.next',
-  // Allow Next.js to use custom dist directory in Azure
-  useFileSystemPublicRoutes: true,
-  // Disable file system caching in production for Azure App Service
-  onDemandEntries: {
-    maxInactiveAge: 60 * 60 * 1000, // 1 hour
-    pagesBufferLength: 5,
-  },
-  // Handle Node.js built-in modules
+  
+  // Disable source maps in CI for faster builds
+  productionBrowserSourceMaps: false,
+  
+  // Simplified webpack configuration
   webpack: (config, { isServer }) => {
-    // Fixes npm packages that depend on `fs` module
+    config.output.filename = 'static/chunks/[name].js';
+    
+    // Avoid Node.js module imports on the client side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
+        path: false,
+        os: false,
         net: false,
         tls: false,
-        'fs/promises': false,
         child_process: false,
-        http: false,
-        https: false,
-        stream: false,
-        crypto: false,
-        os: false,
-        path: false,
       };
     }
-
     return config;
   },
-  async redirects() {
-    return [
-      {
-        source: '/platform',
-        destination: '/courses',
-        permanent: true
-      }
-    ];
-  }
 };
 
 export default nextConfig;

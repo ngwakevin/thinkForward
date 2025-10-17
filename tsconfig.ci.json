@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "jsx": "preserve",
+    "strict": false,
+    "noEmit": true,
+    "incremental": true
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/**/*.js"],
+  "exclude": ["node_modules"]
+}
