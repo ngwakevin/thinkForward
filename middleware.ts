@@ -32,6 +32,13 @@ export default withAuth(
     response.headers.set('X-XSS-Protection', '1; mode=block');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     
+    // Handle Azure App Service proxy headers for NextAuth compatibility
+    // Azure App Service uses a reverse proxy that might not correctly forward the protocol
+    if (process.env.WEBSITE_HOSTNAME && !request.headers.get('x-forwarded-proto')) {
+      // Force secure protocol flag for NextAuth in Azure App Service
+      response.headers.set('x-forwarded-proto', 'https');
+    }
+    
     // Add Content-Security-Policy header for production
     if (process.env.NODE_ENV === 'production') {
       response.headers.set(
