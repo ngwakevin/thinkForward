@@ -48,7 +48,8 @@ export default function AutoLogin() {
           hasPassword: !!password,
           registrationId,
           attempts,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          csrfState: state || 'none'
         };
         setDebug(debugInfo);
         
