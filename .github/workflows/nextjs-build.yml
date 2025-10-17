@@ -48,44 +48,66 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/ci-build-fixed.sh
 
-      - name: Build with App Router only
+      - name: Temporarily fix package.json for build
         run: |
-          # Create a simplified temporary next.config.js that explicitly disables Pages Router
+          # Remove type:module from package.json
+          echo "Modifying package.json..."
+          cp package.json package.json.bak
+          jq 'del(.type)' package.json.bak > package.json
+          
+          # Make a dummy pages folder with a document file
+          echo "Creating minimal pages directory..."
+          mkdir -p pages
+          cat > pages/_document.js << 'EOL'
+          import { Html, Head, Main, NextScript } from 'next/document';
+          
+          export default function Document() {
+            return (
+              <Html lang="en">
+                <Head />
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            );
+          }
+          EOL
+          
+          # Create a simplified next.config.js that focuses on App Router
+          echo "Creating app-router focused next.config.js..."
           cat > next.config.js << 'EOL'
           /** @type {import('next').NextConfig} */
           const nextConfig = {
             reactStrictMode: true,
             output: 'standalone',
             productionBrowserSourceMaps: false,
-            // Disable any Pages Router handling
-            pageExtensions: [],
             webpack: (config, { isServer }) => {
               if (!isServer) {
                 config.resolve.fallback = {
                   ...config.resolve.fallback,
-                  fs: false,
-                  path: false,
-                  os: false,
-                  net: false,
-                  tls: false,
-                  child_process: false,
+                  fs: false, path: false, os: false, net: false,
+                  tls: false, child_process: false,
                 };
               }
               return config;
             },
           };
+          
           module.exports = nextConfig;
           EOL
           
-          # Now run the build script with special environment variables
-          ./scripts/ci-build-fixed.sh
+      - name: Build with Next.js
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx next build
         env:
-          # Explicitly tell Next.js we're using App Router only
-          NEXT_PRIVATE_PREBUNDLED_REACT: "next"
-          NEXT_PRIVATE_STANDALONE: "1"
           NODE_ENV: "production"
           NEXT_TELEMETRY_DISABLED: "1"
-          NODE_OPTIONS: "--max_old_space_size=4096"
+      
+      - name: Restore original files
+        run: |
+          mv package.json.bak package.json
+          rm -rf pages
+          rm -f next.config.js
 
       - name: Cleanup temporary files
         run: |

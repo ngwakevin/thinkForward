@@ -43,8 +43,8 @@ const nextConfig = {
   // Always use standalone output for Azure App Service deployment
   output: 'standalone',
   
-  // Explicitly disable Pages Router
-  pageExtensions: [],
+  // Effectively disable Pages Router by using non-standard extension
+  pageExtensions: ['nonexistent'],
   
   // Disable source maps in CI for faster builds
   productionBrowserSourceMaps: false,

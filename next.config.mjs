@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 
-// Special CI configuration that completely disables Pages Router
+// Special CI configuration that uses App Router with minimal Pages Router
 const nextConfig = {
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
+  // Use a non-standard extension to effectively disable Pages Router
+  pageExtensions: ['nonexistent'],
   
   // Always use standalone output for Azure App Service deployment
   output: 'standalone',
