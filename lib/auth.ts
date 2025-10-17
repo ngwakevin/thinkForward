@@ -66,35 +66,14 @@ const checkEnvVars = () => {
 // Call the environment check function
 checkEnvVars();
 
-// Ensure NEXTAUTH_URL is set and properly configured for Azure App Service
-if (typeof window === 'undefined') {
-  // For Azure App Service, we need to ensure correct proxy handling
-  if (process.env.WEBSITE_HOSTNAME) {
-    // Force secure cookies when behind Azure's proxy
-    process.env.NEXTAUTH_URL = `https://${process.env.WEBSITE_HOSTNAME}`;
-    console.log(`[auth] Running in Azure App Service, set NEXTAUTH_URL to: ${process.env.NEXTAUTH_URL}`);
-  } 
-  // For other environments, use existing logic
-  else if (!process.env.NEXTAUTH_URL) {
-    const hostname = process.env.VERCEL_URL || process.env.NEXTAUTH_URL_INTERNAL || 'localhost:3000';
-    const protocol = hostname.includes('localhost') ? 'http' : 'https';
-    process.env.NEXTAUTH_URL = `${protocol}://${hostname}`;
-    console.warn(`[auth] NEXTAUTH_URL not set, using: ${process.env.NEXTAUTH_URL}`);
-  }
+// Ensure NEXTAUTH_URL is set
+if (!process.env.NEXTAUTH_URL && typeof window === 'undefined') {
+  // Only set this on the server side
+  const hostname = process.env.VERCEL_URL || process.env.NEXTAUTH_URL_INTERNAL || 'localhost:3000';
+  const protocol = hostname.includes('localhost') ? 'http' : 'https';
+  process.env.NEXTAUTH_URL = `${protocol}://${hostname}`;
+  console.warn(`[auth] NEXTAUTH_URL not set, using: ${process.env.NEXTAUTH_URL}`);
 }
-
-// Determine if we're running in Azure App Service to configure cookies properly
-const isRunningInAzure = typeof process !== 'undefined' && !!process.env.WEBSITE_HOSTNAME;
-
-// Configure cookies based on environment
-const getCookiePrefix = () => {
-  // In Azure behind a proxy with proper HTTPS headers, use Secure prefix
-  if (isRunningInAzure) {
-    return "__Secure-";
-  }
-  // In other environments, let NextAuth handle it based on the URL
-  return undefined; // Let NextAuth determine the prefix
-};
 
 export const authOptions: NextAuthOptions = {
   // Using NextAuth v4 configuration compatible with Azure App Service
@@ -108,30 +87,13 @@ export const authOptions: NextAuthOptions = {
   // Ensure cookies are properly configured for Azure's reverse proxy
   cookies: {
     sessionToken: {
-      name: `${getCookiePrefix() || ""}next-auth.session-token`,
+      name: "__Secure-next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: isRunningInAzure ? true : process.env.NODE_ENV === 'production',
+        secure: true,
       },
-    },
-    callbackUrl: {
-      name: `${getCookiePrefix() || ""}next-auth.callback-url`,
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: isRunningInAzure ? true : process.env.NODE_ENV === 'production',
-      }
-    },
-    csrfToken: {
-      name: `${getCookiePrefix() || ""}next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isRunningInAzure ? true : process.env.NODE_ENV === 'production',
-      }
     },
   },
   
