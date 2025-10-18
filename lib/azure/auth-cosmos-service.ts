@@ -30,9 +30,21 @@ class AuthCosmosService {
   /**
    * Links a provider account to a user
    */
-  async linkProviderToUser(userId: string, provider: string, providerAccountId: string, providerData: any) {
+  async linkUserAccount(userId: string, accountData: any) {
     const service = await getMainCosmosService();
-    return service.linkProviderAccount(userId, provider, providerAccountId, providerData);
+    try {
+      const user = await service.getUserById(userId);
+      const updateData = {
+        provider: accountData.provider,
+        providerAccountId: accountData.providerAccountId,
+      };
+
+      await service.updateUser(userId, updateData);
+      return user;
+    } catch (error) {
+      console.error(`[auth] Failed to link account for user ${userId}:`, error);
+      return null;
+    }
   }
   
   /**
@@ -59,13 +71,6 @@ class AuthCosmosService {
     return service.getUserById(userId);
   }
   
-  /**
-   * Gets all linked accounts for a user
-   */
-  async getAccountsByUserId(userId: string) {
-    const service = await getMainCosmosService();
-    return service.getAccountsByUserId(userId);
-  }
 }
 
 // Export a singleton instance

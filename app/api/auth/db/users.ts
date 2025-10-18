@@ -3,8 +3,8 @@ import crypto from 'crypto';
 
 // Import your Cosmos DB service dynamically to avoid circular dependencies
 const getCosmosService = async () => {
-  const { cosmosService } = await import("../azure/cosmos-service");
-  return cosmosService;
+  const { authCosmosService } = await import("../../../../lib/azure/auth-cosmos-service");
+  return authCosmosService;
 };
 
 // Types for user data

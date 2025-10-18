@@ -89,7 +89,7 @@ export function CloudTrainingStackPreview() {
                     aria-controls={`panel-${p.key}`}
                     data-active={active}
                     onClick={() => setTopic((t) => (t === p.key ? null : p.key))}
-                    className={`rounded-2xl px-4 py-2 text-sm font-semibold bg-bg outline outline-1 -outline-offset-1 outline-border/50 transition data-[active=true]:bg-accent/10 data-[active=true]:text-accent data-[active=true]:outline-accent/30`}
+                    className="rounded-2xl px-4 py-2 text-sm font-semibold bg-bg outline outline-1 -outline-offset-1 outline-border/50 transition data-[active=true]:bg-accent/10 data-[active=true]:text-accent data-[active=true]:outline-accent/30"
                   >
                     {p.label}
                   </button>
@@ -150,7 +150,7 @@ export function CloudTrainingStackPreview() {
                     type="button"
                     data-active={active}
                     onClick={() => setTopic((t) => (t === c.key ? null : c.key))}
-                    className={`rounded-2xl px-4 py-2 text-xs font-semibold bg-bg outline outline-1 -outline-offset-1 outline-border/50 transition data-[active=true]:bg-accent/10 data-[active=true]:text-accent data-[active=true]:outline-accent/30`}
+                    className="rounded-2xl px-4 py-2 text-xs font-semibold bg-bg outline outline-1 -outline-offset-1 outline-border/50 transition data-[active=true]:bg-accent/10 data-[active=true]:text-accent data-[active=true]:outline-accent/30"
                   >
                     {c.label}
                   </button>

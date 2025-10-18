@@ -146,7 +146,12 @@ export default function ProductsGrid({ initialProducts, formatSelectorPosition =
         <span className="mt-4 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-warning/90">Explore →</span>
         <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-warning/40 transition" />
       </a>
-  <a href="#courses-list" onClick={scrollToCourses} className={`group flex-1 relative overflow-hidden rounded-2xl border px-6 py-5 text-left transition shadow-sm border-accent/60 bg-gradient-to-br from-accent/10 via-accent/5 to-bg-alt/40`} aria-describedby="self-paced-desc">
+      <a
+        href="#courses-list"
+        onClick={scrollToCourses}
+        className="group flex-1 relative overflow-hidden rounded-2xl border px-6 py-5 text-left transition shadow-sm border-accent/60 bg-gradient-to-br from-accent/10 via-accent/5 to-bg-alt/40"
+        aria-describedby="self-paced-desc"
+      >
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-xl bg-accent/20 text-accent grid place-items-center">
             <Icons.GraduationCap className="h-5 w-5" />
@@ -155,8 +160,12 @@ export default function ProductsGrid({ initialProducts, formatSelectorPosition =
             Self-Paced Learning
           </div>
         </div>
-    <p id="self-paced-desc" className="mt-3 text-xs leading-relaxed text-accent/80 max-w-sm">Flexible module progression, retention loops, layerable with live.</p>
-  <span className="mt-4 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-accent/90">View Courses ↓</span>
+        <p id="self-paced-desc" className="mt-3 text-xs leading-relaxed text-accent/80 max-w-sm">
+          Flexible module progression, retention loops, layerable with live.
+        </p>
+        <span className="mt-4 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-accent/90">
+          View Courses ↓
+        </span>
         <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-accent/40 transition" />
       </a>
     </div>

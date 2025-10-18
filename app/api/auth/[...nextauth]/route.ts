@@ -1,7 +1,17 @@
 import NextAuth from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { DefaultSession, User } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
+
+type ExtendedToken = JWT & {
+  user?: Pick<User, "id" | "name" | "email" | "image">;
+};
+
+type ExtendedSession = DefaultSession & {
+  user?: Pick<User, "id" | "name" | "email" | "image">;
+};
 
 /**
  * ==========================
@@ -64,12 +74,31 @@ const handler = NextAuth({
   // 🔁 Callback functions to customize JWT/session data
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.user = user;
-      return token;
+      const mutableToken = token as ExtendedToken;
+
+      if (user) {
+        mutableToken.user = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
+      }
+
+      return mutableToken;
     },
     async session({ session, token }) {
-      session.user = token.user;
-      return session;
+      const extendedSession = session as ExtendedSession;
+      const extendedToken = token as ExtendedToken;
+
+      if (extendedToken.user) {
+        extendedSession.user = {
+          ...extendedSession.user,
+          ...extendedToken.user,
+        };
+      }
+
+      return extendedSession;
     },
   },
 

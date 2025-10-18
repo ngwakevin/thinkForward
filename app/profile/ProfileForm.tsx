@@ -49,7 +49,7 @@ export default function ProfileForm({ initial }: { initial: any }) {
       const composed = [firstName, lastName].filter(Boolean).join(' ');
       setDisplayName(composed);
     }
-  }, [firstName, lastName]);
+  }, [displayName, firstName, lastName]);
 
   // Completion metric (same keys as header; defensive duplication for client-only updates)
   const completion = useMemo(() => {
@@ -255,8 +255,8 @@ export default function ProfileForm({ initial }: { initial: any }) {
         <div className="grid gap-6 md:grid-cols-4">
           <ReadOnlyField label="Points" value={(initial?.points ?? 0).toString()} />
           <ReadOnlyField label="Streak Days" value={(initial?.streakDays ?? 0).toString()} />
-          <ReadOnlyField label="Courses Completed" value={'0'} />
-          <ReadOnlyField label="Badges" value={'0'} />
+          <ReadOnlyField label="Courses Completed" value="0" />
+          <ReadOnlyField label="Badges" value="0" />
         </div>
         <div className="pt-4 text-xs text-fg-muted">Detailed course and badge tracking coming soon.</div>
       </CollapsibleCard>
