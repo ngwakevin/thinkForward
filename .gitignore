@@ -10,6 +10,9 @@
 # next.js
 /.next/
 /out/
+/standalone/
+/.output/
+.next.zip
 
 # production
 /build
