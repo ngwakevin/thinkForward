@@ -46,14 +46,18 @@ jobs:
           rm -rf .next/server/pages
 
       - name: Make scripts executable
-        run: chmod +x scripts/ci-build-fixed.sh
+        run: |
+          chmod +x scripts/ci-build-fixed.sh
+          chmod +x scripts/temp-build.sh
 
       - name: Temporarily fix package.json for build
         run: |
           # Remove type:module from package.json
           echo "Modifying package.json..."
           cp package.json package.json.bak
-          jq 'del(.type)' package.json.bak > package.json
+          # Use grep instead of jq as it's more reliable for this case
+          cat package.json | grep -v '"type": "module"' > package.json.temp
+          mv package.json.temp package.json
           
           # Make a dummy pages folder with a document file
           echo "Creating minimal pages directory..."
@@ -76,6 +80,10 @@ jobs:
           
           # Create a simplified next.config.js that focuses on App Router
           echo "Creating app-router focused next.config.js..."
+          if [ -f "next.config.mjs" ]; then
+            mv next.config.mjs next.config.mjs.bak
+          fi
+          
           cat > next.config.js << 'EOL'
           /** @type {import('next').NextConfig} */
           const nextConfig = {
@@ -97,30 +105,50 @@ jobs:
           module.exports = nextConfig;
           EOL
           
+          # Debug what files we have
+          echo "Verifying files before build:"
+          ls -la
+          ls -la pages/
+          cat pages/_document.js
+          cat next.config.js
+          
       - name: Build with Next.js
-        run: NODE_OPTIONS="--max-old-space-size=4096" npx next build
+        run: NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS="--max-old-space-size=4096" npx next build
         env:
           NODE_ENV: "production"
-          NEXT_TELEMETRY_DISABLED: "1"
       
       - name: Restore original files
         run: |
+          echo "Restoring original files..."
           mv package.json.bak package.json
           rm -rf pages
-          rm -f next.config.js
-
-      - name: Cleanup temporary files
-        run: |
-          # Remove any temporary config files
-          if [ -f "next.config.js" ]; then
+          
+          if [ -f "next.config.mjs.bak" ]; then
+            mv next.config.mjs.bak next.config.mjs
             rm -f next.config.js
           fi
-          
+
+      - name: Debug final build structure
+        run: |
           # Additional debugging information
           echo "Final build structure:"
           ls -la .next/
+          
           echo "Server directory structure:"
           ls -la .next/server/ || echo "No server directory found"
+          
+          echo "TIC directory structure (if exists):"
+          ls -la .next/server/tic/ || echo "No TIC directory found"
+          
+          # Check for any references to Pages Router in build
+          echo "Checking for Pages Router references:"
+          grep -r "pages/_document" .next/ || echo "No _document references found"
+          
+          # Create symbolic link to prevent error
+          echo "Creating safety symbolic links for potential Pages Router requests:"
+          mkdir -p .next/server/tic/chunks/pages
+          touch .next/server/tic/chunks/pages/_document.js
+          echo "// Empty document file to prevent errors" > .next/server/tic/chunks/pages/_document.js
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
