@@ -24,135 +24,25 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Deep clean environment
-        run: |
-          echo "Performing complete environment cleanup..."
-          rm -rf .next node_modules package-lock.json
-          npm cache clean --force
-          echo "Removed node_modules, package-lock.json, and cleared npm cache"
-
-      - name: Reinstall dependencies
-        run: npm install
-
-      - name: Clean previous builds and cache
-        run: |
-          echo "Cleaning all build artifacts..."
-          rm -rf .next node_modules/.cache node_modules/.next .turbo
-          find . -type d -name ".next" -exec rm -rf {} +
-          
-          # Ensure no Pages Router artifacts remain
-          echo "Removing any Pages Router artifacts..."
-          rm -rf .next/server/tic/chunks/pages
-          rm -rf .next/server/pages
+      - name: Install dependencies
+        run: npm ci
 
       - name: Make scripts executable
-        run: |
-          chmod +x scripts/ci-build-fixed.sh
-          chmod +x scripts/temp-build.sh
+        run: chmod +x scripts/temp-build.sh
 
-      - name: Temporarily fix package.json for build
-        run: |
-          # Remove type:module from package.json
-          echo "Modifying package.json..."
-          cp package.json package.json.bak
-          # Use grep instead of jq as it's more reliable for this case
-          cat package.json | grep -v '"type": "module"' > package.json.temp
-          mv package.json.temp package.json
-          
-          # Make a dummy pages folder with a document file
-          echo "Creating minimal pages directory..."
-          mkdir -p pages
-          cat > pages/_document.js << 'EOL'
-          import { Html, Head, Main, NextScript } from 'next/document';
-          
-          export default function Document() {
-            return (
-              <Html lang="en">
-                <Head />
-                <body>
-                  <Main />
-                  <NextScript />
-                </body>
-              </Html>
-            );
-          }
-          EOL
-          
-          # Create a simplified next.config.js that focuses on App Router
-          echo "Creating app-router focused next.config.js..."
-          if [ -f "next.config.mjs" ]; then
-            mv next.config.mjs next.config.mjs.bak
-          fi
-          
-          cat > next.config.js << 'EOL'
-          /** @type {import('next').NextConfig} */
-          const nextConfig = {
-            reactStrictMode: true,
-            output: 'standalone',
-            productionBrowserSourceMaps: false,
-            webpack: (config, { isServer }) => {
-              if (!isServer) {
-                config.resolve.fallback = {
-                  ...config.resolve.fallback,
-                  fs: false, path: false, os: false, net: false,
-                  tls: false, child_process: false,
-                };
-              }
-              return config;
-            },
-          };
-          
-          module.exports = nextConfig;
-          EOL
-          
-          # Debug what files we have
-          echo "Verifying files before build:"
-          ls -la
-          ls -la pages/
-          cat pages/_document.js
-          cat next.config.js
-          
-      - name: Build with Next.js
-        run: NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS="--max-old-space-size=4096" npx next build
+      - name: Build with temp-build script
+        run: npm run build
         env:
           NODE_ENV: "production"
-      
-      - name: Restore original files
-        run: |
-          echo "Restoring original files..."
-          mv package.json.bak package.json
-          rm -rf pages
-          
-          if [ -f "next.config.mjs.bak" ]; then
-            mv next.config.mjs.bak next.config.mjs
-            rm -f next.config.js
-          fi
-
-      - name: Debug final build structure
-        run: |
-          # Additional debugging information
-          echo "Final build structure:"
-          ls -la .next/
-          
-          echo "Server directory structure:"
-          ls -la .next/server/ || echo "No server directory found"
-          
-          echo "TIC directory structure (if exists):"
-          ls -la .next/server/tic/ || echo "No TIC directory found"
-          
-          # Check for any references to Pages Router in build
-          echo "Checking for Pages Router references:"
-          grep -r "pages/_document" .next/ || echo "No _document references found"
-          
-          # Create symbolic link to prevent error
-          echo "Creating safety symbolic links for potential Pages Router requests:"
-          mkdir -p .next/server/tic/chunks/pages
-          touch .next/server/tic/chunks/pages/_document.js
-          echo "// Empty document file to prevent errors" > .next/server/tic/chunks/pages/_document.js
+          NEXT_TELEMETRY_DISABLED: 1
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: next-build
-          path: .next/
+          path: |
+            .next/
+            standalone/
+            public/
           retention-days: 3
