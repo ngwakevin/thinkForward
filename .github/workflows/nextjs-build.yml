@@ -31,7 +31,7 @@ jobs:
         run: chmod +x scripts/temp-build.sh
 
       - name: Build with temp-build script
-        run: npm run build
+        run: bash scripts/temp-build.sh
         env:
           NODE_ENV: "production"
           NEXT_TELEMETRY_DISABLED: 1
