@@ -11,8 +11,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refetchInterval={300} 
       // Ensure the session is refreshed when needed
       refetchWhenOffline={false}
-      // Use session proxy for consistent path handling on Azure
-      basePath="/api/auth/session/proxy"
     >
       {children}
     </SessionProvider>
