@@ -20,8 +20,15 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Make temp build script executable
+      run: chmod +x scripts/temp-build.sh
+
     - name: Build Next.js app (standalone)
-      run: npm run build
+      run: bash scripts/temp-build.sh
+      env:
+        NODE_ENV: "production"
+        NEXT_TELEMETRY_DISABLED: 1
+        NODE_OPTIONS: "--max-old-space-size=4096"
 
     - name: Package deployment zip
       run: bash scripts/zip-prebuild.sh
