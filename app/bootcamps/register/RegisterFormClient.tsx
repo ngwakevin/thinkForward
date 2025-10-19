@@ -169,19 +169,28 @@ export function RegisterFormClient({ track }: Props) {
           console.log('Direct sign-in failed, using auto-login page instead');
           
           // Use the auto-login route as fallback
-          const callbackUrl = encodeURIComponent('/profile?tab=bootcamps');
-          
+          const autoLoginUrlFromServer = json.auth?.autoLoginUrl as string | undefined;
+          if (autoLoginUrlFromServer) {
+            console.log(`Redirecting to server-provided auto-login URL: ${autoLoginUrlFromServer}`);
+            window.location.href = autoLoginUrlFromServer;
+            return;
+          }
+
+          const callbackUrl = '/profile?tab=bootcamps';
+
           // Add additional params for better diagnosis
           const params = new URLSearchParams();
           params.append('email', json.user.email);
-          params.append('callbackUrl', '/profile?tab=bootcamps');
+          params.append('password', password);
+          params.append('callbackUrl', callbackUrl);
           params.append('registrationId', json.registration?.id || '');
           params.append('timestamp', Date.now().toString());
           params.append('userId', json.user?.id || '');
-          
+
           // Redirect to our custom auto-login page
+          const fallbackUrl = `/auth/auto-login?${params.toString()}`;
           console.log(`Redirecting to auto-login page with params: ${params.toString()}`);
-          window.location.href = `/auth/auto-login?${params.toString()}`;
+          window.location.href = fallbackUrl;
           
           // This prevents the success message from showing, since we're redirecting
           return;

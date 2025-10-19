@@ -227,6 +227,17 @@ export async function POST(req: NextRequest) {
     // Note: We're not actually signing in here as that happens client-side
     // We're just providing the necessary information for the client to handle auto-login
 
+    const callbackUrl = '/profile?tab=bootcamps';
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const autoLoginUrl = new URL('/signin/auto-login', baseUrl);
+    if (user.email) {
+      autoLoginUrl.searchParams.set('email', user.email);
+    }
+    if (password) {
+      autoLoginUrl.searchParams.set('password', password);
+    }
+    autoLoginUrl.searchParams.set('callbackUrl', callbackUrl);
+
     return NextResponse.json(
       {
         ok: true,
@@ -247,7 +258,8 @@ export async function POST(req: NextRequest) {
         auth: {
           email: user.email,
           timestamp: new Date().toISOString(),
-          callbackUrl: '/profile?tab=bootcamps',
+          callbackUrl,
+          autoLoginUrl: autoLoginUrl.toString(),
         }
       },
       { status: 201 }
