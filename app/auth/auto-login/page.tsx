@@ -8,8 +8,8 @@ export default function AutoLoginPage() {
   const router = useRouter();
   const params = useSearchParams();
 
-  const email = params.get("email");
-  const password = params.get("password");
+  const email = params?.get("email") ?? null;
+  const password = params?.get("password") ?? null;
 
   useEffect(() => {
     const doLogin = async () => {
