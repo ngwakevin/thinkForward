@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const tokenPayload: TokenPayload = {
       userId: user.id,
       email: user.email || '',
-      name: user.name,
+      name: user.name || undefined,
     };
 
     // Generate both access and refresh tokens

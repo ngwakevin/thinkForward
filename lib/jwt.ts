@@ -13,7 +13,7 @@ const secretEncoded = new TextEncoder().encode(JWT_SECRET);
 export interface TokenPayload {
   userId: string;
   email: string;
-  name?: string;
+  name?: string | undefined;
   [key: string]: any; // Allow additional properties
 }
 

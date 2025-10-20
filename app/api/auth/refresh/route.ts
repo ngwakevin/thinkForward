@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     // Generate a new access token
     const newAccessToken = await signAccessToken({
       userId: decoded.userId,
-      email: decoded.email,
+      email: decoded.email || '',
       name: decoded.name,
     });
 
