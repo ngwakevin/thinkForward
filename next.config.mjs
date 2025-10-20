@@ -2,12 +2,13 @@
 
 const nextConfig = {
   output: 'standalone',
-  // In Next.js 14.2.5, the App Router is stable and doesn't require experimental flag
+  // Try to disable Pages Router completely
+  useFileSystemPublicRoutes: false,
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
-  // Enable both app and pages router
-  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  // Use .page extension to avoid conflicts with app router
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
   
   // Disable source maps in CI for faster builds
   productionBrowserSourceMaps: false,
