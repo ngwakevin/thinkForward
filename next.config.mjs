@@ -1,15 +1,15 @@
 /** @type {import('next').NextConfig} */
 
-// Special CI configuration that uses App Router with minimal Pages Router
 const nextConfig = {
+  output: 'standalone',
+  experimental: {
+    appDir: true,
+  },
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
   // Enable both app and pages router
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
-  
-  // Always use standalone output for Azure App Service deployment
-  output: 'standalone',
   
   // Disable source maps in CI for faster builds
   productionBrowserSourceMaps: false,
