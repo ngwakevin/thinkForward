@@ -10,7 +10,15 @@ export const runtime = 'nodejs';
 export async function POST(req: Request) {
   try {
     // Get the refresh token from cookies
-    const refreshToken = req.cookies.get('refresh_token')?.value;
+    const cookieHeader = req.headers.get('cookie') || '';
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(cookie => {
+        const [key, ...valueParts] = cookie.split('=');
+        return [key, valueParts.join('=')];
+      })
+    );
+    
+    const refreshToken = cookies['refresh_token'];
     
     if (!refreshToken) {
       return NextResponse.json(
