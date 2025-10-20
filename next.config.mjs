@@ -5,8 +5,8 @@ const nextConfig = {
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
-  // Use a non-standard extension to effectively disable Pages Router
-  pageExtensions: ['nonexistent'],
+  // Enable both app and pages router
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   
   // Always use standalone output for Azure App Service deployment
   output: 'standalone',
