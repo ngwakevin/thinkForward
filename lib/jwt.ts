@@ -3,6 +3,7 @@
  * Edge Runtime compatible implementation
  */
 import * as jose from 'jose'; // Use jose instead of jsonwebtoken for Edge compatibility
+import { JWTPayload } from 'jose';
 
 // Secret key for JWT tokens - fallback to a development secret if not provided
 const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';
@@ -62,7 +63,7 @@ export async function verifyJwt<T = any>(token: string): Promise<T | null> {
  * For backwards compatibility - now also async but keeps the same name
  * These are safe to use in both Edge and Node.js environments
  */
-export async function generateToken(payload: object, expiresIn: string = '1h'): Promise<string> {
+export async function generateToken(payload: jose.JWTPayload, expiresIn: string = '1h'): Promise<string> {
   return await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -70,7 +71,7 @@ export async function generateToken(payload: object, expiresIn: string = '1h'): 
     .sign(secretEncoded);
 }
 
-export async function verifyToken(token: string): Promise<any> {
+export async function verifyToken(token: string): Promise<jose.JWTPayload | null> {
   try {
     const { payload } = await jose.jwtVerify(token, secretEncoded);
     return payload;
