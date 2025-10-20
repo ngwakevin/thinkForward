@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -8,6 +8,7 @@ export default function AutoLoginPage() {
   const router = useRouter();
   const params = useSearchParams();
   const searchKey = params?.toString() ?? "";
+  const [statusMessage, setStatusMessage] = useState("Logging you in automatically...");
 
   useEffect(() => {
     let cancelled = false;
@@ -26,16 +27,50 @@ export default function AutoLoginPage() {
       localStorage.removeItem("authCallbackUrl");
     };
 
+    // Function to try JWT auth first
+    const tryJwtAuth = async (email: string, password: string): Promise<boolean> => {
+      try {
+        setStatusMessage("Attempting JWT authentication...");
+        console.log("[auto-login] Attempting JWT authentication for:", email);
+        
+        // Try to get a JWT token from the auto-login API
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.token) {
+          console.log("[auto-login] JWT authentication successful");
+          // Store the JWT token
+          localStorage.setItem("auth_token", data.token);
+          return true;
+        }
+        
+        console.log("[auto-login] JWT authentication failed, will try NextAuth");
+        return false;
+      } catch (error) {
+        console.error("[auto-login] JWT auth error:", error);
+        return false;
+      }
+    };
+
     const doLogin = async () => {
       if (typeof window === "undefined") {
         return;
       }
 
+      setStatusMessage("Initializing login process...");
       const currentParams = new URLSearchParams(searchKey);
 
       const emailParam = currentParams.get("email") ?? undefined;
       const passwordParam = currentParams.get("password") ?? undefined;
       const callbackParam = currentParams.get("callbackUrl") ?? undefined;
+      const stateParam = currentParams.get("state") ?? undefined;
 
       const storedEmail = localStorage.getItem("userEmail") || undefined;
       const storedPassword = localStorage.getItem("autoLoginPassword") || undefined;
@@ -46,10 +81,34 @@ export default function AutoLoginPage() {
       const callbackUrl = callbackParam || storedCallback || "/dashboard";
 
       if (!email || !password) {
+        console.error("[auto-login] Missing email or password");
+        setStatusMessage("Login failed: Missing email or password");
         clearAutoLoginState();
-        router.replace("/auth/signin?error=auto_login_missing_data");
+        setTimeout(() => {
+          router.replace("/auth/signin?error=auto_login_missing_data");
+        }, 1500);
         return;
       }
+      
+      console.log("[auto-login] Starting login process for:", email);
+
+      // Try JWT auth first if available
+      const jwtSuccess = await tryJwtAuth(email, password);
+      
+      if (jwtSuccess) {
+        setStatusMessage("JWT authentication successful! Redirecting...");
+        clearAutoLoginState();
+        // Use a small delay to ensure token is processed
+        setTimeout(() => {
+          if (!cancelled) {
+            router.replace(callbackUrl);
+          }
+        }, 1000);
+        return;
+      }
+      
+      // Fall back to NextAuth if JWT fails
+      setStatusMessage("Trying NextAuth authentication...");
 
       try {
         const result = await signIn("credentials", {
@@ -60,18 +119,23 @@ export default function AutoLoginPage() {
         });
 
         if (result?.ok) {
+          setStatusMessage("Login successful! Redirecting...");
           clearAutoLoginState();
           const destination = result.url || callbackUrl || "/dashboard";
           if (!cancelled) {
             router.replace(destination);
           }
         } else {
+          console.error("[auto-login] NextAuth signin failed:", result?.error);
+          setStatusMessage("Login failed. Redirecting to login page...");
           clearAutoLoginState();
           if (!cancelled) {
             router.replace("/auth/signin?error=auto_login_failed");
           }
         }
       } catch (err) {
+        console.error("[auto-login] Exception during login:", err);
+        setStatusMessage("Login error occurred. Redirecting to login page...");
         clearAutoLoginState();
         if (!cancelled) {
           router.replace("/auth/signin?error=auto_login_exception");
