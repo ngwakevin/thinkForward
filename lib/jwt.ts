@@ -1,11 +1,13 @@
 /**
  * Enhanced JWT utilities for token generation and verification
- * Supports both async and sync operations with access and refresh tokens
+ * Edge Runtime compatible implementation
  */
-import type { JwtPayload } from 'jsonwebtoken';
+import * as jose from 'jose'; // Use jose instead of jsonwebtoken for Edge compatibility
 
 // Secret key for JWT tokens - fallback to a development secret if not provided
 const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';
+// Convert the secret to the format jose expects
+const secretEncoded = new TextEncoder().encode(JWT_SECRET);
 
 // Define interface for token payload
 export interface TokenPayload {
@@ -21,8 +23,11 @@ export interface TokenPayload {
  * @returns JWT access token string
  */
 export async function signAccessToken(payload: TokenPayload): Promise<string> {
-  const jwt = await import('jsonwebtoken');
-  return jwt.default.sign(payload, JWT_SECRET, { expiresIn: '15m' });
+  return await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(secretEncoded);
 }
 
 /**
@@ -31,8 +36,11 @@ export async function signAccessToken(payload: TokenPayload): Promise<string> {
  * @returns JWT refresh token string
  */
 export async function signRefreshToken(payload: TokenPayload): Promise<string> {
-  const jwt = await import('jsonwebtoken');
-  return jwt.default.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  return await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(secretEncoded);
 }
 
 /**
@@ -42,8 +50,8 @@ export async function signRefreshToken(payload: TokenPayload): Promise<string> {
  */
 export async function verifyJwt<T = any>(token: string): Promise<T | null> {
   try {
-    const jwt = await import('jsonwebtoken');
-    return jwt.default.verify(token, JWT_SECRET) as T;
+    const { payload } = await jose.jwtVerify(token, secretEncoded);
+    return payload as unknown as T;
   } catch (error) {
     console.error('[jwt] Token verification failed:', error);
     return null;
@@ -51,22 +59,21 @@ export async function verifyJwt<T = any>(token: string): Promise<T | null> {
 }
 
 /**
- * For backwards compatibility - synchronous versions
- * These should only be used in server components/api routes
+ * For backwards compatibility - now also async but keeps the same name
+ * These are safe to use in both Edge and Node.js environments
  */
-export function generateToken(payload: object, expiresIn: string = '1h'): string {
-  // This is a synchronous version that will throw if used in Edge Runtime
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const jwt = require('jsonwebtoken');
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+export async function generateToken(payload: object, expiresIn: string = '1h'): Promise<string> {
+  return await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(secretEncoded);
 }
 
-export function verifyToken(token: string): any {
+export async function verifyToken(token: string): Promise<any> {
   try {
-    // This is a synchronous version that will throw if used in Edge Runtime
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const jwt = require('jsonwebtoken');
-    return jwt.verify(token, JWT_SECRET);
+    const { payload } = await jose.jwtVerify(token, secretEncoded);
+    return payload;
   } catch (error) {
     console.error('[jwt] Token verification failed:', error);
     return null;

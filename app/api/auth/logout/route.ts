@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Ensure this runs in Node.js environment, not Edge Runtime
+// Authentication requires server-side code that's not compatible with Edge
 export const runtime = 'nodejs';
 
 /**

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { authCosmosService } from '../../../../lib/azure/auth-cosmos-service';
 import { signAccessToken, signRefreshToken, TokenPayload } from '@/lib/jwt';
 
-// Ensure this runs in Node.js environment, not Edge Runtime
+// Authentication requires server-side code that's not compatible with Edge
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
@@ -50,7 +50,6 @@ export async function POST(req: Request) {
         name: user.name,
       },
       token: accessToken,
-      refreshToken, // Include refresh token in response for testing purposes
     });
 
     // Set refresh token as HttpOnly cookie

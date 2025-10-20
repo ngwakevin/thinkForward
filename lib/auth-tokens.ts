@@ -1,5 +1,6 @@
 /**
  * Client-side token management utilities
+ * Edge Runtime compatible implementation
  */
 
 const TOKEN_KEY = 'auth_token';
@@ -33,13 +34,39 @@ export function removeAuthToken(): void {
 }
 
 /**
+ * Decode JWT token payload without verification
+ * Only for client-side use
+ */
+export function decodeToken(token: string): any {
+  if (!token) return null;
+  
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('Error decoding token:', e);
+    return null;
+  }
+}
+
+/**
  * Check if token is expired
  */
 export function isTokenExpired(token: string): boolean {
   if (!token) return true;
   
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = decodeToken(token);
+    if (!payload || !payload.exp) return true;
+    
     const expiryTime = payload.exp * 1000; // Convert to milliseconds
     return Date.now() >= expiryTime;
   } catch (e) {
@@ -113,6 +140,7 @@ export async function fetchWithAuth(
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include', // Always include cookies for refresh token
   });
 
   return response;

@@ -3,11 +3,28 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
 import { telemetry } from './lib/azure/telemetry-service';
-import { verifyToken } from '@/lib/jwt';
+import { jwtVerify } from 'jose'; // Import directly from jose for Edge compatibility
 
 /**
  * Custom middleware that adds telemetry, JWT authentication and enhanced security features
+ * Edge Runtime compatible implementation
  */
+
+// Secret key for JWT verification - same as in jwt.ts
+const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';
+const secretEncoded = new TextEncoder().encode(JWT_SECRET);
+
+// Helper function to verify JWT token in Edge Runtime
+async function verifyJwtToken(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, secretEncoded);
+    return payload;
+  } catch (error) {
+    console.error('[middleware] JWT verification failed:', error);
+    return null;
+  }
+}
+
 export default withAuth(
   // `withAuth` augments your Request with the user's token
   function middleware(request) {
@@ -56,7 +73,7 @@ export default withAuth(
   {
     callbacks: {
       // Only run middleware for paths in the matcher
-      authorized: ({ token, req }) => {
+      authorized: async ({ token, req }) => {
         const pathname = req.nextUrl.pathname;
 
         // Check JWT protected paths first
@@ -69,13 +86,9 @@ export default withAuth(
 
           // If Bearer token exists, verify it
           if (bearerToken) {
-            try {
-              const decoded = verifyToken(bearerToken);
-              if (decoded && decoded.userId) {
-                return true;
-              }
-            } catch (error) {
-              console.error('JWT verification failed:', error);
+            const decoded = await verifyJwtToken(bearerToken);
+            if (decoded && decoded.userId) {
+              return true;
             }
           }
 
@@ -84,13 +97,9 @@ export default withAuth(
           const refreshToken = cookies.get('refresh_token')?.value;
           
           if (refreshToken) {
-            try {
-              const decoded = verifyToken(refreshToken);
-              if (decoded && decoded.userId) {
-                return true;
-              }
-            } catch (error) {
-              console.error('Refresh token verification failed:', error);
+            const decoded = await verifyJwtToken(refreshToken);
+            if (decoded && decoded.userId) {
+              return true;
             }
           }
 

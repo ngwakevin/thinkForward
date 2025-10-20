@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyJwt, signAccessToken, TokenPayload } from '@/lib/jwt';
 
-// Ensure this runs in Node.js environment, not Edge Runtime
+// Authentication requires server-side code that's not compatible with Edge
 export const runtime = 'nodejs';
 
 /**
@@ -10,14 +10,7 @@ export const runtime = 'nodejs';
 export async function POST(req: Request) {
   try {
     // Get the refresh token from cookies
-    const cookieHeader = req.headers.get('cookie') || '';
-    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      if (key && value) acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
-    
-    const refreshToken = cookies['refresh_token'];
+    const refreshToken = req.cookies.get('refresh_token')?.value;
     
     if (!refreshToken) {
       return NextResponse.json(

@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuthToken, setAuthToken, removeAuthToken, refreshAccessToken, isTokenExpired } from '@/lib/auth-tokens';
+import { 
+  getAuthToken, 
+  setAuthToken, 
+  removeAuthToken, 
+  refreshAccessToken, 
+  isTokenExpired,
+  decodeToken
+} from '@/lib/auth-tokens';
 
 interface UseAuthReturn {
   isAuthenticated: boolean;
@@ -14,6 +21,7 @@ interface UseAuthReturn {
 
 /**
  * Custom hook for JWT authentication
+ * Edge Runtime compatible implementation
  */
 export function useJwtAuth(): UseAuthReturn {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -104,25 +112,8 @@ export function useJwtAuth(): UseAuthReturn {
   // Get user info from token
   const getUserInfo = useCallback((): any | null => {
     const token = getAuthToken();
-    
     if (!token) return null;
-    
-    try {
-      // Decode JWT token (payload is in the second part after splitting by dot)
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error('Error parsing token:', error);
-      return null;
-    }
+    return decodeToken(token);
   }, []);
 
   return {
