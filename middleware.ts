@@ -17,7 +17,11 @@ const secretEncoded = new TextEncoder().encode(JWT_SECRET);
 // Helper function to verify JWT token in Edge Runtime
 async function verifyJwtToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, secretEncoded);
+    // Add clock tolerance for Edge and serverless environments
+    // This helps with time drift between systems when deployed
+    const { payload } = await jwtVerify(token, secretEncoded, {
+      clockTolerance: '5s'
+    });
     return payload;
   } catch (error) {
     console.error('[middleware] JWT verification failed:', error);
@@ -86,23 +90,38 @@ export default withAuth(
 
           // If Bearer token exists, verify it
           if (bearerToken) {
+            console.log('[middleware] Verifying Bearer token');
             const decoded = await verifyJwtToken(bearerToken);
             if (decoded && decoded.userId) {
               return true;
             }
           }
 
-          // Fallback: check for auth token in cookies (for refresh token)
+          // Check for auth_token cookie (access token)
           const cookies = req.cookies;
+          const authToken = cookies.get('auth_token')?.value;
+          
+          if (authToken) {
+            console.log('[middleware] Verifying auth_token cookie');
+            const decoded = await verifyJwtToken(authToken);
+            if (decoded && decoded.userId) {
+              return true;
+            }
+          }
+
+          // Fallback: check for refresh token in cookies
           const refreshToken = cookies.get('refresh_token')?.value;
           
           if (refreshToken) {
+            console.log('[middleware] Verifying refresh_token cookie');
             const decoded = await verifyJwtToken(refreshToken);
             if (decoded && decoded.userId) {
               return true;
             }
           }
 
+          // Log that authentication failed
+          console.log('[middleware] JWT authentication failed for protected path');
           return false;
         }
 
@@ -126,7 +145,13 @@ const protectedPaths = [
   '/api/uploads'
 ];
 
-const jwtProtectedPaths = ['/api/protected'];
+// JWT can also be used for these paths
+const jwtProtectedPaths = [
+  '/api/protected', 
+  '/api/community', 
+  '/api/profile', 
+  '/api/uploads'
+];
 
 // Only run middleware for matching paths
 export const config = {

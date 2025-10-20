@@ -40,15 +40,35 @@ export default function AutoLoginPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, password }),
+          // Add credentials mode for better cookie handling
+          credentials: "same-origin"
         });
         
+        // Log the response status for debugging
+        console.log("[auto-login] Response status:", response.status);
+        
         const data = await response.json();
+        console.log("[auto-login] Response data:", JSON.stringify(data, null, 2));
         
         if (response.ok && data.token) {
           console.log("[auto-login] JWT authentication successful");
           // Store the JWT token - cookies are already set by the server
           // but also store in localStorage for client-side access
           localStorage.setItem("auth_token", data.token);
+          
+          // Verify token is stored properly
+          console.log("[auto-login] Token stored in localStorage:", !!localStorage.getItem("auth_token"));
+          
+          // Check if cookies were set
+          console.log("[auto-login] Cookies available:", document.cookie.includes("auth_token") || document.cookie.includes("refresh_token"));
+          
+          return true;
+        }
+        
+        // If we have a redirectUrl but no token, it may be working differently than expected
+        if (response.ok && data.redirectUrl) {
+          console.log("[auto-login] Received redirect URL but no token:", data.redirectUrl);
+          // Still consider this a success, but log it for debugging
           return true;
         }
         

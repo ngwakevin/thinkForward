@@ -6,7 +6,8 @@ import { createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { signAccessToken, signRefreshToken } from '@/lib/jwt';
 
-// Authentication requires server-side code that's not compatible with Edge
+// Authentication can work with Edge Runtime since we're now using jose for JWT
+// But we'll keep using Node.js runtime for bcrypt compatibility
 export const runtime = 'nodejs';
 
 // Mark route as dynamic since it uses cookies and performs auth operations
@@ -76,6 +77,7 @@ export async function GET(req: NextRequest) {
             path: '/',
             secure: process.env.NODE_ENV === 'production',
             httpOnly: false, // Client code needs access
+            sameSite: 'lax', // Allow cross-site requests for better compatibility
           });
           
           // Set refresh token as HttpOnly cookie
@@ -84,7 +86,7 @@ export async function GET(req: NextRequest) {
             path: '/',
             secure: process.env.NODE_ENV === 'production',
             httpOnly: true, // For security
-            sameSite: 'strict'
+            sameSite: 'lax' // Changed from strict for better compatibility
           });
           
           console.log('[auth/auto-login] Generated JWT token for user:', user.email);
@@ -185,6 +187,7 @@ export async function POST(req: NextRequest) {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         httpOnly: false, // Client code needs access
+        sameSite: 'lax', // Allow cross-site requests for better compatibility
       });
       
       // Set refresh token as HttpOnly cookie
@@ -193,7 +196,7 @@ export async function POST(req: NextRequest) {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true, // For security
-        sameSite: 'strict'
+        sameSite: 'lax' // Changed from strict for better compatibility
       });
 
       console.log('[auth/auto-login] Generated JWT token for user:', user.email);

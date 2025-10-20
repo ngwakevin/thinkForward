@@ -4,6 +4,7 @@ import matter from 'gray-matter';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { mdxComponents } from '../../../components/blog/mdx';
 import readingTime from 'reading-time';
+import ViewTracker from '../../../components/docs/ViewTracker';
 
 function loadDoc(slugParts: string[]) {
   const rel = slugParts.join('/');
@@ -38,15 +39,10 @@ export default function DocPage({ params }: { params: { slug: string[] } }) {
   if (!doc) return <div className="px-6 py-24">Not found.</div>;
   const { data, content } = doc;
   const stats = readingTime(content);
-  if (typeof window !== 'undefined') {
-    try {
-      const views = JSON.parse(localStorage.getItem('docViews') || '{}');
-      views[doc.slug] = (views[doc.slug] || 0) + 1;
-      localStorage.setItem('docViews', JSON.stringify(views));
-    } catch {}
-  }
   return (
     <article className="mx-auto max-w-3xl px-6 py-24">
+      {/* Client component to track views */}
+      <ViewTracker slug={doc.slug} />
       <header className="mb-10 space-y-4">
         <h1 className="font-display text-3xl font-semibold tracking-tight">{(data as any).title || doc.slug}</h1>
         {(data as any).description && <p className="text-sm text-fg-muted leading-relaxed max-w-prose">{(data as any).description}</p>}
