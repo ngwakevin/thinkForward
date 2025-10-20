@@ -34,7 +34,7 @@ export default function AutoLoginPage() {
         console.log("[auto-login] Attempting JWT authentication for:", email);
         
         // Try to get a JWT token from the auto-login API
-        const response = await fetch("/api/auth/login", {
+        const response = await fetch("/api/auth/signin/auto-login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -46,7 +46,8 @@ export default function AutoLoginPage() {
         
         if (response.ok && data.token) {
           console.log("[auto-login] JWT authentication successful");
-          // Store the JWT token
+          // Store the JWT token - cookies are already set by the server
+          // but also store in localStorage for client-side access
           localStorage.setItem("auth_token", data.token);
           return true;
         }
