@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // Create payload for tokens
     const tokenPayload: TokenPayload = {
       userId: user.id,
-      email: user.email,
+      email: user.email || '',
       name: user.name,
     };
 
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const accessToken = await signAccessToken(tokenPayload);
     const refreshToken = await signRefreshToken({
       userId: user.id,
-      email: user.email,
+      email: user.email || '',
     });
 
     // Create the response
