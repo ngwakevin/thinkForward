@@ -4,11 +4,23 @@
  */
 import * as jose from 'jose'; // Use jose instead of jsonwebtoken for Edge compatibility
 import { JWTPayload } from 'jose';
+import crypto from 'crypto';
 
-// Secret key for JWT tokens - fallback to a development secret if not provided
-const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';
+// Require JWT_SECRET to be set - fail fast instead of silently defaulting
+// This ensures proper security practices are followed
+if (!process.env.JWT_SECRET) {
+  // Only allow missing JWT_SECRET in development mode
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('[CRITICAL SECURITY ERROR] Missing JWT_SECRET environment variable in production');
+  } else {
+    console.warn('[jwt] WARNING: JWT_SECRET not set in development environment');
+    // Set a deterministic development-only secret
+    process.env.JWT_SECRET = 'dev-jwt-secret-thinkforward-do-not-use-in-production';
+  }
+}
+
 // Convert the secret to the format jose expects
-const secretEncoded = new TextEncoder().encode(JWT_SECRET);
+const secretEncoded = new TextEncoder().encode(process.env.JWT_SECRET);
 
 // Define interface for token payload
 export interface TokenPayload {
