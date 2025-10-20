@@ -9,6 +9,13 @@ import { Session } from 'next-auth';
 import { User, Account } from 'next-auth';
 import bcrypt from 'bcryptjs';
 
+// Import authOptions from centralized auth config
+import { authOptions as authOptionsFromConfig } from './auth-options';
+
+// Re-export authOptions for backward compatibility
+export { authOptions as default } from './auth-options';
+export const authOptions = authOptionsFromConfig;
+
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
   console.error('ERROR: NEXTAUTH_SECRET is not set in environment!');
