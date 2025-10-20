@@ -95,6 +95,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: true,
+        domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
       },
     },
   },

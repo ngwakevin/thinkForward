@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import type { DefaultSession, User } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -18,7 +19,20 @@ type ExtendedSession = DefaultSession & {
  *  NEXTAUTH CONFIGURATION
  * ==========================
  */
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: '__Host-next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: process.env.COOKIE_DOMAIN || undefined,
+      },
+    },
+  },
   // 🔐 List of supported authentication providers
   providers: [
     /**
@@ -109,6 +123,7 @@ const handler = NextAuth({
 
   // 🧱 Debug mode for local dev
   debug: process.env.NODE_ENV === "development",
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

@@ -10,9 +10,10 @@ import { jwtVerify } from 'jose'; // Import directly from jose for Edge compatib
  * Edge Runtime compatible implementation
  */
 
-// Secret key for JWT verification - same as in jwt.ts
-const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';
-const secretEncoded = new TextEncoder().encode(JWT_SECRET);
+// Use NEXTAUTH_SECRET as the primary secret, falling back to JWT_SECRET
+// This ensures both authentication systems use the same secret
+const AUTH_SECRET = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'development-secret-key';
+const secretEncoded = new TextEncoder().encode(AUTH_SECRET);
 
 // Helper function to verify JWT token in Edge Runtime
 async function verifyJwtToken(token: string) {

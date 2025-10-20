@@ -18,6 +18,7 @@ export async function POST() {
       sameSite: 'strict',
       path: '/',
       maxAge: 0, // Expire immediately
+      domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
     });
     
     return response;

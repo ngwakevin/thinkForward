@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
             secure: process.env.NODE_ENV === 'production',
             httpOnly: false, // Client code needs access
             sameSite: 'lax', // Allow cross-site requests for better compatibility
+            domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
           });
           
           // Set refresh token as HttpOnly cookie
@@ -86,7 +87,8 @@ export async function GET(req: NextRequest) {
             path: '/',
             secure: process.env.NODE_ENV === 'production',
             httpOnly: true, // For security
-            sameSite: 'lax' // Changed from strict for better compatibility
+            sameSite: 'lax', // Changed from strict for better compatibility
+            domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
           });
           
           console.log('[auth/auto-login] Generated JWT token for user:', user.email);
@@ -188,6 +190,7 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: false, // Client code needs access
         sameSite: 'lax', // Allow cross-site requests for better compatibility
+        domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
       });
       
       // Set refresh token as HttpOnly cookie
@@ -196,7 +199,8 @@ export async function POST(req: NextRequest) {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true, // For security
-        sameSite: 'lax' // Changed from strict for better compatibility
+        sameSite: 'lax', // Changed from strict for better compatibility
+        domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
       });
 
       console.log('[auth/auto-login] Generated JWT token for user:', user.email);

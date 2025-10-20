@@ -37,7 +37,9 @@ jobs:
         NODE_ENV: "production"
         NEXT_TELEMETRY_DISABLED: 1
         NODE_OPTIONS: "--max-old-space-size=4096"
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}   # ✅ Make JWT_SECRET available at build time
+        JWT_SECRET: ${{ secrets.NEXTAUTH_SECRET || secrets.JWT_SECRET }}   # Use NEXTAUTH_SECRET as primary
+        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || secrets.JWT_SECRET }}   # Ensure both secrets are the same
+        COOKIE_DOMAIN: ".azurewebsites.net"   # Set cookie domain for Azure Web App
 
     # 6️⃣ Package deployment zip
     - name: Package deployment zip

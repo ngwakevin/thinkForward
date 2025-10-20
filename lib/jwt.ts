@@ -5,13 +5,17 @@
 import * as jose from 'jose';
 import { JWTPayload } from 'jose';
 
+// Use NEXTAUTH_SECRET as the primary secret, falling back to JWT_SECRET
+// This ensures both authentication systems use the same secret
+const AUTH_SECRET = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+
 // Ensure environment secret exists
-if (!process.env.JWT_SECRET) {
-  throw new Error('Missing JWT_SECRET environment variable');
+if (!AUTH_SECRET) {
+  throw new Error('Missing JWT_SECRET or NEXTAUTH_SECRET environment variable');
 }
 
 // Encode secret for jose
-const secretEncoded = new TextEncoder().encode(process.env.JWT_SECRET);
+const secretEncoded = new TextEncoder().encode(AUTH_SECRET);
 
 // Interface for JWT payload
 export interface TokenPayload {

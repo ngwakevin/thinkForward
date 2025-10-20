@@ -59,6 +59,7 @@ export async function POST(req: Request) {
       sameSite: 'strict',
       path: '/',
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      domain: process.env.COOKIE_DOMAIN || undefined, // Use configured domain if available
     });
 
     return response;
