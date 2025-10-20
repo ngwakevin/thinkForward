@@ -1,10 +1,10 @@
 import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
-import { authOptions } from '../../../../../lib/auth';
+import { authOptions } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { generateToken } from '../../../../lib/jwt';
+import { signJwt, generateToken } from '@/lib/jwt';
 
 // Mark route as dynamic since it uses cookies and performs auth operations
 export const dynamic = 'force-dynamic';

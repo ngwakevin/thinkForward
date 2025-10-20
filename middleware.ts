@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
 import { telemetry } from './lib/azure/telemetry-service';
+import { verifyJwt } from '@/lib/jwt';
 
 /**
  * Custom middleware that adds telemetry and enhanced security features
@@ -56,11 +57,28 @@ export default withAuth(
     callbacks: {
       // Only run middleware for paths in the matcher
       authorized: ({ token, req }) => {
-        // For paths requiring auth, check for token
-        if (protectedPaths.some(path => req.nextUrl.pathname.startsWith(path))) {
+        const pathname = req.nextUrl.pathname;
+
+        if (jwtProtectedPaths.some(path => pathname.startsWith(path))) {
+          const authHeader = req.headers.get('authorization');
+          const bearerToken = authHeader?.toLowerCase().startsWith('bearer ')
+            ? authHeader.slice(7)
+            : undefined;
+
+          if (bearerToken) {
+            const decoded = verifyJwt(bearerToken);
+            if (decoded) {
+              return true;
+            }
+          }
+
+          return false;
+        }
+
+        if (protectedPaths.some(path => pathname.startsWith(path))) {
           return !!token;
         }
-        // For non-protected paths, always proceed
+
         return true;
       }
     }
@@ -75,6 +93,8 @@ const protectedPaths = [
   '/api/uploads'
 ];
 
+const jwtProtectedPaths = ['/api/protected'];
+
 // Only run middleware for matching paths
 export const config = {
   matcher: [
@@ -82,6 +102,7 @@ export const config = {
     '/api/community/:path*',
     '/api/profile/:path*',
     '/api/uploads/:path*',
+    '/api/protected/:path*',
     '/((?!api|_next/static|_next/image|favicon.ico|images).*)',
   ],
 };
