@@ -6,33 +6,44 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+
+    # 1️⃣ Checkout the repo
     - uses: actions/checkout@v3
 
+    # 2️⃣ Set up Node.js
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20'
         cache: 'npm'
 
+    # 3️⃣ Install dependencies
     - name: Install dependencies
       run: npm ci
 
-    - name: Make temp build script executable
-      run: chmod +x scripts/temp-build.sh
+    # 4️⃣ Make build scripts executable
+    - name: Make scripts executable
+      run: |
+        chmod +x scripts/temp-build.sh
+        chmod +x scripts/zip-prebuild.sh
 
+    # 5️⃣ Build Next.js app
     - name: Build Next.js app (standalone)
       run: bash scripts/temp-build.sh
       env:
         NODE_ENV: "production"
         NEXT_TELEMETRY_DISABLED: 1
         NODE_OPTIONS: "--max-old-space-size=4096"
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}   # ✅ Make JWT_SECRET available at build time
 
+    # 6️⃣ Package deployment zip
     - name: Package deployment zip
       run: bash scripts/zip-prebuild.sh
 
+    # 7️⃣ Deploy to Azure Web App
     - name: Deploy to Azure Web App
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
