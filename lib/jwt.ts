@@ -1,39 +1,31 @@
-import jwt from 'jsonwebtoken';
-import type { JwtPayload } from 'jsonwebtoken';
-
-// Define a fallback secret for development only
-const FALLBACK_SECRET = 'development-secret-key';
-
-// Get the secret from environment variables or use fallback in development
-const getJwtSecret = (): string => {
-  const secret = process.env.JWT_SECRET;
-  
-  // In production, we require the secret to be set
-  if (!secret && process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET environment variable is required in production.');
-  }
-  
-  // Return the secret or fallback for development
-  return secret || FALLBACK_SECRET;
-};
+import * as jwt from 'jsonwebtoken';
 
 /**
- * Sign a JWT token with the given payload and options
+ * Simple JWT utilities for token generation and verification
+ */
+
+// Secret key for JWT tokens - fallback to a development secret if not provided
+const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';
+
+/**
+ * Sign a JWT token with the given payload
+ * @param payload The data to be encoded in the token
+ * @param expiresIn Token expiration time (default: 1 hour)
+ * @returns JWT token string
  */
 export function signJwt(payload: object, expiresIn: string = '1h'): string {
-  const secret = getJwtSecret();
-  
-  return jwt.sign(payload, secret, { expiresIn: expiresIn });
+  // Use type assertion to handle typing issues
+  return jwt.sign(payload, JWT_SECRET as jwt.Secret, { expiresIn });
 }
 
 /**
- * Verify a JWT token and return the decoded payload or null if invalid
+ * Verify a JWT token and return the decoded payload
+ * @param token JWT token to verify
+ * @returns Decoded payload or null if invalid
  */
-export function verifyJwt(token: string): JwtPayload | null {
+export function verifyJwt(token: string): jwt.JwtPayload | string | null {
   try {
-    const secret = getJwtSecret();
-    const decoded = jwt.verify(token, secret);
-    return typeof decoded === 'object' ? decoded as JwtPayload : null;
+    return jwt.verify(token, JWT_SECRET as jwt.Secret);
   } catch (error) {
     console.error('[jwt] Token verification failed:', error);
     return null;
