@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { verifyJwt } from "@/lib/jwt";
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +9,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Missing token" }, { status: 400 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded = verifyJwt(token);
+    if (!decoded) {
+      return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
+    }
+    
     console.log("[verify-token] decoded:", decoded);
 
     return NextResponse.json({ success: true, user: decoded });
