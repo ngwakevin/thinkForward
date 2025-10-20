@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { authCosmosService } from '../../../../lib/azure/auth-cosmos-service';
-import { generateToken } from '@/lib/jwt';
+import { signAccessToken, signRefreshToken, TokenPayload } from '@/lib/jwt';
+
+// Ensure this runs in Node.js environment, not Edge Runtime
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
@@ -24,17 +27,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = generateToken({ userId: user.id, email: user.email }, process.env.JWT_EXPIRES_IN || '1h');
+    // Create payload for tokens
+    const tokenPayload: TokenPayload = {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    };
 
-    return NextResponse.json({
+    // Generate both access and refresh tokens
+    const accessToken = await signAccessToken(tokenPayload);
+    const refreshToken = await signRefreshToken({
+      userId: user.id,
+      email: user.email,
+    });
+
+    // Create the response
+    const response = NextResponse.json({
       message: 'Login successful',
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
       },
-      token,
+      token: accessToken,
+      refreshToken, // Include refresh token in response for testing purposes
     });
+
+    // Set refresh token as HttpOnly cookie
+    response.cookies.set('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    });
+
+    return response;
   } catch (err) {
     console.error('[auth/login] error', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

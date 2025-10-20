@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
 import { telemetry } from './lib/azure/telemetry-service';
-import { verifyJwt } from '@/lib/jwt';
+import { verifyToken } from '@/lib/jwt';
 
 /**
- * Custom middleware that adds telemetry and enhanced security features
+ * Custom middleware that adds telemetry, JWT authentication and enhanced security features
  */
 export default withAuth(
   // `withAuth` augments your Request with the user's token
@@ -59,26 +59,50 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const pathname = req.nextUrl.pathname;
 
+        // Check JWT protected paths first
         if (jwtProtectedPaths.some(path => pathname.startsWith(path))) {
+          // Check Authorization header for Bearer token
           const authHeader = req.headers.get('authorization');
           const bearerToken = authHeader?.toLowerCase().startsWith('bearer ')
             ? authHeader.slice(7)
-            : undefined;
+            : null;
 
+          // If Bearer token exists, verify it
           if (bearerToken) {
-            const decoded = verifyJwt(bearerToken);
-            if (decoded) {
-              return true;
+            try {
+              const decoded = verifyToken(bearerToken);
+              if (decoded && decoded.userId) {
+                return true;
+              }
+            } catch (error) {
+              console.error('JWT verification failed:', error);
+            }
+          }
+
+          // Fallback: check for auth token in cookies (for refresh token)
+          const cookies = req.cookies;
+          const refreshToken = cookies.get('refresh_token')?.value;
+          
+          if (refreshToken) {
+            try {
+              const decoded = verifyToken(refreshToken);
+              if (decoded && decoded.userId) {
+                return true;
+              }
+            } catch (error) {
+              console.error('Refresh token verification failed:', error);
             }
           }
 
           return false;
         }
 
+        // Check NextAuth protected paths
         if (protectedPaths.some(path => pathname.startsWith(path))) {
           return !!token;
         }
 
+        // Public paths
         return true;
       }
     }
