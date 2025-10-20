@@ -2,9 +2,7 @@
 
 const nextConfig = {
   output: 'standalone',
-  experimental: {
-    appDir: true,
-  },
+  // In Next.js 14.2.5, the App Router is stable and doesn't require experimental flag
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
