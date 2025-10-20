@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
-export default function LegacyHome() {
+export default function LegacyPage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to App Router home page
+    // Redirect to App Router
     router.replace('/');
   }, []);
   
-  return null; // This page won't be shown as it redirects
+  return <div>Redirecting to new app...</div>;
 }
