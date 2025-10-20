@@ -1,20 +1,41 @@
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from 'jsonwebtoken';
 
-const FALLBACK_SECRET = "development-secret-key";
-const JWT_SECRET = process.env.JWT_SECRET ?? (process.env.NODE_ENV === "production" ? undefined : FALLBACK_SECRET);
+// Define a fallback secret for development only
+const FALLBACK_SECRET = 'development-secret-key';
 
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required.");
+// Get the secret from environment variables or use fallback in development
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  
+  // In production, we require the secret to be set
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production.');
+  }
+  
+  // Return the secret or fallback for development
+  return secret || FALLBACK_SECRET;
+};
+
+/**
+ * Sign a JWT token with the given payload and options
+ */
+export function signJwt(payload: object, expiresIn = '1h'): string {
+  const secret = getJwtSecret();
+  const options: SignOptions = { expiresIn };
+  
+  return jwt.sign(payload, secret, options);
 }
 
-export function signJwt(payload: object, expiresIn = "1h") {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
-}
-
-export function verifyJwt(token: string) {
+/**
+ * Verify a JWT token and return the decoded payload or null if invalid
+ */
+export function verifyJwt(token: string): jwt.JwtPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(token, secret);
+    return typeof decoded === 'object' ? decoded as jwt.JwtPayload : null;
   } catch (error) {
+    console.error('[jwt] Token verification failed:', error);
     return null;
   }
 }
