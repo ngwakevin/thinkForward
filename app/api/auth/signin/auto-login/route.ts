@@ -4,7 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { signJwt, generateToken } from '@/lib/jwt';
+import { signAccessToken, signRefreshToken } from '@/lib/jwt';
+
+// Authentication requires server-side code that's not compatible with Edge
+export const runtime = 'nodejs';
 
 // Mark route as dynamic since it uses cookies and performs auth operations
 export const dynamic = 'force-dynamic';
@@ -51,18 +54,37 @@ export async function GET(req: NextRequest) {
       if (user && user.passwordHash) {
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
         if (isValidPassword) {
-          // Generate JWT token
-          const token = generateToken({ 
-            userId: user.id, 
-            email: user.email 
-          }, '24h');
+          // Create token payload
+          const tokenPayload = {
+            userId: user.id,
+            email: user.email || '',
+            name: user.name || undefined
+          };
           
-          // Set JWT token in cookies (HTTP only for security)
-          cookieStore.set('auth_token', token, {
-            maxAge: 60 * 60 * 24, // 24 hours
+          // Generate access token (short-lived)
+          const accessToken = await signAccessToken(tokenPayload);
+          
+          // Generate refresh token (long-lived)
+          const refreshToken = await signRefreshToken({
+            userId: user.id,
+            email: user.email || ''
+          });
+          
+          // Set access token as client-accessible cookie
+          cookieStore.set('auth_token', accessToken, {
+            maxAge: 60 * 15, // 15 minutes
             path: '/',
             secure: process.env.NODE_ENV === 'production',
-            httpOnly: true,
+            httpOnly: false, // Client code needs access
+          });
+          
+          // Set refresh token as HttpOnly cookie
+          cookieStore.set('refresh_token', refreshToken, {
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: true, // For security
+            sameSite: 'strict'
           });
           
           console.log('[auth/auto-login] Generated JWT token for user:', user.email);
@@ -141,18 +163,37 @@ export async function POST(req: NextRequest) {
         httpOnly: true,
       });
       
-      // Generate JWT token
-      const token = generateToken({ 
-        userId: user.id, 
-        email: user.email 
-      }, '24h');
+      // Create token payload
+      const tokenPayload = {
+        userId: user.id,
+        email: user.email || '',
+        name: user.name || undefined
+      };
       
-      // Set JWT token in cookies (HTTP only for security)
-      cookieStore.set('auth_token', token, {
-        maxAge: 60 * 60 * 24, // 24 hours
+      // Generate access token (short-lived)
+      const accessToken = await signAccessToken(tokenPayload);
+      
+      // Generate refresh token (long-lived)
+      const refreshToken = await signRefreshToken({
+        userId: user.id,
+        email: user.email || ''
+      });
+      
+      // Set access token as client-accessible cookie
+      cookieStore.set('auth_token', accessToken, {
+        maxAge: 60 * 15, // 15 minutes
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
+        httpOnly: false, // Client code needs access
+      });
+      
+      // Set refresh token as HttpOnly cookie
+      cookieStore.set('refresh_token', refreshToken, {
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true, // For security
+        sameSite: 'strict'
       });
 
       console.log('[auth/auto-login] Generated JWT token for user:', user.email);
@@ -161,7 +202,7 @@ export async function POST(req: NextRequest) {
       // The frontend will redirect the user to this URL to complete authentication
       return NextResponse.json({
         success: true,
-        token: token, // Include the JWT token in response
+        token: accessToken, // Include the access token in response
         redirectUrl: `/auth/auto-login?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(callbackUrl)}&state=${csrfToken}`,
       });
 
