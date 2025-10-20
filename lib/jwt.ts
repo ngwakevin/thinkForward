@@ -1,4 +1,5 @@
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import type { JwtPayload } from 'jsonwebtoken';
 
 // Define a fallback secret for development only
 const FALLBACK_SECRET = 'development-secret-key';
@@ -19,21 +20,20 @@ const getJwtSecret = (): string => {
 /**
  * Sign a JWT token with the given payload and options
  */
-export function signJwt(payload: object, expiresIn = '1h'): string {
+export function signJwt(payload: object, expiresIn: string = '1h'): string {
   const secret = getJwtSecret();
-  const options: SignOptions = { expiresIn };
   
-  return jwt.sign(payload, secret, options);
+  return jwt.sign(payload, secret, { expiresIn: expiresIn });
 }
 
 /**
  * Verify a JWT token and return the decoded payload or null if invalid
  */
-export function verifyJwt(token: string): jwt.JwtPayload | null {
+export function verifyJwt(token: string): JwtPayload | null {
   try {
     const secret = getJwtSecret();
     const decoded = jwt.verify(token, secret);
-    return typeof decoded === 'object' ? decoded as jwt.JwtPayload : null;
+    return typeof decoded === 'object' ? decoded as JwtPayload : null;
   } catch (error) {
     console.error('[jwt] Token verification failed:', error);
     return null;
