@@ -12,7 +12,7 @@ interface ProvidersProps {
   session: Session | null;
 }
 
-export function Providers({ children, session }: ProvidersProps) {
+export default function Providers({ children, session }: ProvidersProps) {
   return (
     <SessionProvider
       session={session}

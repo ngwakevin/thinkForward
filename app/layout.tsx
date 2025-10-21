@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth-options';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
-import { Providers } from './providers';
+import Providers from './providers';
 import { siteConfig } from '../config/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
