@@ -56,3 +56,9 @@ yarn.lock
 
 # Temporary files
 /temp*
+
+# Editor/backup artifacts
+*.bak
+*.bak*
+*.temp.js
+pages.backup/
