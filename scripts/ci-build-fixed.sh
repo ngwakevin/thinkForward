@@ -42,6 +42,14 @@ const nextConfig = {
   
   // Always use standalone output for Azure App Service deployment
   output: 'standalone',
+  // Ensure Next's vendored compiled modules are included in standalone output (fixes node-html-parser missing on Azure)
+  outputFileTracingIncludes: {
+    '*': [
+      './node_modules/next/dist/compiled/node-html-parser/**/*',
+      './node_modules/next/dist/compiled/cheerio/**/*',
+      './node_modules/next/dist/compiled/**/*'
+    ],
+  },
   
   // Effectively disable Pages Router by using non-standard extension
   pageExtensions: ['nonexistent'],

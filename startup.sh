@@ -51,6 +51,20 @@ mkdir -p "$RUNTIME_STANDALONE_DIR"
 echo "Copying standalone server into runtime directory"
 cp -R "$STANDALONE_DIR/." "$RUNTIME_STANDALONE_DIR/"
 
+# Workaround: Ensure Next's vendored compiled modules exist (node-html-parser, etc.)
+# Some Azure builds prune next/dist/compiled; if missing in standalone, copy from root node_modules
+COMPILED_SRC="node_modules/next/dist/compiled"
+COMPILED_DST="$RUNTIME_STANDALONE_DIR/node_modules/next/dist/compiled"
+if [ ! -d "$COMPILED_DST" ]; then
+  if [ -d "$COMPILED_SRC" ]; then
+    echo "Restoring Next compiled vendor directory into runtime (next/dist/compiled)"
+    mkdir -p "$COMPILED_DST"
+    cp -R "$COMPILED_SRC/." "$COMPILED_DST/"
+  else
+    echo "Warning: Root compiled vendor directory not found at $COMPILED_SRC"
+  fi
+fi
+
 echo "Syncing static assets into runtime directory (.next/static)"
 mkdir -p "$RUNTIME_STANDALONE_DIR/.next"
 rm -rf "$RUNTIME_STANDALONE_DIR/.next/static"
@@ -83,18 +97,14 @@ ensure_helper_script "scripts/comprehensive-nextjs-diagnostics.js"
 
 echo "Launching Next.js standalone server from writable runtime..."
 cd "$RUNTIME_STANDALONE_DIR"
-exec node server.js
-    echo "Direct start wrapper failed, trying custom server..."
-    sleep 2
-    echo "Starting with custom server: node server.js"
-    node --experimental-specifier-resolution=node server.js || {
-        echo "ERROR: Failed to start server with experimental specifier resolution. Retrying with default..."
-        sleep 2
-        echo "Retrying server start with default settings..."
-        node server.js
-    }
+
+# Try to start the Next standalone server; if it fails, fall back to custom server at repo root
+node server.js || {
+  echo "Standalone server failed to start, falling back to custom server.js at /home/site/wwwroot"
+  cd /home/site/wwwroot
+  # Prefer ESM-friendly start
+  node --experimental-specifier-resolution=node server.js || node server.js
 }
 
-# Log successful startup
-echo "App started successfully at: $(date)"
-echo "Health check available at: http://localhost:$PORT/api/health"
+echo "Startup script completed at: $(date)"
+echo "Health check: http://localhost:$PORT/api/health"

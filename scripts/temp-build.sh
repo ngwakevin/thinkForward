@@ -47,6 +47,14 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   productionBrowserSourceMaps: false,
+  // Ensure Next's vendored compiled modules are included in standalone output (fixes node-html-parser missing on Azure)
+  outputFileTracingIncludes: {
+    '*': [
+      './node_modules/next/dist/compiled/node-html-parser/**/*',
+      './node_modules/next/dist/compiled/cheerio/**/*',
+      './node_modules/next/dist/compiled/**/*'
+    ],
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
