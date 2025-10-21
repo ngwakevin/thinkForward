@@ -1,5 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-options';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { Header } from '../components/layout/Header';
 import { UserMenuProvider } from '../components/layout/UserMenuProvider';
@@ -34,7 +36,8 @@ export const metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const session = await getServerSession(authOptions);
   const analyticsKey = process.env.NEXT_PUBLIC_ANALYTICS_KEY;
   return (
     <html lang="en" suppressHydrationWarning>
@@ -48,7 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         )}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] rounded-md bg-accent px-4 py-2 text-white text-sm shadow-lg">Skip to content</a>
         <ThemeProvider>
-          <AuthProvider>
+          <AuthProvider session={session}>
             <UserMenuProvider>
               <Header />
               <main id="main" role="main" className="min-h-[60vh] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">{children}</main>
