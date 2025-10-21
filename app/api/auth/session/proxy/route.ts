@@ -8,7 +8,12 @@ import { cookies } from 'next/headers';
 export async function GET(req: NextRequest) {
   // Get the cookies from the request
   const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('__Secure-next-auth.session-token')?.value;
+  // Try common NextAuth cookie names to be robust across environments
+  const sessionCookie =
+    cookieStore.get('__Secure-next-auth.session-token')?.value ||
+    cookieStore.get('__Host-next-auth.session-token')?.value ||
+    cookieStore.get('next-auth.session-token')?.value ||
+    '';
 
   // Construct the URL for the actual NextAuth session endpoint
   const apiUrl = process.env.NEXTAUTH_URL_INTERNAL || process.env.NEXTAUTH_URL || '';
@@ -17,7 +22,8 @@ export async function GET(req: NextRequest) {
   // Call the NextAuth session endpoint with the cookies
   const response = await fetch(sessionUrl, {
     headers: {
-      Cookie: `__Secure-next-auth.session-token=${sessionCookie || ''}`,
+      // Forward the cookie value under the secure name; NextAuth will parse it
+      Cookie: `__Secure-next-auth.session-token=${sessionCookie}`,
     },
   });
 

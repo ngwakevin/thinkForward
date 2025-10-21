@@ -14,18 +14,10 @@ import { fetchUserByEmail } from "@/lib/db/users";
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt", maxAge: 15 * 60 },
-  cookies: {
-    sessionToken: {
-      name: "__Host-next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: true,
-        domain: process.env.COOKIE_DOMAIN,
-      },
-    },
-  },
+  // Use NextAuth.js default cookie configuration to avoid prefix/domains conflicts
+  // across environments (local dev, Azure HTTPS). Defaults:
+  // - __Secure-next-auth.session-token (HTTPS)
+  // - next-auth.session-token (HTTP/dev)
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
