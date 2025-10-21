@@ -2,6 +2,9 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { signAccessToken, signRefreshToken } from "@/lib/jwt";
+import { fetchUserByEmail } from "@/lib/db/users";
 
 /**
  * ==========================
@@ -10,101 +13,88 @@ import CredentialsProvider from "next-auth/providers/credentials";
  */
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
+  session: { strategy: "jwt", maxAge: 15 * 60 },
   cookies: {
     sessionToken: {
-      name: '__Host-next-auth.session-token',
+      name: "__Host-next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
         secure: true,
+        sameSite: "lax",
+        path: "/",
         domain: process.env.COOKIE_DOMAIN || undefined,
       },
     },
   },
-  // 🔐 List of supported authentication providers
   providers: [
-    /**
-     * Google OAuth 2.0
-     * Make sure your credentials match the redirect URI:
-     *   https://<your-domain>/api/auth/callback/google
-     */
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-
-    /**
-     * Microsoft Entra ID (Azure AD) / Outlook Login
-     * Ensure redirect URI:
-     *   https://<your-domain>/api/auth/callback/azure-ad
-     */
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      tenantId: process.env.AZURE_AD_TENANT_ID!, // "common" works for multi-tenant apps
+      tenantId: process.env.AZURE_AD_TENANT_ID!,
     }),
-
-    /**
-     * Manual Email + Password Login (Credentials Provider)
-     */
     CredentialsProvider({
-      name: "Email and Password",
+      name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "you@example.com" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const { email, password } = credentials ?? {};
-
-        // ✅ Replace this block with your actual user lookup (DB/API)
-        if (
-          email === process.env.TEST_USER_EMAIL &&
-          password === process.env.TEST_USER_PASSWORD
-        ) {
-          return { id: "1", name: "Admin User", email };
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Missing credentials");
         }
 
-        // ❌ If invalid, return null
-        return null;
+        const user = await fetchUserByEmail(credentials.email);
+        if (!user) throw new Error("User not found");
+
+        const valid = await bcrypt.compare(credentials.password, user.password);
+        if (!valid) throw new Error("Invalid password");
+
+        const accessToken = await signAccessToken({ userId: user.id, email: user.email });
+        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email });
+
+        return { id: user.id, email: user.email, accessToken, refreshToken } as any;
       },
     }),
   ],
-
-  // 🔄 Use JWT-based sessions (no DB adapter needed)
-  session: { strategy: "jwt" },
-
-  // 🔁 Callback functions to customize JWT/session data
   callbacks: {
     async jwt({ token, user }) {
+      // Attach user basics for session consumption
       if (user) {
-        token.user = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
+        (token as any).user = {
+          id: (user as any).id,
+          name: (user as any).name,
+          email: (user as any).email,
+          image: (user as any).image,
         };
       }
 
+      // Propagate issued tokens from credentials sign-in
+      if ((user as any)?.accessToken) (token as any).accessToken = (user as any).accessToken;
+      if ((user as any)?.refreshToken) (token as any).refreshToken = (user as any).refreshToken;
       return token;
     },
     async session({ session, token }) {
-      if (token.user) {
+      // Prefer token.user (populated during jwt callback)
+      if ((token as any).user) {
         session.user = {
           ...session.user,
-          ...token.user,
-        };
+          ...(token as any).user,
+        } as any;
       }
 
+      (session as any).accessToken = (token as any).accessToken;
+      (session as any).refreshToken = (token as any).refreshToken;
       return session;
     },
   },
-
-  // 🧭 Custom Pages
   pages: {
-    signIn: "/auth/signin", // your custom sign-in page
+    signIn: "/auth/signin",
+    signOut: "/auth/signout",
+    error: "/auth/error",
   },
-
-  // 🧱 Debug mode for local dev
   debug: process.env.NODE_ENV === "development",
 };

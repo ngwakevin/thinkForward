@@ -17,6 +17,32 @@ type OidcIdentity = {
 const memoryUserStore: Map<string, any> = new Map();
 const memoryProfileStore: Map<string, any> = new Map();
 
+/**
+ * Fetch a user by email. Uses Cosmos DB if available, otherwise checks the in-memory store.
+ */
+export async function fetchUserByEmail(email: string): Promise<any | null> {
+  if (!email) return null;
+  try {
+    if (isCosmosAvailable()) {
+      const usersContainer = await getUsersContainer();
+      const { resources } = await usersContainer.items
+        .query({
+          query: 'SELECT TOP 1 * FROM c WHERE c.email = @email',
+          parameters: [{ name: '@email', value: email }],
+        })
+        .fetchAll();
+      return resources?.[0] ?? null;
+    }
+  } catch (err) {
+    console.warn('[db] fetchUserByEmail fell back to memory store:', err);
+  }
+  // In-memory fallback search
+  for (const user of Array.from(memoryUserStore.values())) {
+    if (user.email === email) return user;
+  }
+  return null;
+}
+
 export async function ensureUserFromOidc(identity: OidcIdentity) {
   try {
     const provider = identity.provider ?? 'microsoft';

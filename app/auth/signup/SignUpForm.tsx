@@ -57,33 +57,9 @@ export function SignUpForm() {
         return;
       }
       
-      console.log('Account created successfully, signing in...');
-      // Add a small delay to ensure the user is created in the database
-      setTimeout(async () => {
-        try {
-          // Sign in with credentials
-          const signInResult = await signIn('credentials', { 
-            redirect: false, 
-            email: normEmail, 
-            password,
-            callbackUrl: '/'
-          });
-          
-          console.log('Sign-in result:', signInResult);
-          
-          if (signInResult?.error) {
-            setGeneralError('Account created but sign in failed. Please try signing in manually.');
-            setLoading(false);
-          } else {
-            // Redirect to home page
-            window.location.href = '/';
-          }
-        } catch (signInError) {
-          console.error('Sign in after registration error:', signInError);
-          setGeneralError('Account created but sign in failed. Please try signing in manually.');
-          setLoading(false);
-        }
-      }, 1000);
+      // Store credentials for the auto-login page and redirect there
+      localStorage.setItem('lastSignupCreds', JSON.stringify({ email: normEmail, password }));
+      window.location.href = '/auth/auto-login';
     } catch (e: any) {
       console.error('Registration error:', e);
       setGeneralError('Unexpected error');
