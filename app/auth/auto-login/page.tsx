@@ -10,9 +10,6 @@ export default async function AutoLoginPage() {
     redirect("/dashboard");
   }
 
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-lg">Redirecting to sign-in...</p>
-    </div>
-  );
+  // If not logged in → redirect to sign-in page
+  redirect("/auth/signin");
 }
