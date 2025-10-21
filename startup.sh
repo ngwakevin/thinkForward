@@ -70,6 +70,15 @@ mkdir -p "$RUNTIME_STANDALONE_DIR/.next"
 rm -rf "$RUNTIME_STANDALONE_DIR/.next/static"
 cp -R .next/static "$RUNTIME_STANDALONE_DIR/.next/"
 
+# Also sync server assets required by App Router (API routes, RSC) into runtime (.next/server)
+if [ -d ".next/server" ]; then
+  echo "Syncing server assets into runtime directory (.next/server)"
+  rm -rf "$RUNTIME_STANDALONE_DIR/.next/server"
+  cp -R .next/server "$RUNTIME_STANDALONE_DIR/.next/"
+else
+  echo "Warning: .next/server not found; App Router API routes may be missing."
+fi
+
 echo "Syncing public assets into runtime directory"
 rm -rf "$RUNTIME_STANDALONE_DIR/public"
 cp -R public "$RUNTIME_STANDALONE_DIR/public"
