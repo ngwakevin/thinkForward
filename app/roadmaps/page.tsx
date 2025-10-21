@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -212,7 +212,7 @@ const emptyProgress = (monthTasks: string[], sixTasks: string[]): ProgressData =
   updated: Date.now()
 });
 
-export default function RoadmapsPage() {
+function RoadmapsContent() {
   const searchParams = useSearchParams();
   const goal = searchParams?.get('goal') || undefined;
   const level = searchParams?.get('level') || undefined;
@@ -472,5 +472,13 @@ export default function RoadmapsPage() {
 
       <div className="pt-6"><Link href="/" className="text-xs font-medium text-accent hover:underline">← Back to Home</Link></div>
     </main>
+  );
+}
+
+export default function RoadmapsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-5xl mx-auto px-6 py-24">Loading roadmap...</div>}>
+      <RoadmapsContent />
+    </Suspense>
   );
 }
