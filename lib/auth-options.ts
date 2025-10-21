@@ -16,13 +16,13 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 15 * 60 },
   cookies: {
     sessionToken: {
-      name: "__Secure-next-auth.session-token",
+      name: "__Host-next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: process.env.COOKIE_DOMAIN || undefined,
+        secure: true,
+        domain: process.env.COOKIE_DOMAIN,
       },
     },
   },
