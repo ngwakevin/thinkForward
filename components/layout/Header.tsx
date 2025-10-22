@@ -126,7 +126,7 @@ export function Header() {
           </details>
           {(status === 'unauthenticated' || status === 'loading') && (
             <Link
-              href={'/auth/signin' as any}
+              href={'/login' as any}
               className="inline-flex items-center gap-2 rounded-md border border-border px-4 h-9 text-sm font-medium text-fg hover:bg-bg-alt transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               {status === 'loading' ? (

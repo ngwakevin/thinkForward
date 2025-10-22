@@ -28,15 +28,28 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen items-center justify-center flex-col gap-4">
       <h1 className="text-2xl font-bold mb-4">Sign In</h1>
+      
+      <div className="mb-6 text-center max-w-md">
+        <p className="text-sm text-gray-500 mb-2">
+          You only need to sign in to access <strong>Dashboard</strong> and <strong>Profile</strong> pages.
+        </p>
+        <p className="text-sm text-gray-500">
+          All other content like Bootcamps, Solutions, Products, and Community is publicly accessible.
+        </p>
+      </div>
+
       <button 
         onClick={() => signIn("azure-ad", { callbackUrl })}
         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
       >
         Sign in with Microsoft
       </button>
-      <p className="text-sm text-gray-500 mt-4">
-        You need to sign in to access this content
-      </p>
+      
+      <div className="mt-8 flex gap-2">
+        <a href="/" className="text-sm text-gray-500 underline">Return to Home</a>
+        <span className="text-gray-400">•</span>
+        <a href="/bootcamps" className="text-sm text-gray-500 underline">View Bootcamps</a>
+      </div>
     </div>
   );
 }
