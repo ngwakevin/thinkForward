@@ -32,7 +32,7 @@ async function getThread(id: string) {
 
 export default async function ThreadPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session) return <div className="max-w-3xl mx-auto py-10">Please <Link className="text-accent underline" href="/auth/signin">sign in</Link>.</div>;
+  if (!session) return <div className="max-w-3xl mx-auto py-10">Please <Link className="text-accent underline" href="/login">sign in</Link>.</div>;
   const me = (session.user as any);
   const thread = await getThread(params.id);
   if (!thread) return <div className="max-w-3xl mx-auto py-10">Thread not found</div>;

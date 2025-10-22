@@ -42,7 +42,7 @@ export default async function CommunityPage() {
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="font-display text-3xl font-bold">Community</h1>
         <p className="mt-2 text-fg-muted">Please sign in to access the community.</p>
-        <Link className="mt-4 inline-block text-accent underline" href="/auth/signin">Sign in</Link>
+  <Link className="mt-4 inline-block text-accent underline" href="/login">Sign in</Link>
       </div>
     );
   }

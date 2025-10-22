@@ -73,7 +73,7 @@ export function SignUpForm() {
         <div className="rounded-xl border border-border bg-bg-alt/40 shadow-sm p-8">
           <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">
-              Use email & password or <Link href="/auth/signin" className="underline hover:text-fg">Microsoft sign in</Link> instead.
+              Use email & password or <Link href="/login" className="underline hover:text-fg">Microsoft sign in</Link> instead.
             </p>
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
@@ -107,7 +107,7 @@ export function SignUpForm() {
             <p className="mt-4 text-xs text-fg-muted/70">By creating an account you agree to our <Link href="/docs/terms" className="underline hover:text-fg">Terms</Link>.</p>
         </div>
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-xs text-fg-muted">
-          Already have an account? <Link href="/auth/signin" className="underline hover:text-fg">Sign in</Link>.
+          Already have an account? <Link href="/login" className="underline hover:text-fg">Sign in</Link>.
         </div>
       </div>
     </div>

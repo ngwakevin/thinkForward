@@ -6,7 +6,7 @@ import { communityService } from '../../../../lib/azure/community-service';
 
 export default async function CategoryPage({ params }: { params: { slug: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session) return <div className="max-w-3xl mx-auto py-10">Please <Link className="text-accent underline" href="/auth/signin">sign in</Link>.</div>;
+  if (!session) return <div className="max-w-3xl mx-auto py-10">Please <Link className="text-accent underline" href="/login">sign in</Link>.</div>;
   // Stub implementation for build
   const category = {
     id: "category-id",
