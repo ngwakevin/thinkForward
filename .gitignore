@@ -62,3 +62,5 @@ yarn.lock
 *.bak*
 *.temp.js
 pages.backup/
+# Large accidental binary
+ziVmkDe1
