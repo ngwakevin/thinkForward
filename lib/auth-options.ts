@@ -1,92 +1,37 @@
 import type { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { signAccessToken, signRefreshToken } from "@/lib/jwt";
-import { fetchUserByEmail } from "@/lib/db/users";
 
-/**
- * ==========================
- *  NEXTAUTH OPTIONS
- * ==========================
- */
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt", maxAge: 15 * 60 },
-  // Use NextAuth.js default cookie configuration to avoid prefix/domains conflicts
-  // across environments (local dev, Azure HTTPS). Defaults:
-  // - __Secure-next-auth.session-token (HTTPS)
-  // - next-auth.session-token (HTTP/dev)
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
       tenantId: process.env.AZURE_AD_TENANT_ID!,
     }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing credentials");
-        }
-
-        const user = await fetchUserByEmail(credentials.email);
-        if (!user) throw new Error("User not found");
-
-        const valid = await bcrypt.compare(credentials.password, user.password);
-        if (!valid) throw new Error("Invalid password");
-
-        const accessToken = await signAccessToken({ userId: user.id, email: user.email });
-        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email });
-
-        return { id: user.id, email: user.email, accessToken, refreshToken } as any;
-      },
-    }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      // Attach user basics for session consumption
-      if (user) {
-        (token as any).user = {
-          id: (user as any).id,
-          name: (user as any).name,
-          email: (user as any).email,
-          image: (user as any).image,
-        };
-      }
 
-      // Propagate issued tokens from credentials sign-in
-      if ((user as any)?.accessToken) (token as any).accessToken = (user as any).accessToken;
-      if ((user as any)?.refreshToken) (token as any).refreshToken = (user as any).refreshToken;
-      return token;
+  pages: {
+    signIn: '/login',
+  },
+
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Always redirect to /profile after login
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return `${baseUrl}/profile`;
     },
     async session({ session, token }) {
-      // Prefer token.user (populated during jwt callback)
-      if ((token as any).user) {
-        session.user = {
-          ...session.user,
-          ...(token as any).user,
-        } as any;
+      if (token?.sub && session.user) {
+        // Add the user ID to the session using type assertion
+        (session.user as any).id = token.sub;
       }
-
-      (session as any).accessToken = (token as any).accessToken;
-      (session as any).refreshToken = (token as any).refreshToken;
       return session;
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signout",
-    error: "/auth/error",
+
+  session: {
+    strategy: "jwt",
   },
-  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
 };

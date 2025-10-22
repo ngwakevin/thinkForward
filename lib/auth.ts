@@ -1,19 +1,15 @@
 /**
  * auth.ts - Authentication utilities and configuration
- * This file re-exports from auth-options.ts to maintain backward compatibility
  */
 
+import { getServerSession } from "next-auth";
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
-import { User, Account } from 'next-auth';
-import bcrypt from 'bcryptjs';
-import { ensureUserFromOidc } from './db/users';
+import { User } from 'next-auth';
+import { authOptions } from "./auth-options";
 
-// Import and re-export authOptions from centralized auth config with alias
-import { authOptions as authOptionsFromConfig } from './auth-options';
-// Re-export with original name for backward compatibility
-export const authOptions = authOptionsFromConfig;
-export default authOptionsFromConfig;
+export const getAuthSession = () => getServerSession(authOptions);
+export { authOptions };
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET) {
