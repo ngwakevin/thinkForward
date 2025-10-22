@@ -8,8 +8,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
 
+    steps:
     # 1️⃣ Checkout the repo
     - uses: actions/checkout@v3
 
@@ -24,28 +24,79 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    # 4️⃣ Make build scripts executable
+    # 4️⃣ (Optional) Copy updated next.config.mjs from fresh_clone
+    - name: Copy updated next.config.mjs
+      run: |
+        if [ -d "../fresh_clone" ] && [ -f "../fresh_clone/next.config.mjs" ]; then
+          echo "Copying updated next.config.mjs from fresh_clone..."
+          cp ../fresh_clone/next.config.mjs ./next.config.mjs
+        else
+          echo "Using existing next.config.mjs"
+        fi
+
+    # 5️⃣ Make build scripts executable
     - name: Make scripts executable
       run: |
         chmod +x scripts/temp-build.sh
         chmod +x scripts/zip-prebuild.sh
 
-    # 5️⃣ Build Next.js app
+    # 6️⃣ Build Next.js app (standalone)
     - name: Build Next.js app (standalone)
-      run: bash scripts/temp-build.sh
+      run: |
+        echo "Starting Next.js production build..."
+        npm run build -- -c next.config.mjs
+        echo "✅ Build complete"
+        
+        # Verify standalone output exists and contains required files
+        if [ -d ".next/standalone" ]; then
+          echo "✅ .next/standalone directory exists"
+          ls -la .next/standalone
+          
+          if [ -f ".next/standalone/server.js" ]; then
+            echo "✅ server.js exists"
+          else
+            echo "❌ ERROR: server.js is missing from standalone output"
+            exit 1
+          fi
+          
+          if [ -d ".next/standalone/node_modules" ]; then
+            echo "✅ node_modules directory exists"
+          else
+            echo "❌ ERROR: node_modules is missing from standalone output"
+            exit 1
+          fi
+          
+          if [ -f ".next/standalone/package.json" ]; then
+            echo "✅ package.json exists"
+          else
+            echo "❌ ERROR: package.json is missing from standalone output"
+            exit 1
+          fi
+          
+          echo "✅ All required standalone files verified"
+        else
+          echo "❌ ERROR: .next/standalone directory not found - build likely failed or output setting not applied"
+          echo "Current .next directory contents:"
+          ls -la .next
+          exit 1
+        fi
       env:
         NODE_ENV: "production"
         NEXT_TELEMETRY_DISABLED: 1
         NODE_OPTIONS: "--max-old-space-size=4096"
-        JWT_SECRET: ${{ secrets.NEXTAUTH_SECRET || secrets.JWT_SECRET }}   # Use NEXTAUTH_SECRET as primary
-        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || secrets.JWT_SECRET }}   # Ensure both secrets are the same
-        COOKIE_DOMAIN: ".azurewebsites.net"   # Set cookie domain for Azure Web App
+        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || secrets.JWT_SECRET }}
+        JWT_SECRET: ${{ secrets.NEXTAUTH_SECRET || secrets.JWT_SECRET }}
+        COOKIE_DOMAIN: ".azurewebsites.net"
+        # Cosmos fallback prevention
+        COSMOS_DB_ENDPOINT: ${{ secrets.COSMOS_DB_ENDPOINT }}
+        COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
+        COSMOS_DB_DATABASE: "thinkforward"
 
-    # 6️⃣ Package deployment zip
+    # 7️⃣ Package deployment zip (includes standalone server)
     - name: Package deployment zip
       run: bash scripts/zip-prebuild.sh
 
-    # 7️⃣ Deploy to Azure Web App
+    # 8️⃣ Deploy to Azure Web App
     - name: Deploy to Azure Web App
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2

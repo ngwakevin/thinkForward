@@ -35,44 +35,16 @@ EOL
   DOCUMENT_CREATED=1
 fi
 
-# Create a simplified next.config.js that focuses on App Router
-echo "Creating app-router focused next.config.js..."
+# Use the existing next.config.mjs file
+echo "Using existing next.config.mjs for build..."
+# We'll make a backup just in case
 if [ -f "next.config.mjs" ]; then
-  mv next.config.mjs next.config.mjs.bak
+  cp next.config.mjs next.config.mjs.bak
 fi
 
-cat > next.config.js << 'EOL'
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  output: 'standalone',
-  productionBrowserSourceMaps: false,
-  // Ensure Next's vendored compiled modules are included in standalone output (fixes node-html-parser missing on Azure)
-  outputFileTracingIncludes: {
-    '*': [
-      './node_modules/next/dist/compiled/node-html-parser/**/*',
-      './node_modules/next/dist/compiled/cheerio/**/*',
-      './node_modules/next/dist/compiled/**/*'
-    ],
-  },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false, path: false, os: false, net: false,
-        tls: false, child_process: false,
-      };
-    }
-    return config;
-  },
-};
-
-module.exports = nextConfig;
-EOL
-
 # Build
-echo "Building with Next.js..."
-NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS="--max-old-space-size=4096" npx next build
+echo "Building with Next.js using explicit config file..."
+NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS="--max-old-space-size=4096" npx next build -c next.config.mjs
 
 # Restore
 echo "Restoring original files..."
@@ -86,8 +58,8 @@ if [ "$PAGES_DIR_CREATED" -eq 1 ]; then
   rmdir pages 2>/dev/null || true
 fi
 if [ -f "next.config.mjs.bak" ]; then
+  # Restore the backup if needed
   mv next.config.mjs.bak next.config.mjs
-  rm -f next.config.js
 fi
 
 echo "Build completed!"
