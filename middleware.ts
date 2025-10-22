@@ -21,9 +21,6 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/profile/:path*",
-    "/products/:path*", 
-    "/roadmaps/:path*",
-    "/support/:path*",
-    // Bootcamps and solutions are now public
+    // Products, Roadmaps, Support, Bootcamps and Solutions are all public
   ],
 };
