@@ -1,4 +1,5 @@
-import type { NextAuthOptions } from "next-auth";
+// lib/auth-options.ts
+import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
 export const authOptions: NextAuthOptions = {
@@ -10,28 +11,46 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
 
-  pages: {
-    signIn: '/login',
+  secret: process.env.NEXTAUTH_SECRET,
+
+  // Session settings
+  session: {
+    strategy: "jwt",           // Use JWT sessions for serverless / Azure
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
+  // Cookies configuration (important for Azure production)
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production", // required for Azure HTTPS
+      },
+    },
+  },
+
+  // Redirects
+  pages: {
+    signIn: "/login", // custom login page
+    error: "/login",  // redirect on auth errors
+  },
+
+  // Callbacks for controlling session content
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Always redirect to /profile after login
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      if (new URL(url).origin === baseUrl) return url;
-      return `${baseUrl}/profile`;
+    async jwt({ token, user }) {
+      // Add user info to token
+      if (user) token.user = user;
+      return token;
     },
     async session({ session, token }) {
-      if (token?.sub && session.user) {
-        // Add the user ID to the session using type assertion
-        (session.user as any).id = token.sub;
-      }
+      // Add token info to session
+      if (token.user) session.user = token.user;
       return session;
     },
   },
 
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV !== "production", // debug logs in dev only
 };
