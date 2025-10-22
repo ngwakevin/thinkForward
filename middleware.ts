@@ -20,11 +20,10 @@ export default withAuth(
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/bootcamps/:path*",
     "/profile/:path*",
-    "/products/:path*",
+    "/products/:path*", 
     "/roadmaps/:path*",
-    "/solutions/:path*",
     "/support/:path*",
+    // Bootcamps and solutions are now public
   ],
 };
