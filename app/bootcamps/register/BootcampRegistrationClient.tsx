@@ -50,7 +50,7 @@ export default function BootcampRegistrations() {
   const registerForBootcamp = async (bootcamp: Bootcamp) => {
     if (!session) {
       // Redirect to login if user is not authenticated
-      window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent('/bootcamps')}`;
+      window.location.href = `/login?callbackUrl=${encodeURIComponent('/bootcamps')}`;
       return;
     }
     

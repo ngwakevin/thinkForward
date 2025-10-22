@@ -54,7 +54,7 @@ export default function SignInForm() {
     try {
       console.log('Attempting Microsoft sign in');
       // Use redirect:true to ensure proper session handling
-      await signIn('microsoft', { 
+      await signIn('azure-ad', { 
         callbackUrl: '/',
         redirect: true
       });

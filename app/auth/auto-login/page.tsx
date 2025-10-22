@@ -8,6 +8,6 @@ export default async function AutoLoginPage() {
   if (session?.user) {
     redirect("/dashboard");
   } else {
-    redirect("/auth/signin");
+    redirect("/login");
   }
 }

@@ -1,6 +1,9 @@
 // lib/auth-options.ts
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { authCosmosService } from "./azure/auth-cosmos-service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -8,6 +11,41 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
       tenantId: process.env.AZURE_AD_TENANT_ID!,
+    }),
+    // Enable email/password sign-in
+    CredentialsProvider({
+      id: "credentials",
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        try {
+          const email = credentials?.email?.trim().toLowerCase();
+          const password = credentials?.password ?? "";
+          if (!email || !password) return null;
+
+          const user = await authCosmosService.getUserByEmail(email);
+          if (!user || !user.passwordHash) {
+            return null;
+          }
+
+          const ok = await bcrypt.compare(password, user.passwordHash);
+          if (!ok) return null;
+
+          // Return minimal user object for NextAuth
+          return {
+            id: user.id,
+            email: user.email || email,
+            name: user.name || user.profile?.displayName || email,
+            image: user.profile?.avatarUrl || undefined,
+          } as any;
+        } catch (err) {
+          console.error("[auth] Credentials authorize error:", err);
+          return null;
+        }
+      },
     }),
   ],
 
