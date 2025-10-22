@@ -44,7 +44,7 @@ jobs:
     - name: Build Next.js app (standalone)
       run: |
         echo "Starting Next.js production build..."
-        npm run build -- -c next.config.mjs
+        npx next build
         echo "✅ Build complete"
         
         # Verify standalone output exists and contains required files
