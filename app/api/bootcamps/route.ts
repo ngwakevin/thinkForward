@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
           .query(querySpec)
           .fetchAll();
 
-        return NextResponse.json({ bootcamps: resources || [] });
+        // Return an array for compatibility with clients expecting a list
+        return NextResponse.json(resources || []);
       } catch (dbErr) {
         console.error('Error fetching user bootcamps:', dbErr);
         return NextResponse.json({ bootcamps: [] });
