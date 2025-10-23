@@ -1,9 +1,13 @@
 // lib/auth-options.ts
 import { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authCosmosService } from "./azure/auth-cosmos-service";
+
+// Local alias to satisfy consumers that expect AuthOptions
+export type AuthOptions = NextAuthOptions;
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,6 +16,15 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
       tenantId: process.env.AZURE_AD_TENANT_ID!,
     }),
+    // Optional Google Sign-In (only active when env vars are set)
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          }),
+        ]
+      : []),
     // Enable email/password sign-in
     CredentialsProvider({
       id: "credentials",
@@ -77,6 +90,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login", // custom login page
     error: "/login",  // redirect on auth errors
+    newUser: "/profile", // onboard new users
   },
 
   // Callbacks for controlling session content

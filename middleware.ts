@@ -1,26 +1,40 @@
-import { withAuth } from "next-auth/middleware";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default withAuth(
-  function middleware(req: NextRequest) {
-    // Optional: custom logic for redirect after login
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/bootcamps",
+  "/api",
+  "/auth/auto-login",
+];
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Skip static files, NextAuth routes, and public routes
+  if (
+    PUBLIC_PATHS.some((path) => pathname.startsWith(path)) ||
+    pathname.startsWith("/_next") ||
+    pathname.includes(".")
+  ) {
     return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token, // user is authorized if token exists
-    },
-    pages: {
-      signIn: "/login", // redirect here if not authenticated
-    },
   }
-);
 
-// Define which paths are protected
+  // Verify JWT session
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", req.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Allow access if authenticated
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/profile/:path*",
-    // Products, Roadmaps, Support, Bootcamps and Solutions are all public
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
