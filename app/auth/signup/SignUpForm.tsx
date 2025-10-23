@@ -64,23 +64,21 @@ export function SignUpForm() {
         return;
       }
 
-      // Auto-login using credentials
+      // Auto-login using credentials and redirect to dashboard
       if (data.user?.email) {
-        const loginResult = await signIn('credentials', {
-          redirect: false,
+        // Reset form safely before redirect
+        formRef.current?.reset();
+        setEmail('');
+        setName('');
+        setPassword('');
+
+        await signIn('credentials', {
+          redirect: true,
           email: data.user.email,
           password,
-          callbackUrl: '/profile?tab=bootcamps',
+          callbackUrl: '/dashboard',
         });
-        if (loginResult?.ok && loginResult.url) {
-          // Reset form safely
-          formRef.current?.reset();
-          setEmail('');
-          setName('');
-          setPassword('');
-          window.location.href = loginResult.url;
-          return;
-        }
+        return;
       }
     } catch (err) {
       console.error(err);
@@ -206,7 +204,7 @@ export function SignUpForm() {
         </div>
 
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-xs text-fg-muted">
-          Already have an account? <Link href="/auth/signin" className="underline hover:text-fg">Sign in</Link>.
+          Already have an account? <Link href="/login" className="underline hover:text-fg">Sign in</Link>.
         </div>
       </div>
     </div>

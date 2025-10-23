@@ -88,8 +88,9 @@ export const authOptions: NextAuthOptions = {
 
   // Redirects / custom pages
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/login",
+    // Use unified login route; keep /auth/login as a shim re-export
+    signIn: "/login",
+    error: "/login?error=credentials",
     newUser: "/auth/welcome", // optional onboarding page
   },
 

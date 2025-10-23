@@ -43,8 +43,8 @@ if [ -f "next.config.mjs" ]; then
 fi
 
 # Build
-echo "Building with Next.js using explicit config file..."
-NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS="--max-old-space-size=4096" npx next build -c next.config.mjs
+echo "Building with Next.js..."
+NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS="--max-old-space-size=4096" npx next build
 
 # Restore
 echo "Restoring original files..."
