@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -13,6 +14,7 @@ export function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState('');
+  const formRef = useRef<HTMLFormElement|null>(null);
   const emailRef = useRef<HTMLInputElement|null>(null);
   const passwordRef = useRef<HTMLInputElement|null>(null);
   const nameRef = useRef<HTMLInputElement|null>(null);
@@ -36,15 +38,19 @@ export function SignUpForm() {
     setGeneralError('');
     try {
       const normEmail = email.trim().toLowerCase();
+
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: normEmail, password, name: name.trim() || undefined }),
       });
+
       const data = await res.json();
+
       if (!res.ok || !data.ok) {
         if (data.fieldErrors) setFieldErrors(data.fieldErrors);
         else setGeneralError(data.error || 'Registration failed');
+
         const order = ['email','password','name'];
         for (const f of order) {
           if (data.fieldErrors?.[f]) {
@@ -56,18 +62,40 @@ export function SignUpForm() {
         }
         return;
       }
-      // After successful registration, sign in with credentials and redirect to dashboard
-      await signIn('credentials', {
-        redirect: true,
-        email: normEmail,
-        password,
-        callbackUrl: '/dashboard',
-      });
-    } catch (e: any) {
-      console.error('Registration error:', e);
-      setGeneralError('Unexpected error');
+
+      // Auto-login after registration
+      if (data.user?.email) {
+        const loginResult = await signIn('credentials', {
+          redirect: false,
+          email: data.user.email,
+          password,
+          callbackUrl: '/',
+        });
+
+        if (loginResult?.ok) {
+          if (formRef?.current) formRef.current.reset();
+          setEmail('');
+          setPassword('');
+          setName('');
+          window.location.href = loginResult.url || '/';
+          return;
+        }
+      }
+
+      if (formRef?.current) formRef.current.reset();
+      setEmail('');
+      setPassword('');
+      setName('');
+      alert('Registration successful!');
+    } catch (err) {
+      setGeneralError('Unexpected error occurred.');
+    } finally {
       setLoading(false);
     }
+  }
+
+  function handleOAuth(provider: 'google' | 'azure-ad') {
+    signIn(provider, { callbackUrl: '/' });
   }
 
   return (
@@ -76,9 +104,28 @@ export function SignUpForm() {
         <div className="rounded-xl border border-border bg-bg-alt/40 shadow-sm p-8">
           <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">
-              Use email & password or <Link href="/login" className="underline hover:text-fg">Microsoft sign in</Link> instead.
+              Use email & password or sign in with:
             </p>
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+
+            {/* OAuth Buttons */}
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => handleOAuth('google')}
+                className="flex-1 rounded-md border border-border py-2 text-sm font-medium bg-white hover:bg-gray-100"
+              >
+                Continue with Google
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOAuth('azure-ad')}
+                className="flex-1 rounded-md border border-border py-2 text-sm font-medium bg-white hover:bg-gray-100"
+              >
+                Continue with Microsoft
+              </button>
+            </div>
+
+            <form ref={formRef} onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium mb-1" htmlFor="name">Name (optional)</label>
                 <input ref={nameRef} id="name" type="text" value={name} onChange={e=>setName(e.target.value)} className="w-full rounded-md border bg-bg p-2 text-sm" placeholder="Ada Lovelace" />
@@ -110,7 +157,7 @@ export function SignUpForm() {
             <p className="mt-4 text-xs text-fg-muted/70">By creating an account you agree to our <Link href="/docs/terms" className="underline hover:text-fg">Terms</Link>.</p>
         </div>
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-xs text-fg-muted">
-          Already have an account? <Link href="/login" className="underline hover:text-fg">Sign in</Link>.
+          Already have an account? <Link href="/auth/login" className="underline hover:text-fg">Sign in</Link>.
         </div>
       </div>
     </div>
