@@ -22,9 +22,9 @@ const variants: Record<Variant, string> = {
   subtle: 'bg-accent/10 text-accent outline outline-1 -outline-offset-1 outline-accent/30 hover:bg-accent/15',
 };
 
-export const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'md', className = '', children, ...props }) => {
+export const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'md', className = '', children, type = 'button', ...props }) => {
   return (
-    <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props}>
+    <button type={type} className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props}>
       {children}
     </button>
   );

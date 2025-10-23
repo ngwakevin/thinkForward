@@ -46,8 +46,9 @@ export function ContactForm() {
       if (!res.ok) throw new Error('Request failed');
       const json = await res.json();
       if (json.success === 'true' || json.message) {
-        setFormState({ status: 'success', message: 'Message sent successfully. We will respond within 1 business day.' });
-        form.reset();
+  setFormState({ status: 'success', message: 'Message sent successfully. We will respond within 1 business day.' });
+  // Guard reset to avoid errors if event target is not a form
+  form?.reset?.();
         setMessageValue('');
         setErrors({});
       } else throw new Error('Unknown response');

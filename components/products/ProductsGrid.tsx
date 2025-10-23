@@ -83,7 +83,7 @@ function Card({ p, onOpenSyllabus, onWaitlist }: { p: ProductDefinition; onOpenS
         </div>
         {p.enrollmentStatus === 'coming-soon' && (
           <form
-            onSubmit={(e) => { e.preventDefault(); const email = (e.currentTarget.elements.namedItem('waitlist-email') as HTMLInputElement).value; onWaitlist(p, email); e.currentTarget.reset(); }}
+            onSubmit={(e) => { e.preventDefault(); const email = (e.currentTarget.elements.namedItem('waitlist-email') as HTMLInputElement).value; onWaitlist(p, email); e.currentTarget?.reset?.(); }}
             className="mt-3 flex items-center gap-2"
           >
             <input name="waitlist-email" type="email" required placeholder="Email for updates" className="flex-1 rounded-md border border-border/60 bg-bg-alt/60 px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-accent" />

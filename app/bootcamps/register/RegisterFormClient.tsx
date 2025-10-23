@@ -109,8 +109,9 @@ export function RegisterFormClient({ track }: Props) {
         throw new Error('Registration information is missing from the response.');
       }
       
-      setSuccess(registration);
-      event.currentTarget.reset();
+  setSuccess(registration);
+  // Guard reset to avoid errors if not a form element
+  event.currentTarget?.reset?.();
       setPassword('');
       setConfirmPassword('');
       
