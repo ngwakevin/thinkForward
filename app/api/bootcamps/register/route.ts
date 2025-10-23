@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../../lib/auth';
 import { createBootcampRegistration } from '../../../../lib/db/bootcamps';
 import { sendEmail } from '../../../../lib/email';
+import { container } from '../../../../lib/azure/cosmos-config';
 
 const REQUIRED_FIELDS = ['name', 'email'];
 const NOTIFICATION_EMAIL = 'bootcamp@cloudegree.com';
@@ -12,6 +15,7 @@ function validateEmail(email: string) {
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
+    const session = await getServerSession(authOptions);
     
     console.log('Received bootcamp registration request with payload:', {
       name: payload.name,
@@ -65,19 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Add userId from session if available
-    const session = req.cookies.get('next-auth.session-token')?.value;
-    let userId;
-    
-    if (session) {
-      try {
-        // This is a simple attempt to extract userId, not full JWT validation
-        const sessionData = JSON.parse(Buffer.from(session.split('.')[1], 'base64').toString());
-        userId = sessionData?.user?.id || sessionData?.id || undefined;
-        console.log("Found userId in session:", userId);
-      } catch (e) {
-        console.log("Could not extract userId from session:", e);
-      }
-    }
+    let userId: string | undefined = (session as any)?.user?.id;
     
     // Extract bootcamp ID if provided
     let bootcampId = 'default-bootcamp';
@@ -125,6 +117,47 @@ export async function POST(req: NextRequest) {
       type: registration.type,
       paymentReference: registration.paymentReference
     });
+
+    // Best-effort: also upsert this registration into the users container under user.bootcamps[] if authenticated
+    try {
+      const authedEmail = session?.user?.email?.toLowerCase().trim();
+      if (authedEmail) {
+        const userQuery: any = {
+          query: 'SELECT * FROM c WHERE LOWER(c.email) = @email',
+          parameters: [{ name: '@email', value: authedEmail }]
+        };
+
+        const { resources } = await container.items.query(userQuery).fetchAll();
+  let userDoc: any = resources?.[0];
+  const userName = (session?.user as any)?.name || payload.name;
+
+        const newBootcamp = {
+          id: registration.bootcampId || payload.bootcampId || registration.id,
+          name: registration.bootcampName || payload.bootcampName || payload.track || 'Bootcamp',
+          startDate: payload.startDate || registration.createdAt,
+          endDate: payload.endDate || '',
+          status: 'Active',
+        };
+
+        if (!userDoc) {
+          userDoc = {
+            id: crypto.randomUUID(),
+            email: authedEmail,
+            name: userName,
+            bootcamps: [newBootcamp],
+          };
+        } else {
+          userDoc.bootcamps = Array.isArray(userDoc.bootcamps) ? userDoc.bootcamps : [];
+          const exists = userDoc.bootcamps.some((b: any) => b.id === newBootcamp.id);
+          if (!exists) userDoc.bootcamps.push(newBootcamp);
+        }
+
+        await container.items.upsert(userDoc);
+        console.log('Upserted user bootcamp registration into users container');
+      }
+    } catch (upsertErr) {
+      console.warn('Non-blocking: failed to upsert user bootcamp array', upsertErr);
+    }
 
     // Send notification email to bootcamp admin
     try {
