@@ -57,18 +57,21 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-  // Cookies configuration (important for Azure production)
-  cookies: {
-    sessionToken: {
-      name: `__Secure-next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production", // required for Azure HTTPS
+  // Cookies configuration (ensure dev works without __Secure- prefix)
+  cookies: (() => {
+    const isProd = process.env.NODE_ENV === "production";
+    return {
+      sessionToken: {
+        name: isProd ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure: isProd, // must be true in production (HTTPS)
+        },
       },
-    },
-  },
+    } as NextAuthOptions["cookies"]; 
+  })(),
 
   // Redirects
   pages: {
