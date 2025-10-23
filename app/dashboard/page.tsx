@@ -1,94 +1,104 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-type Registration = {
+interface Bootcamp {
   id: string;
-  bootcampName?: string;
-  createdAt?: string;
-  registeredAt?: string;
-};
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [bootcamps, setBootcamps] = useState<Registration[]>([]);
+  const [bootcamps, setBootcamps] = useState<Bootcamp[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Redirect if unauthenticated
   useEffect(() => {
-    if (status === "loading") return;
-    if (!session?.user) {
-      router.push("/login");
-      return;
+    if (status === "unauthenticated") {
+      router.replace("/login");
     }
+  }, [status, router]);
 
+  useEffect(() => {
     const fetchBootcamps = async () => {
+      if (!session?.user?.email) return;
       try {
-        const res = await fetch(`/api/profile/bootcamps`, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(`/api/bootcamps?email=${session.user.email}`);
+        if (!res.ok) throw new Error("Failed to load bootcamps");
         const data = await res.json();
-        // Our API returns { registrations: [...] }
-        const regs: Registration[] = (data?.registrations || []).map((r: any) => ({
-          id: r.id,
-          bootcampName: r.bootcampName || r.track || r.bootcampId,
-          // Prefer explicit registeredAt if present, fallback to createdAt
-          registeredAt: r.registeredAt || r.createdAt,
-          createdAt: r.createdAt,
-        }));
-        setBootcamps(regs);
+        setBootcamps(data);
       } catch (err) {
-        console.error("Error fetching bootcamps:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchBootcamps();
-  }, [session, status, router]);
+  }, [session?.user?.email]);
 
-  if (loading) {
+  if (status === "loading" || loading)
+    return <p className="text-center mt-10">Loading your dashboard...</p>;
+
+  if (!session)
     return (
-      <div className="flex h-[60vh] items-center justify-center text-gray-600">
-        Loading your dashboard...
+      <div className="flex flex-col items-center mt-10">
+        <p>Please sign in to view your dashboard.</p>
+        <Link href="/login" className="text-blue-600 underline mt-2">
+          Go to Sign In
+        </Link>
       </div>
     );
-  }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-2xl p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Welcome, {session?.user?.name || "User"}
-        </h1>
+    <div className="max-w-5xl mx-auto mt-12 p-6 bg-white shadow-lg rounded-xl">
+  <h1 className="text-3xl font-bold mb-6">Welcome, {session?.user?.name || session?.user?.email}</h1>
+  <p className="text-gray-500 mb-8">Email: {session?.user?.email}</p>
 
-        <p className="text-gray-600 mb-6">
-          Below are the bootcamps you’ve registered for.
-        </p>
+      <h2 className="text-2xl font-semibold mb-4">Your Registered Bootcamps</h2>
 
-        {bootcamps.length > 0 ? (
-          <ul className="space-y-3">
-            {bootcamps.map((b) => (
-              <li
-                key={b.id}
-                className="border p-4 rounded-lg shadow-sm flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition"
-              >
+      {bootcamps.length === 0 ? (
+        <p className="text-gray-500">You haven’t registered for any bootcamps yet.</p>
+      ) : (
+        <ul className="divide-y divide-gray-200">
+          {bootcamps.map((bootcamp) => (
+            <li key={bootcamp.id} className="py-4">
+              <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{b.bootcampName || "Bootcamp"}</h3>
+                  <p className="text-lg font-medium">{bootcamp.name}</p>
                   <p className="text-sm text-gray-500">
-                    Registered on {new Date(b.registeredAt || b.createdAt || Date.now()).toLocaleDateString()}
+                    {bootcamp.startDate} → {bootcamp.endDate}
                   </p>
                 </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-gray-500 italic">
-            You have not registered for any bootcamps yet.
-          </div>
-        )}
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    bootcamp.status === "Active"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {bootcamp.status}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-8">
+        <Link
+          href="/bootcamps"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Browse Bootcamps
+        </Link>
       </div>
-    </main>
+    </div>
   );
 }
