@@ -36,16 +36,19 @@ export async function POST(req: NextRequest) {
       createdUser = true;
     }
 
-    // Optional: create bootcamp registration if bootcampId is provided
+    // Optional: create bootcamp registration if provided
     let registration = null as any;
-    if (payload.bootcampId) {
+    // Support both bootcampId or a plain 'bootcamp' name from older examples
+    const bootcampId = payload.bootcampId || (payload.bootcamp ? String(payload.bootcamp).toLowerCase().replace(/\s+/g, '-') : undefined);
+    const bootcampName = payload.bootcampName || payload.bootcamp || undefined;
+    if (bootcampId) {
       registration = await createBootcampRegistration({
         userId: user.id,
         email: user.email ?? email,
         name: user.name || name || 'Bootcamp User',
-        bootcampId: String(payload.bootcampId).toLowerCase().replace(/\s+/g, '-'),
-        bootcampName: payload.bootcampName || undefined,
-        track: payload.track || undefined,
+        bootcampId,
+        bootcampName,
+        track: payload.track || bootcampName || undefined,
         type: 'bootcamp-registration',
         paymentStatus: 'Pending',
         completionStatus: 'Not Started',
