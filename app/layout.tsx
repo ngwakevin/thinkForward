@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
-import { SessionProviderWrapper } from '@/providers/SessionProviderWrapper';
+import { Providers } from './providers';
 import { siteConfig } from '../config/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -44,11 +44,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           />
         )}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] rounded-md bg-accent px-4 py-2 text-white text-sm shadow-lg">Skip to content</a>
-        <SessionProviderWrapper>
+        <Providers>
           <Header />
           <main id="main" role="main" className="min-h-[60vh] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">{children}</main>
           <Footer />
-        </SessionProviderWrapper>
+        </Providers>
       </body>
     </html>
   );
