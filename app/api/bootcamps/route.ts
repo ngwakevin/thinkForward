@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(resources || []);
       } catch (dbErr) {
         console.error('Error fetching user bootcamps:', dbErr);
-        return NextResponse.json({ bootcamps: [] });
+        // Maintain response shape compatibility: return an empty array on error
+        return NextResponse.json([]);
       }
     }
 
