@@ -8,6 +8,9 @@ const PUBLIC_PATHS = [
   "/register",
   "/bootcamps",
   "/api",
+  "/auth/login",
+  "/auth/signup",
+  "/auth/welcome",
   "/auth/auto-login",
 ];
 

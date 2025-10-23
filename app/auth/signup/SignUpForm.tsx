@@ -56,10 +56,13 @@ export function SignUpForm() {
         }
         return;
       }
-      
-      // Store credentials for the auto-login page and redirect there
-      localStorage.setItem('lastSignupCreds', JSON.stringify({ email: normEmail, password }));
-      window.location.href = '/auth/auto-login';
+      // After successful registration, sign in with credentials and redirect to dashboard
+      await signIn('credentials', {
+        redirect: true,
+        email: normEmail,
+        password,
+        callbackUrl: '/dashboard',
+      });
     } catch (e: any) {
       console.error('Registration error:', e);
       setGeneralError('Unexpected error');
