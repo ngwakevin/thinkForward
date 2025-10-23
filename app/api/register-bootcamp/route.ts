@@ -193,7 +193,8 @@ export async function POST(req: NextRequest) {
           ok: true,
           alreadyRegistered: true,
           user: { id: user.id, email: user.email, name: user.name },
-          registration: existingRegistration
+          registration: existingRegistration,
+          next: "/profile?tab=bootcamps",
         },
         { status: 200 }
       );
@@ -227,7 +228,7 @@ export async function POST(req: NextRequest) {
     // Note: We're not actually signing in here as that happens client-side
     // We're just providing the necessary information for the client to handle auto-login
 
-    const callbackUrl = '/profile?tab=bootcamps';
+  const callbackUrl = '/profile?tab=bootcamps';
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const autoLoginUrl = new URL('/signin/auto-login', baseUrl);
     if (user.email) {
@@ -250,17 +251,17 @@ export async function POST(req: NextRequest) {
         },
         registration: {
           ...registration,
-          userId: user.id, // Ensure userId is included
-          type: 'bootcamp-registration', // Ensure type is included
-          bootcampId: bootcampSlug!, // Ensure bootcampId is included
+          userId: user.id,
+          type: 'bootcamp-registration',
+          bootcampId: bootcampSlug!,
         },
-        // Add session info for auto-login
         auth: {
           email: user.email,
           timestamp: new Date().toISOString(),
           callbackUrl,
           autoLoginUrl: autoLoginUrl.toString(),
-        }
+        },
+        next: callbackUrl,
       },
       { status: 201 }
     );

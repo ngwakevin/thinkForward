@@ -94,7 +94,7 @@ export function RegisterFormClient({ track }: Props) {
         throw new Error('No registration information received from the server.');
       }
 
-      // If registering with account creation, the API returns a different response structure
+      // If registering with account creation, normalize a registration-like object for UI
       const registration = json.registration || (json.createdUser ? { 
         id: json.user?.id, 
         paymentReference: json.registration?.paymentReference, 
@@ -114,89 +114,33 @@ export function RegisterFormClient({ track }: Props) {
       setPassword('');
       setConfirmPassword('');
       
-      // If account was created, automatically log the user in
+      // If account was created, attempt secure auto-login via NextAuth credentials
       if (createAccount && json.createdUser && json.user?.email) {
         try {
-          console.log('Attempting auto-login for new user:', json.user.email);
-          console.log('Registration data:', json.registration);
-          
-          // Clear any existing login-related data first
-          localStorage.removeItem('userLoggedIn');
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('autoLoginPassword');
-          localStorage.removeItem('autoLoginAttempt');
-          localStorage.removeItem('registrationId');
-          
-          // Then set fresh data with all necessary information for auto-login
-          localStorage.setItem('userLoggedIn', 'true');
-          localStorage.setItem('userEmail', json.user.email);
-          localStorage.setItem('autoLoginPassword', password); // Store temporarily for auto-login
-          localStorage.setItem('autoLoginAttempt', Date.now().toString());
-          localStorage.setItem('registrationId', json.registration?.id || '');
-          localStorage.setItem('userId', json.user?.id || '');
-          // Store additional information to ensure proper auto-login
-          localStorage.setItem('bootcampId', json.registration?.bootcampId || '');
-          localStorage.setItem('registrationType', json.registration?.type || 'bootcamp-registration');
-          
-          // Store auth info if provided
-          if (json.auth) {
-            localStorage.setItem('authTimestamp', json.auth.timestamp || '');
-            localStorage.setItem('authCallbackUrl', json.auth.callbackUrl || '/profile?tab=bootcamps');
-          }
-          
-          // Attempt direct sign-in first with minimal delay
-          console.log('Attempting direct sign-in first...');
-          await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for stability
-          
+          const callbackUrl = json.next || '/profile?tab=bootcamps';
+          // Attempt credentials sign-in (NextAuth handles securely)
           const result = await signIn('credentials', {
             email: json.user.email,
-            password: password,
+            password,
             redirect: false,
-            callbackUrl: '/profile?tab=bootcamps',
+            callbackUrl,
           });
-          
-          console.log('Direct sign-in result:', result);
-          
+
           if (result?.ok) {
-            console.log('Direct sign-in successful, redirecting to profile');
-            // Use a small delay to ensure session is established
-            setTimeout(() => {
-              window.location.href = '/profile?tab=bootcamps';
-            }, 1000);
-            return;
-          }
-          
-          console.log('Direct sign-in failed, using auto-login page instead');
-          
-          // Use the auto-login route as fallback
-          const autoLoginUrlFromServer = json.auth?.autoLoginUrl as string | undefined;
-          if (autoLoginUrlFromServer) {
-            console.log(`Redirecting to server-provided auto-login URL: ${autoLoginUrlFromServer}`);
-            window.location.href = autoLoginUrlFromServer;
+            window.location.href = result.url || callbackUrl;
             return;
           }
 
-          const callbackUrl = '/profile?tab=bootcamps';
-
-          // Add additional params for better diagnosis
-          const params = new URLSearchParams();
-          params.append('email', json.user.email);
-          params.append('password', password);
-          params.append('callbackUrl', callbackUrl);
-          params.append('registrationId', json.registration?.id || '');
-          params.append('timestamp', Date.now().toString());
-          params.append('userId', json.user?.id || '');
-
-          // Redirect to our custom auto-login page
-          const fallbackUrl = `/auth/auto-login?${params.toString()}`;
-          console.log(`Redirecting to auto-login page with params: ${params.toString()}`);
-          window.location.href = fallbackUrl;
-          
-          // This prevents the success message from showing, since we're redirecting
+          // Optional fallback: token-based auto-login (no password in URL)
+          const autoUrl = json.auth?.token
+            ? `/auth/auto-login?token=${encodeURIComponent(json.auth.token)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+            : '/login';
+          window.location.href = autoUrl;
           return;
         } catch (signInError) {
-          console.error('Auto login redirect failed after registration:', signInError);
-          // Continue to show the success message
+          console.warn('Auto-login failed, redirecting to login', signInError);
+          window.location.href = '/login';
+          return;
         }
       }
     } catch (err: any) {
