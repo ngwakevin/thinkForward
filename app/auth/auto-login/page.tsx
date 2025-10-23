@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
-export default function AutoLoginPage() {
+function AutoLoginInner() {
   const search = useSearchParams();
   const router = useRouter();
   const { status } = useSession();
@@ -13,7 +13,7 @@ export default function AutoLoginPage() {
   useEffect(() => {
     // If already authenticated, go to callback or profile
     if (status === "authenticated") {
-      const cb = (search?.get("callbackUrl")) || "/profile?tab=bootcamps";
+      const cb = search?.get("callbackUrl") || "/profile?tab=bootcamps";
       router.replace(cb);
       return;
     }
@@ -22,9 +22,10 @@ export default function AutoLoginPage() {
     const run = async () => {
       try {
         // Prefer query params, fallback to localStorage (set by registration flow)
-  const email = (search?.get("email")) || localStorage.getItem("userEmail") || "";
-  const password = (search?.get("password")) || localStorage.getItem("autoLoginPassword") || "";
-  const callbackUrl = (search?.get("callbackUrl")) || localStorage.getItem("authCallbackUrl") || "/profile?tab=bootcamps";
+        const email = search?.get("email") || localStorage.getItem("userEmail") || "";
+        const password = search?.get("password") || localStorage.getItem("autoLoginPassword") || "";
+        const callbackUrl =
+          search?.get("callbackUrl") || localStorage.getItem("authCallbackUrl") || "/profile?tab=bootcamps";
 
         if (!email || !password) {
           setMessage("Missing credentials for auto-login. Redirecting to login…");
@@ -57,5 +58,13 @@ export default function AutoLoginPage() {
     <div className="min-h-[50vh] flex items-center justify-center">
       <div className="text-sm text-fg-muted">{message}</div>
     </div>
+  );
+}
+
+export default function AutoLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center"><div className="text-sm text-fg-muted">Preparing auto-login…</div></div>}>
+      <AutoLoginInner />
+    </Suspense>
   );
 }
