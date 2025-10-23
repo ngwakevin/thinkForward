@@ -86,11 +86,11 @@ export const authOptions: NextAuthOptions = {
     } as NextAuthOptions["cookies"]; 
   })(),
 
-  // Redirects
+  // Redirects / custom pages
   pages: {
-    signIn: "/login", // custom login page
-    error: "/login",  // redirect on auth errors
-    newUser: "/profile", // onboard new users
+    signIn: "/auth/login",
+    error: "/auth/login",
+    newUser: "/auth/welcome", // optional onboarding page
   },
 
   // Callbacks for controlling session content
