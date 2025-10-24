@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 
-export default function BootcampRegistrationsSection({ userId }: { userId?: any }) {
+export default function BootcampRegistrationsSection({ userId: _userId }: { userId?: any } = {}) {
   const { data: session, status } = useSession();
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,51 +14,64 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: any 
   const [countdown, setCountdown] = useState(5);
   const [forceReload, setForceReload] = useState(false);
 
-  // 🟩 Dynamic progress animation values
+  // 🟩 Smooth animated progress
   const progress = ((5 - countdown) / 5) * 100;
 
-  // 🟦 Added deep debug logging
+  // 🟦 Debug: show session state
   useEffect(() => {
     console.log('[Bootcamp] Session status:', status, session);
   }, [status, session]);
 
-  // Fetch bootcamp registrations from API
+  // 🟩 Safe API fetch
   const fetchRegistrations = useCallback(async (attempt = 1) => {
     try {
       console.log(`[Bootcamp] Fetching registrations (attempt ${attempt})...`);
-      const res = await fetch('/api/profile/bootcamps');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const res = await fetch('/api/profile/bootcamps', {
+        headers: { 'Cache-Control': 'no-store' },
+      });
 
-      console.log('[Bootcamp] API data:', data);
-      const list = Array.isArray(data) ? data : Array.isArray(data?.registrations) ? data.registrations : [];
+      if (!res.ok) {
+        console.warn('[Bootcamp] Fetch failed:', res.status);
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log('[Bootcamp] API data received:', data);
+
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.registrations)
+        ? data.registrations
+        : [];
+
       setRegistrations(list);
       setLoading(false);
     } catch (error) {
       console.error('[Bootcamp] Fetch error:', error);
       if (attempt < 3) {
-        setTimeout(() => fetchRegistrations(attempt + 1), 2000);
+        setTimeout(() => fetchRegistrations(attempt + 1), 2500);
       } else {
         setLoading(false);
       }
     }
   }, []);
 
-  // 🟩 Initial and forced reload logic
+  // 🟩 Fetch only when authenticated
   useEffect(() => {
     if (status === 'authenticated') {
       fetchRegistrations();
     }
   }, [status, forceReload, fetchRegistrations]);
 
-  // 🟩 Dynamic countdown with progress animation
+  // 🟩 Countdown that triggers forced reload after 5 seconds
   useEffect(() => {
     if (loading && status === 'authenticated') {
       const interval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
-            setForceReload((p) => !p); // Force re-fetch
+            console.log('[Bootcamp] Force reloading registrations');
+            setForceReload((p) => !p);
             setCountdown(5);
             return 5;
           }
@@ -69,18 +82,15 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: any 
     }
   }, [loading, status]);
 
+  // 🟦 UI States
   if (loading) {
     return (
       <Card className="p-4 text-center bg-gray-50">
         <CardContent>
           <h2 className="text-lg font-semibold mb-2">Loading your registrations...</h2>
-
-          {/* 🟩 Countdown Display */}
           <p className="text-sm text-gray-500 mb-3">
             Retrying in <span className="font-bold">{countdown}</span> seconds...
           </p>
-
-          {/* 🟩 Smooth Animated Progress Bar */}
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
             <motion.div
               className="bg-blue-500 h-2"
@@ -114,8 +124,11 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: any 
       {registrations.map((bootcamp) => (
         <Card key={bootcamp.id || bootcamp._id} className="bg-white shadow-sm">
           <CardContent className="p-4">
-            <h3 className="text-lg font-semibold">{bootcamp.name}</h3>
+            <h3 className="text-lg font-semibold">{bootcamp.bootcampName || bootcamp.name}</h3>
             <p className="text-gray-600">{bootcamp.description || 'No description available.'}</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Status: {bootcamp.completionStatus || 'Not Started'} | Payment: {bootcamp.paymentStatus || 'Pending'}
+            </p>
           </CardContent>
         </Card>
       ))}
