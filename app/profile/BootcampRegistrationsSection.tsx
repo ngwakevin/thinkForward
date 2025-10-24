@@ -85,7 +85,7 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
   // 🟦 UI States
   if (loading) {
     return (
-      <Card className="p-4 text-center bg-gray-50">
+      <Card className="p-4 text-center">
         <CardContent>
           <h2 className="text-lg font-semibold mb-2">Loading your registrations...</h2>
           <p className="text-sm text-gray-500 mb-3">
@@ -93,7 +93,7 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
           </p>
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
             <motion.div
-              className="bg-blue-500 h-2"
+              className="bg-accent h-2"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.9, ease: 'easeInOut' }}
             />
@@ -105,10 +105,10 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
 
   if (!registrations.length) {
     return (
-      <Card className="p-4 text-center bg-gray-50">
+      <Card className="p-4 text-center">
         <CardContent>
           <h2 className="text-lg font-semibold mb-2">No Bootcamp Registrations Found</h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-fg-muted mb-4">
             It looks like you haven&apos;t registered for a bootcamp yet.
           </p>
           <Button onClick={() => (window.location.href = '/bootcamps')}>
@@ -122,11 +122,11 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
   return (
     <div className="space-y-4">
       {registrations.map((bootcamp) => (
-        <Card key={bootcamp.id || bootcamp._id} className="bg-white shadow-sm">
+        <Card key={bootcamp.id || bootcamp._id} className="shadow-sm">
           <CardContent className="p-4">
             <h3 className="text-lg font-semibold">{bootcamp.bootcampName || bootcamp.name}</h3>
-            <p className="text-gray-600">{bootcamp.description || 'No description available.'}</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-fg-muted">{bootcamp.description || 'No description available.'}</p>
+            <p className="text-sm text-fg-muted mt-2">
               Status: {bootcamp.completionStatus || 'Not Started'} | Payment: {bootcamp.paymentStatus || 'Pending'}
             </p>
           </CardContent>
