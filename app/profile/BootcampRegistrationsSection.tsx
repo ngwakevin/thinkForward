@@ -49,10 +49,12 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         ? data.registrations
         : [];
 
+      console.log('[Bootcamp] Raw API response:', { data, rawList });
+
       // Normalize to Bootcamp shape for compatibility with existing API fields
       const list: Bootcamp[] = rawList.map((r) => ({
         id: r.id || r.bootcampId || r._id || '',
-        name: r.name || r.bootcampName || 'Bootcamp',
+        name: r.name || r.bootcampName || r.bootcampId || 'Bootcamp',
         description: r.description || r.bootcampDescription || '',
         startDate: r.startDate || r.bootcampStartDate || r.createdAt || new Date().toISOString(),
         endDate: r.endDate || r.bootcampEndDate || r.bootcampFinishDate || new Date().toISOString(),
@@ -61,6 +63,7 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         joinedAt: r.joinedAt || r.createdAt || r.registrationDate || undefined,
       }));
 
+      console.log('[Bootcamp] Normalized registrations:', list);
       setRegistrations(list);
       setLoading(false);
     } catch (err) {
