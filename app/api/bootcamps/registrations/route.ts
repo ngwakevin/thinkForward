@@ -4,8 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { CosmosClient } from "@azure/cosmos";
 
 const cosmos = new CosmosClient({
-  endpoint: process.env.AZURE_COSMOS_ENDPOINT!,
-  key: process.env.AZURE_COSMOS_KEY!,
+  endpoint: process.env.COSMOS_DB_ENDPOINT!,
+  key: process.env.COSMOS_DB_KEY!,
 });
 
 const db = cosmos.database("cloudMasterClass"); // change if different
