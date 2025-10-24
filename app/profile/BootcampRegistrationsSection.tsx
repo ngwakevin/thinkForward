@@ -217,15 +217,15 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <Card className="group overflow-hidden border border-border bg-bg-alt hover:shadow-2xl transition-all duration-300 rounded-2xl">
+              <Card className="group overflow-hidden border border-border bg-bg-alt hover:shadow-2xl transition-all duration-300 rounded-2xl min-h-[600px] flex flex-col">
                 {/* Gradient header with status */}
-                <div className="relative h-32 bg-gradient-to-br from-accent via-accent-alt to-accent/80 p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-2xl bg-bg/90 backdrop-blur-sm flex items-center justify-center text-2xl font-bold text-accent shadow-lg">
+                <div className="relative h-40 bg-gradient-to-br from-accent via-accent-alt to-accent/80 p-6 flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="h-16 w-16 rounded-2xl bg-bg/90 backdrop-blur-sm flex items-center justify-center text-2xl font-bold text-accent shadow-lg flex-shrink-0">
                       {bootcamp.name.slice(0, 1)}
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-bg mb-1">{bootcamp.name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-2xl font-bold text-bg mb-1 truncate">{bootcamp.name}</h3>
                       {isUpcoming && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-bg/90">
                           <Clock size={12} /> Starts in {daysUntilStart} days
@@ -238,10 +238,12 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
                       )}
                     </div>
                   </div>
-                  <StatusBadge state={bootcamp.paymentStatus} />
+                  <div className="flex-shrink-0 ml-4">
+                    <StatusBadge state={bootcamp.paymentStatus} />
+                  </div>
                 </div>
 
-                <CardContent className="p-6 space-y-6">
+                <CardContent className="p-6 space-y-6 flex-1 flex flex-col">
                   {/* Description */}
                   {bootcamp.description && (
                     <p className="text-fg-muted text-sm leading-relaxed">
@@ -309,16 +311,16 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
                   )}
 
                   {/* Action buttons */}
-                  <div className="flex flex-wrap gap-3 pt-2">
+                  <div className="flex flex-wrap gap-3 pt-4 mt-auto">
                     <a
                       href={`/bootcamps/${bootcamp.id}`}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-bg bg-accent rounded-lg hover:bg-accent-alt transition-colors shadow-sm"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-bg bg-accent rounded-lg hover:bg-accent-alt transition-colors shadow-sm"
                     >
                       View Details <ArrowRight size={16} />
                     </a>
                     <a
                       href="/mentorship"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-accent border-2 border-accent rounded-lg hover:bg-accent hover:text-bg transition-colors"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-accent border-2 border-accent rounded-lg hover:bg-accent hover:text-bg transition-colors"
                     >
                       Get Help
                     </a>
