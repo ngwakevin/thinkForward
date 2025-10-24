@@ -1,263 +1,124 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
+import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 
-interface BootcampRegistration {
-  id: string;
-  paymentReference: string;
-  createdAt: string;
-  paymentStatus: 'Pending' | 'Confirmed' | 'Rejected';
-  bootcampId: string;
-  bootcampName: string;
-  bootcampStartDate: string;
-  userId: string;
-  name?: string;
-  email?: string;
-  type?: string;
-}
-
-export default function BootcampRegistrationsSection({ userId }: { userId?: string }) {
-  const [registrations, setRegistrations] = useState<BootcampRegistration[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [justRegistered, setJustRegistered] = useState<boolean>(false);
-
+export default function BootcampRegistrationsSection({ userId }: { userId?: any }) {
   const { data: session, status } = useSession();
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [countdown, setCountdown] = useState(5);
+  const [forceReload, setForceReload] = useState(false);
 
-  // --- 1️⃣ Detect if user just registered ---
+  // 🟩 Dynamic progress animation values
+  const progress = ((5 - countdown) / 5) * 100;
+
+  // 🟦 Added deep debug logging
   useEffect(() => {
-    const autoLoginAttempt = localStorage.getItem('autoLoginAttempt');
-    const regId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
-    if (autoLoginAttempt && regId) {
-      setJustRegistered(true);
-      localStorage.setItem('justRegistered', 'true');
+    console.log('[Bootcamp] Session status:', status, session);
+  }, [status, session]);
+
+  // Fetch bootcamp registrations from API
+  const fetchRegistrations = useCallback(async (attempt = 1) => {
+    try {
+      console.log(`[Bootcamp] Fetching registrations (attempt ${attempt})...`);
+      const res = await fetch('/api/profile/bootcamps');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      console.log('[Bootcamp] API data:', data);
+      const list = Array.isArray(data) ? data : Array.isArray(data?.registrations) ? data.registrations : [];
+      setRegistrations(list);
+      setLoading(false);
+    } catch (error) {
+      console.error('[Bootcamp] Fetch error:', error);
+      if (attempt < 3) {
+        setTimeout(() => fetchRegistrations(attempt + 1), 2000);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
-  // --- 2️⃣ Fetch registrations function with exponential backoff ---
-  const fetchRegistrations = useCallback(async (attempt = 1, maxAttempts = 5) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const effectiveUserId = userId || (session?.user as any)?.id || localStorage.getItem('userId');
-      const email = localStorage.getItem('userEmail');
-      const registrationId = localStorage.getItem('lastRegistrationId') || localStorage.getItem('registrationId');
-
-      // --- 2a️⃣ Attempt lookup API first for just-registered users ---
-      let foundRegistrations: BootcampRegistration[] = [];
-      if (registrationId || email || effectiveUserId) {
-        try {
-          const params = new URLSearchParams();
-          if (registrationId) params.append('id', registrationId);
-          if (email) params.append('email', email);
-          if (effectiveUserId) params.append('userId', String(effectiveUserId));
-
-          const lookupUrl = `/api/bootcamps/lookup?${params.toString()}`;
-          const lookupResp = await fetch(lookupUrl);
-          if (lookupResp.ok) {
-            const lookupData = await lookupResp.json();
-            if (lookupData.registrations?.length) {
-              foundRegistrations = lookupData.registrations;
-            }
-          }
-        } catch (err) {
-          console.warn('Lookup API failed, will try authenticated API', err);
-        }
-      }
-
-      // --- 2b️⃣ If no lookup results, try authenticated API ---
-      if (!foundRegistrations.length && status === 'authenticated') {
-        const params = new URLSearchParams();
-        if (effectiveUserId) params.append('userId', String(effectiveUserId));
-        if (email) params.append('email', email);
-        if (registrationId) params.append('registrationId', registrationId);
-
-        const url = `/api/profile/bootcamps?${params.toString()}`;
-        const resp = await fetch(url);
-        if (!resp.ok) {
-          if (attempt < maxAttempts && (resp.status === 401 || resp.status === 403)) {
-            setTimeout(() => fetchRegistrations(attempt + 1, maxAttempts), 3000);
-            return;
-          }
-          throw new Error(`Failed to fetch registrations: ${resp.statusText}`);
-        }
-        const data = await resp.json();
-        if (data?.registrations?.length) {
-          foundRegistrations = data.registrations;
-        }
-      }
-
-      setRegistrations(foundRegistrations);
-
-      // --- 2c️⃣ Clear temporary registration flags after successful fetch ---
-      if (foundRegistrations.length && justRegistered) {
-        localStorage.removeItem('autoLoginAttempt');
-        localStorage.removeItem('lastRegistrationId');
-        setJustRegistered(false);
-      }
-
-      if (!foundRegistrations.length && attempt < maxAttempts) {
-        const delay = Math.min(attempt * attempt * 1000, 10000);
-        setTimeout(() => fetchRegistrations(attempt + 1, maxAttempts), delay);
-      }
-    } catch (err: any) {
-      console.error('Error fetching bootcamp registrations:', err);
-      setError(err.message || 'Failed to load bootcamp registrations');
-      if (attempt < 5) {
-        const delay = Math.min(attempt * attempt * 1000, 10000);
-        setTimeout(() => fetchRegistrations(attempt + 1, 5), delay);
-      }
-    } finally {
-      if (attempt >= 5) setLoading(false);
-    }
-  }, [status, session, userId, justRegistered]);
-
-  // --- 3️⃣ Trigger fetch when session is ready or retryCount changes ---
+  // 🟩 Initial and forced reload logic
   useEffect(() => {
     if (status === 'authenticated') {
       fetchRegistrations();
     }
-  }, [status, fetchRegistrations, retryCount]);
+  }, [status, forceReload, fetchRegistrations]);
 
-  const handleRefresh = () => setRetryCount(prev => prev + 1);
+  // 🟩 Dynamic countdown with progress animation
+  useEffect(() => {
+    if (loading && status === 'authenticated') {
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setForceReload((p) => !p); // Force re-fetch
+            setCountdown(5);
+            return 5;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [loading, status]);
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
-      <div className="py-10 text-center">
-        <div className="inline-block animate-spin h-8 w-8 border-4 border-gray-200 rounded-full border-t-blue-600"></div>
-        <p className="mt-2 text-sm text-gray-600">Loading your registrations...</p>
-      </div>
-    );
-  }
+      <Card className="p-4 text-center bg-gray-50">
+        <CardContent>
+          <h2 className="text-lg font-semibold mb-2">Loading your registrations...</h2>
 
-  if (status === 'unauthenticated') {
-    return (
-      <div className="py-10 text-center">
-        <div className="text-5xl">🔐</div>
-        <h3 className="text-lg font-semibold">Authentication Required</h3>
-        <p className="text-gray-600">Sign in to view your bootcamp registrations.</p>
-      </div>
-    );
-  }
+          {/* 🟩 Countdown Display */}
+          <p className="text-sm text-gray-500 mb-3">
+            Retrying in <span className="font-bold">{countdown}</span> seconds...
+          </p>
 
-  if (error) {
-    return (
-      <div className="py-6 space-y-4">
-        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-          <p className="font-semibold">Error loading bootcamp registrations</p>
-          <p>{error}</p>
-        </div>
-        <div className="text-center">
-          <button
-            onClick={handleRefresh}
-            className="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
+          {/* 🟩 Smooth Animated Progress Bar */}
+          <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+            <motion.div
+              className="bg-blue-500 h-2"
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.9, ease: 'easeInOut' }}
+            />
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!registrations.length) {
     return (
-      <div className="py-10 text-center space-y-4">
-        <div className="text-5xl">🎓</div>
-        <h3 className="text-lg font-semibold">No Bootcamp Registrations Found</h3>
-        {justRegistered ? (
-          <p className="text-gray-600 max-w-md mx-auto">
-            Thank you for registering! Your registration is being processed. Refresh in a few seconds.
+      <Card className="p-4 text-center bg-gray-50">
+        <CardContent>
+          <h2 className="text-lg font-semibold mb-2">No Bootcamp Registrations Found</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            It looks like you haven&apos;t registered for a bootcamp yet.
           </p>
-        ) : (
-          <p className="text-gray-600 max-w-md mx-auto">
-            You haven&apos;t registered for any bootcamps yet.
-          </p>
-        )}
-        <div className="flex flex-wrap gap-3 justify-center">
-          <a href="/bootcamps" className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/80">
-            Browse Bootcamps
-          </a>
-          <button onClick={handleRefresh} className="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
-            Refresh
-          </button>
-        </div>
-      </div>
+          <Button onClick={() => (window.location.href = '/bootcamps')}>
+            View Available Bootcamps
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Your Bootcamp Registrations</h3>
-        <a href="/bootcamps" className="text-sm font-medium text-accent hover:underline">
-          View All Bootcamps
-        </a>
-      </div>
-      <div className="space-y-4">
-        {registrations.map((reg) => (
-          <div key={reg.id} className="rounded-lg border border-border bg-bg-alt/50 p-4 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold">{reg.bootcampName}</h4>
-                  <PaymentStatusBadge status={reg.paymentStatus} />
-                </div>
-                <div className="text-xs text-fg-muted">
-                  <span className="font-medium">Registered:</span>{' '}
-                  {new Date(reg.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </div>
-                <div className="text-xs font-mono text-fg-muted">
-                  <span className="font-medium">Payment Reference:</span> {reg.paymentReference}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <a href={`/bootcamps/${reg.bootcampId}`} className="px-4 py-1 text-xs font-medium text-accent border border-accent/40 rounded-full hover:bg-accent/10 transition-colors">
-                  View Details
-                </a>
-                {reg.paymentStatus !== 'Confirmed' && (
-                  <a href={`/bootcamps/payment/${reg.id}`} className="px-4 py-1 text-xs font-medium text-white bg-accent rounded-full hover:bg-accent/90 transition-colors">
-                    Complete Payment
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4">
+      {registrations.map((bootcamp) => (
+        <Card key={bootcamp.id || bootcamp._id} className="bg-white shadow-sm">
+          <CardContent className="p-4">
+            <h3 className="text-lg font-semibold">{bootcamp.name}</h3>
+            <p className="text-gray-600">{bootcamp.description || 'No description available.'}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
-  );
-}
-
-function PaymentStatusBadge({ status }: { status: 'Pending' | 'Confirmed' | 'Rejected' }) {
-  let bgColor = 'bg-gray-500/20';
-  let textColor = 'text-gray-300';
-  let icon = 'i-lucide-circle-alert';
-  let label = 'Pending';
-
-  if (status === 'Confirmed') {
-    bgColor = 'bg-emerald-500/20';
-    textColor = 'text-emerald-300';
-    icon = 'i-lucide-check-circle';
-    label = 'Paid';
-  } else if (status === 'Pending') {
-    bgColor = 'bg-amber-500/20';
-    textColor = 'text-amber-300';
-    icon = 'i-lucide-clock';
-    label = 'Pending';
-  } else if (status === 'Rejected') {
-    bgColor = 'bg-red-500/20';
-    textColor = 'text-red-300';
-    icon = 'i-lucide-x-circle';
-    label = 'Rejected';
-  }
-
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${bgColor} ${textColor}`}>
-      <span className={icon} />
-      {label}
-    </span>
   );
 }
