@@ -23,10 +23,11 @@ interface Bootcamp {
   endDate: string;
   paymentStatus: 'Pending' | 'Confirmed' | 'Rejected';
   prerequisites?: string[];
+  joinedAt?: string;
 }
 
 export default function BootcampRegistrationsSection({ userId }: { userId?: string }) {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const [registrations, setRegistrations] = useState<Bootcamp[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(5);
@@ -57,6 +58,7 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
         endDate: r.endDate || r.bootcampEndDate || r.bootcampFinishDate || new Date().toISOString(),
         paymentStatus: r.paymentStatus || 'Pending',
         prerequisites: r.prerequisites || [],
+        joinedAt: r.joinedAt || r.createdAt || r.registrationDate || undefined,
       }));
 
       setRegistrations(list);
@@ -188,81 +190,126 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
     );
   }
 
+  // Layout matching the provided mock
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-      {registrations.map((bootcamp) => {
-        const startInMs = new Date(bootcamp.startDate).getTime() - Date.now();
-        const startInDays = Math.ceil(startInMs / 86400000);
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Student info + registrations (2 cols on large) */}
+        <Card className="lg:col-span-2 bg-bg-alt border border-border rounded-2xl shadow-lg">
+          <CardContent className="p-6 lg:p-8 space-y-6">
+            {/* Header: Student name + subheading */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl lg:text-3xl font-bold text-fg">
+                {session?.user?.name || 'Name of student'}
+              </h2>
+            </div>
+            <div className="flex items-center gap-3 text-fg font-semibold text-lg">
+              {/* Simple avatar with initial */}
+              <div className="h-10 w-10 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold">
+                {(session?.user?.name || 'S').slice(0, 1)}
+              </div>
+              <span>Bootcamp register</span>
+            </div>
 
-        return (
-          <Card
-            key={bootcamp.id}
-            className="group overflow-hidden rounded-xl border border-border bg-bg-alt shadow-lg hover:shadow-xl transition-shadow will-change-transform"
+            {/* Registration detail cards */}
+            <div className="space-y-4">
+              {registrations.map((bootcamp) => {
+                const start = new Date(bootcamp.startDate).getTime();
+                const end = new Date(bootcamp.endDate).getTime();
+                const now = Date.now();
+                const total = Math.max(end - start, 1);
+                const elapsed = Math.max(Math.min(now - start, total), 0);
+                const percent = Math.round((elapsed / total) * 100);
+                const joined = bootcamp.joinedAt
+                  ? new Date(bootcamp.joinedAt).toLocaleDateString()
+                  : new Date(bootcamp.startDate).toLocaleDateString();
+
+                return (
+                  <div
+                    key={bootcamp.id}
+                    className="rounded-xl border border-border bg-bg shadow-sm p-5 lg:p-6"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Left column */}
+                      <div className="space-y-3">
+                        <div className="text-xs uppercase tracking-wide text-fg-muted">Email</div>
+                        <div className="text-fg font-medium">
+                          {session?.user?.email || 'student@example.com'}
+                        </div>
+
+                        <div className="text-xs uppercase tracking-wide text-fg-muted mt-4">Joined</div>
+                        <div className="text-fg">{joined}</div>
+                      </div>
+
+                      {/* Right column */}
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-semibold text-fg">{bootcamp.name}</h3>
+
+                        <div className="text-xs uppercase tracking-wide text-fg-muted">Start Date</div>
+                        <div className="text-fg">
+                          {new Date(bootcamp.startDate).toLocaleDateString()}
+                        </div>
+
+                        {/* Progress bar + status */}
+                        <div className="mt-3">
+                          <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                            <div
+                              className="h-2 bg-accent transition-all"
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-fg-muted text-sm">{percent}%</span>
+                            <StatusBadge state={bootcamp.paymentStatus} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right: Promo panels */}
+        <div className="space-y-6">
+          <a
+            href="/mentorship"
+            className="block rounded-2xl overflow-hidden shadow-lg border border-border bg-gradient-to-br from-accent to-accent-alt/90 p-6 text-bg"
           >
-            {/* Decorative header */}
-            <div className="h-24 bg-gradient-to-r from-accent to-accent-alt/90" />
-
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-fg font-semibold text-xl leading-tight">{bootcamp.name}</h3>
-                <StatusBadge state={bootcamp.paymentStatus} />
-              </div>
-
-              <p className="text-fg-muted text-sm">
-                {bootcamp.description || 'No description available.'}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold">Book Mentorship</h3>
+              <p className="text-sm/6 opacity-95 max-w-[26ch]">
+                1:1 sessions with an expert mentor — get personalized guidance
               </p>
+            </div>
+          </a>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                <span className="inline-flex items-center gap-1 text-fg-muted">
-                  <Calendar size={14} />
-                  {new Date(bootcamp.startDate).toLocaleDateString()} – {new Date(bootcamp.endDate).toLocaleDateString()}
-                </span>
-                {startInDays > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-border text-fg-muted">
-                    <Clock size={14} /> Starts in {startInDays} {startInDays === 1 ? 'day' : 'days'}
-                  </span>
-                )}
-              </div>
+          <a
+            href="/bootcamps"
+            className="block rounded-2xl overflow-hidden shadow-lg border border-border bg-gradient-to-br from-accent-alt to-accent/90 p-6 text-bg"
+          >
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold">Subscribe to
+                <br /> Self-paced Course</h3>
+              <p className="text-sm/6 opacity-95 max-w-[30ch]">
+                Learn at your own pace with lifetime access to recorded lessons
+              </p>
+            </div>
+          </a>
+        </div>
+      </div>
 
-              {/* Prerequisites chips */}
-              {!!(bootcamp.prerequisites && bootcamp.prerequisites.length > 0) && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {bootcamp.prerequisites!.map((pre, i) => (
-                    <span
-                      key={`${bootcamp.id}-pre-${i}`}
-                      className="inline-flex items-center px-2 py-0.5 text-xs rounded-md border border-border text-fg-muted"
-                    >
-                      {pre}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* CTAs */}
-              <div className="flex flex-wrap gap-2 pt-2">
-                <a
-                  href={`/bootcamps/${bootcamp.id}`}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-alt transition-colors"
-                >
-                  View Details <ArrowRight size={16} />
-                </a>
-                <a
-                  href="/bootcamps"
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-accent border border-accent rounded-md hover:bg-accent-soft transition-colors"
-                >
-                  Explore More
-                </a>
-                <a
-                  href="/mentorship"
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-bg bg-accent-alt rounded-md hover:bg-accent transition-colors"
-                >
-                  Mentorship
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+      {/* Bottom primary CTA */}
+      <div className="flex justify-center">
+        <a
+          href="/mentorship"
+          className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold rounded-xl bg-accent text-bg hover:bg-accent-alt transition-colors shadow-md"
+        >
+          Book Mentorship
+        </a>
+      </div>
     </div>
   );
 }
