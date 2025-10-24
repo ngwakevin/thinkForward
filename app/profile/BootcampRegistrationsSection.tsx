@@ -200,13 +200,13 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
             {/* Header: Student name + subheading */}
             <div className="flex items-center justify-between">
               <h2 className="text-2xl lg:text-3xl font-bold text-fg">
-                {session?.user?.name || 'Name of student'}
+                {registrations[0]?.name || 'Bootcamp'}
               </h2>
             </div>
             <div className="flex items-center gap-3 text-fg font-semibold text-lg">
               {/* Simple avatar with initial */}
               <div className="h-10 w-10 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold">
-                {(session?.user?.name || 'S').slice(0, 1)}
+                {(registrations[0]?.name || 'B').slice(0, 1)}
               </div>
               <span>Bootcamp register</span>
             </div>
