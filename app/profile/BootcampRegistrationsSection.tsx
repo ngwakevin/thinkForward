@@ -6,73 +6,71 @@ import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 
-export default function BootcampRegistrationsSection({ userId: _userId }: { userId?: any } = {}) {
+interface Bootcamp {
+  id: string;
+  name: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  paymentStatus: 'Pending' | 'Confirmed' | 'Rejected';
+  prerequisites?: string[];
+}
+
+export default function BootcampRegistrationsSection({ userId }: { userId?: string }) {
   const { data: session, status } = useSession();
-  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [registrations, setRegistrations] = useState<Bootcamp[]>([]);
   const [loading, setLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
   const [countdown, setCountdown] = useState(5);
   const [forceReload, setForceReload] = useState(false);
 
-  // 🟩 Smooth animated progress
+  // Progress bar value
   const progress = ((5 - countdown) / 5) * 100;
 
-  // 🟦 Debug: show session state
-  useEffect(() => {
-    console.log('[Bootcamp] Session status:', status, session);
-  }, [status, session]);
-
-  // 🟩 Safe API fetch
-  const fetchRegistrations = useCallback(async (attempt = 1) => {
+  // Fetch bootcamp registrations
+  const fetchRegistrations = useCallback(async () => {
     try {
-      console.log(`[Bootcamp] Fetching registrations (attempt ${attempt})...`);
-      const res = await fetch('/api/profile/bootcamps', {
-        headers: { 'Cache-Control': 'no-store' },
-      });
-
-      if (!res.ok) {
-        console.warn('[Bootcamp] Fetch failed:', res.status);
-        throw new Error(`HTTP ${res.status}`);
-      }
-
+      const res = await fetch('/api/profile/bootcamps');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      console.log('[Bootcamp] API data received:', data);
 
-      const list = Array.isArray(data)
+      const rawList: any[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.registrations)
         ? data.registrations
         : [];
 
+      // Normalize to Bootcamp shape for compatibility with existing API fields
+      const list: Bootcamp[] = rawList.map((r) => ({
+        id: r.id || r.bootcampId || r._id || '',
+        name: r.name || r.bootcampName || 'Bootcamp',
+        description: r.description || r.bootcampDescription || '',
+        startDate: r.startDate || r.bootcampStartDate || r.createdAt || new Date().toISOString(),
+        endDate: r.endDate || r.bootcampEndDate || r.bootcampFinishDate || new Date().toISOString(),
+        paymentStatus: r.paymentStatus || 'Pending',
+        prerequisites: r.prerequisites || [],
+      }));
+
       setRegistrations(list);
       setLoading(false);
-    } catch (error) {
-      console.error('[Bootcamp] Fetch error:', error);
-      if (attempt < 3) {
-        setTimeout(() => fetchRegistrations(attempt + 1), 2500);
-      } else {
-        setLoading(false);
-      }
+    } catch (err) {
+      console.error('[Bootcamp] Fetch error:', err);
+      setTimeout(() => setForceReload((p) => !p), 3000);
     }
   }, []);
 
-  // 🟩 Fetch only when authenticated
+  // Initial & forced reload
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetchRegistrations();
-    }
+    if (status === 'authenticated') fetchRegistrations();
   }, [status, forceReload, fetchRegistrations]);
 
-  // 🟩 Countdown that triggers forced reload after 5 seconds
+  // Countdown for forced fetch
   useEffect(() => {
     if (loading && status === 'authenticated') {
       const interval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
-            console.log('[Bootcamp] Force reloading registrations');
             setForceReload((p) => !p);
-            setCountdown(5);
             return 5;
           }
           return prev - 1;
@@ -82,16 +80,15 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
     }
   }, [loading, status]);
 
-  // 🟦 UI States
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
-      <Card className="p-4 text-center">
+      <Card className="p-4 text-center bg-bg-alt">
         <CardContent>
-          <h2 className="text-lg font-semibold mb-2">Loading your registrations...</h2>
-          <p className="text-sm text-gray-500 mb-3">
+          <h2 className="text-lg font-semibold text-fg mb-2">Loading your registrations...</h2>
+          <p className="text-fg-muted text-sm mb-3">
             Retrying in <span className="font-bold">{countdown}</span> seconds...
           </p>
-          <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-border h-2 rounded-full overflow-hidden">
             <motion.div
               className="bg-accent h-2"
               animate={{ width: `${progress}%` }}
@@ -105,15 +102,15 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
 
   if (!registrations.length) {
     return (
-      <Card className="p-4 text-center">
+      <Card className="p-4 text-center bg-bg-alt">
         <CardContent>
-          <h2 className="text-lg font-semibold mb-2">No Bootcamp Registrations Found</h2>
-          <p className="text-sm text-fg-muted mb-4">
+          <h2 className="text-lg font-semibold text-fg mb-2">No Bootcamp Registrations Found</h2>
+          <p className="text-fg-muted text-sm mb-4">
             It looks like you haven&apos;t registered for a bootcamp yet.
           </p>
-          <Button onClick={() => (window.location.href = '/bootcamps')}>
-            View Available Bootcamps
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={() => (window.location.href = '/bootcamps')}>View Available Bootcamps</Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -121,17 +118,76 @@ export default function BootcampRegistrationsSection({ userId: _userId }: { user
 
   return (
     <div className="space-y-4">
-      {registrations.map((bootcamp) => (
-        <Card key={bootcamp.id || bootcamp._id} className="shadow-sm">
-          <CardContent className="p-4">
-            <h3 className="text-lg font-semibold">{bootcamp.bootcampName || bootcamp.name}</h3>
-            <p className="text-fg-muted">{bootcamp.description || 'No description available.'}</p>
-            <p className="text-sm text-fg-muted mt-2">
-              Status: {bootcamp.completionStatus || 'Not Started'} | Payment: {bootcamp.paymentStatus || 'Pending'}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+      {registrations.map((bootcamp) => {
+        const startInMs = new Date(bootcamp.startDate).getTime() - Date.now();
+        const startInDays = Math.ceil(startInMs / 86400000);
+
+        return (
+          <Card key={bootcamp.id} className="bg-bg-alt border border-border rounded-lg shadow-md">
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-fg font-semibold text-lg">{bootcamp.name}</h3>
+                <span
+                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                    bootcamp.paymentStatus === 'Confirmed'
+                      ? 'bg-accent text-bg'
+                      : bootcamp.paymentStatus === 'Pending'
+                      ? 'bg-warning text-bg'
+                      : 'bg-danger text-bg'
+                  }`}
+                >
+                  {bootcamp.paymentStatus}
+                </span>
+              </div>
+
+              <p className="text-fg-muted text-sm">{bootcamp.description || 'No description available.'}</p>
+
+              <div className="flex flex-wrap gap-2 items-center">
+                {!!(bootcamp.prerequisites && bootcamp.prerequisites.length > 0) && (
+                  <div className="group relative cursor-pointer">
+                    <span className="text-accent text-xs font-medium">Prerequisites ⚡</span>
+                    <div className="absolute bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs text-fg bg-bg-alt border border-border rounded shadow-lg z-10">
+                      {(bootcamp.prerequisites || []).join(', ')}
+                    </div>
+                  </div>
+                )}
+
+                {startInDays > 0 && (
+                  <span className="text-fg-muted text-xs">
+                    Starts in {startInDays} {startInDays === 1 ? 'day' : 'days'}
+                  </span>
+                )}
+
+                <a
+                  href={`/bootcamps/${bootcamp.id}`}
+                  className="px-3 py-1 text-xs font-medium text-bg bg-accent rounded hover:bg-accent-alt transition-colors"
+                >
+                  View Details
+                </a>
+
+                <a
+                  href="/bootcamps"
+                  className="px-3 py-1 text-xs font-medium text-accent border border-accent rounded hover:bg-accent-soft transition-colors"
+                >
+                  Register More / Self-Learning
+                </a>
+
+                <a
+                  href="/mentorship"
+                  className="px-3 py-1 text-xs font-medium text-bg bg-accent-alt rounded hover:bg-accent transition-colors"
+                >
+                  Book Mentorship
+                </a>
+              </div>
+
+              <p className="text-fg-muted text-xs font-mono mt-2">
+                Bootcamp Date: {new Date(bootcamp.startDate).toLocaleDateString()} –{' '}
+                {new Date(bootcamp.endDate).toLocaleDateString()}
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
