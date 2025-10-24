@@ -621,13 +621,7 @@ export default function AccountTabs({ initialData, user }: AccountTabsProps) {
         )}
 
         {/* Bootcamps Tab */}
-        {activeTab === 'bootcamps' && (
-          <BootcampRegistrationsSection 
-            userId={(session?.user as any)?.id || 
-                   initialData?.id || 
-                   (user?.email ? user.email : undefined)} 
-          />
-        )}
+        {activeTab === 'bootcamps' && <BootcampRegistrationsSection />}
 
         {/* Save Button (fixed at bottom) */}
         <div className="sticky bottom-6 flex items-center justify-between bg-bg-alt rounded-lg border border-border p-4 shadow-md">
