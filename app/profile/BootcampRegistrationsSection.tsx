@@ -5,6 +5,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import {
+  Calendar,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ArrowRight,
+  GraduationCap,
+} from 'lucide-react';
 
 interface Bootcamp {
   id: string;
@@ -17,13 +26,13 @@ interface Bootcamp {
 }
 
 export default function BootcampRegistrationsSection({ userId }: { userId?: string }) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [registrations, setRegistrations] = useState<Bootcamp[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(5);
   const [forceReload, setForceReload] = useState(false);
 
-  // Progress bar value
+  // Progress bar value for retry countdown
   const progress = ((5 - countdown) / 5) * 100;
 
   // Fetch bootcamp registrations
@@ -80,36 +89,99 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
     }
   }, [loading, status]);
 
+  const StatusBadge = ({ state }: { state: Bootcamp['paymentStatus'] }) => {
+    if (state === 'Confirmed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-accent text-bg shadow-sm">
+          <CheckCircle2 size={14} /> Confirmed
+        </span>
+      );
+    }
+    if (state === 'Pending') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-warning text-bg shadow-sm">
+          <Clock size={14} /> Pending
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-danger text-bg shadow-sm">
+        <XCircle size={14} /> Rejected
+      </span>
+    );
+  };
+
+  // Loading state: countdown + skeleton grid
   if (status === 'loading' || loading) {
     return (
-      <Card className="p-4 text-center bg-bg-alt">
-        <CardContent>
-          <h2 className="text-lg font-semibold text-fg mb-2">Loading your registrations...</h2>
-          <p className="text-fg-muted text-sm mb-3">
-            Retrying in <span className="font-bold">{countdown}</span> seconds...
-          </p>
-          <div className="w-full bg-border h-2 rounded-full overflow-hidden">
-            <motion.div
-              className="bg-accent h-2"
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.9, ease: 'easeInOut' }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card className="p-4 bg-bg-alt">
+          <CardContent>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-fg flex items-center gap-2">
+                <GraduationCap size={18} /> Loading your registrations...
+              </h2>
+              <span className="text-xs text-fg-muted">Retrying in {countdown}s</span>
+            </div>
+            <div className="w-full bg-border h-2 rounded-full overflow-hidden">
+              <motion.div
+                className="bg-accent h-2"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.9, ease: 'easeInOut' }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-border bg-bg-alt shadow-lg overflow-hidden animate-pulse"
+            >
+              <div className="h-24 bg-border/50" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 w-2/3 bg-border/60 rounded" />
+                <div className="h-4 w-full bg-border/50 rounded" />
+                <div className="h-4 w-5/6 bg-border/50 rounded" />
+                <div className="flex gap-2 pt-2">
+                  <div className="h-8 w-28 bg-border/60 rounded" />
+                  <div className="h-8 w-28 bg-border/50 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
+  // Empty state
   if (!registrations.length) {
     return (
-      <Card className="p-4 text-center bg-bg-alt">
+      <Card className="p-8 text-center bg-bg-alt border border-border rounded-xl shadow-lg">
         <CardContent>
-          <h2 className="text-lg font-semibold text-fg mb-2">No Bootcamp Registrations Found</h2>
-          <p className="text-fg-muted text-sm mb-4">
-            It looks like you haven&apos;t registered for a bootcamp yet.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button onClick={() => (window.location.href = '/bootcamps')}>View Available Bootcamps</Button>
+          <div className="flex flex-col items-center gap-3">
+            <AlertCircle className="text-fg-muted" size={28} />
+            <h2 className="text-xl font-semibold text-fg">No Bootcamp Registrations Yet</h2>
+            <p className="text-fg-muted text-sm max-w-prose">
+              It looks like you haven&apos;t registered for a bootcamp yet. Explore upcoming programs and
+              start your journey.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 mt-2">
+              <a
+                href="/bootcamps"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-alt transition-colors"
+              >
+                Browse Bootcamps <ArrowRight size={16} />
+              </a>
+              <a
+                href="/mentorship"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent border border-accent rounded-md hover:bg-accent-soft transition-colors"
+              >
+                Book Mentorship
+              </a>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -117,73 +189,76 @@ export default function BootcampRegistrationsSection({ userId }: { userId?: stri
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
       {registrations.map((bootcamp) => {
         const startInMs = new Date(bootcamp.startDate).getTime() - Date.now();
         const startInDays = Math.ceil(startInMs / 86400000);
 
         return (
-          <Card key={bootcamp.id} className="bg-bg-alt border border-border rounded-lg shadow-md">
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-fg font-semibold text-lg">{bootcamp.name}</h3>
-                <span
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                    bootcamp.paymentStatus === 'Confirmed'
-                      ? 'bg-accent text-bg'
-                      : bootcamp.paymentStatus === 'Pending'
-                      ? 'bg-warning text-bg'
-                      : 'bg-danger text-bg'
-                  }`}
-                >
-                  {bootcamp.paymentStatus}
-                </span>
+          <Card
+            key={bootcamp.id}
+            className="group overflow-hidden rounded-xl border border-border bg-bg-alt shadow-lg hover:shadow-xl transition-shadow will-change-transform"
+          >
+            {/* Decorative header */}
+            <div className="h-24 bg-gradient-to-r from-accent to-accent-alt/90" />
+
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-fg font-semibold text-xl leading-tight">{bootcamp.name}</h3>
+                <StatusBadge state={bootcamp.paymentStatus} />
               </div>
 
-              <p className="text-fg-muted text-sm">{bootcamp.description || 'No description available.'}</p>
+              <p className="text-fg-muted text-sm">
+                {bootcamp.description || 'No description available.'}
+              </p>
 
-              <div className="flex flex-wrap gap-2 items-center">
-                {!!(bootcamp.prerequisites && bootcamp.prerequisites.length > 0) && (
-                  <div className="group relative cursor-pointer">
-                    <span className="text-accent text-xs font-medium">Prerequisites ⚡</span>
-                    <div className="absolute bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs text-fg bg-bg-alt border border-border rounded shadow-lg z-10">
-                      {(bootcamp.prerequisites || []).join(', ')}
-                    </div>
-                  </div>
-                )}
-
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className="inline-flex items-center gap-1 text-fg-muted">
+                  <Calendar size={14} />
+                  {new Date(bootcamp.startDate).toLocaleDateString()} – {new Date(bootcamp.endDate).toLocaleDateString()}
+                </span>
                 {startInDays > 0 && (
-                  <span className="text-fg-muted text-xs">
-                    Starts in {startInDays} {startInDays === 1 ? 'day' : 'days'}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-border text-fg-muted">
+                    <Clock size={14} /> Starts in {startInDays} {startInDays === 1 ? 'day' : 'days'}
                   </span>
                 )}
-
-                <a
-                  href={`/bootcamps/${bootcamp.id}`}
-                  className="px-3 py-1 text-xs font-medium text-bg bg-accent rounded hover:bg-accent-alt transition-colors"
-                >
-                  View Details
-                </a>
-
-                <a
-                  href="/bootcamps"
-                  className="px-3 py-1 text-xs font-medium text-accent border border-accent rounded hover:bg-accent-soft transition-colors"
-                >
-                  Register More / Self-Learning
-                </a>
-
-                <a
-                  href="/mentorship"
-                  className="px-3 py-1 text-xs font-medium text-bg bg-accent-alt rounded hover:bg-accent transition-colors"
-                >
-                  Book Mentorship
-                </a>
               </div>
 
-              <p className="text-fg-muted text-xs font-mono mt-2">
-                Bootcamp Date: {new Date(bootcamp.startDate).toLocaleDateString()} –{' '}
-                {new Date(bootcamp.endDate).toLocaleDateString()}
-              </p>
+              {/* Prerequisites chips */}
+              {!!(bootcamp.prerequisites && bootcamp.prerequisites.length > 0) && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {bootcamp.prerequisites!.map((pre, i) => (
+                    <span
+                      key={`${bootcamp.id}-pre-${i}`}
+                      className="inline-flex items-center px-2 py-0.5 text-xs rounded-md border border-border text-fg-muted"
+                    >
+                      {pre}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* CTAs */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <a
+                  href={`/bootcamps/${bootcamp.id}`}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-alt transition-colors"
+                >
+                  View Details <ArrowRight size={16} />
+                </a>
+                <a
+                  href="/bootcamps"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-accent border border-accent rounded-md hover:bg-accent-soft transition-colors"
+                >
+                  Explore More
+                </a>
+                <a
+                  href="/mentorship"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-bg bg-accent-alt rounded-md hover:bg-accent transition-colors"
+                >
+                  Mentorship
+                </a>
+              </div>
             </CardContent>
           </Card>
         );
