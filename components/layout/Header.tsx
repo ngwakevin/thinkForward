@@ -174,10 +174,10 @@ export function Header() {
             </details>
           )}
           <Link
-            href={'/bootcamps' as any}
+            href={'/mentoring' as any}
             className="inline-flex items-center gap-2 rounded-md bg-teal-600 px-5 h-9 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 transition"
           >
-            Apply Now
+            Book Mentorship
           </Link>
           {/* Theme toggle (icon-only style to match preview) */}
           <button
