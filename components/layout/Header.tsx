@@ -175,9 +175,28 @@ export function Header() {
           )}
           <Link
             href={'/mentoring' as any}
-            className="inline-flex items-center gap-2 rounded-md bg-teal-600 px-5 h-9 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 transition"
+            className="relative group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-600 to-teal-500 px-6 h-10 text-sm font-semibold text-white shadow-lg shadow-teal-600/30 hover:shadow-xl hover:shadow-teal-600/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 transition-all duration-300 overflow-hidden whitespace-nowrap"
           >
-            Book Mentorship
+            <span className="relative z-10 flex items-center gap-2">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Book Mentorship
+              <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M5 12h14"/>
+                <path d="m12 5 7 7-7 7"/>
+              </svg>
+            </span>
+            {/* Animated border light effect */}
+            <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <span className="absolute inset-0 rounded-full border-2 border-white/30 animate-ping" style={{ animationDuration: '2s' }} />
+              <span className="absolute inset-0 rounded-full border-2 border-white/20" />
+            </span>
+            {/* Shimmer effect */}
+            <span className="absolute inset-0 -z-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
           </Link>
           {/* Theme toggle (icon-only style to match preview) */}
           <button

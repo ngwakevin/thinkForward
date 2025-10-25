@@ -12,57 +12,81 @@ export default function BootcampsPage() {
       title: 'AZ-305: Designing Microsoft Azure Infrastructure Solutions',
       provider: 'Microsoft Azure',
       level: 'Expert',
-      icon: 'i-lucide-cloud',
-      color: 'blue'
+      icon: 'Cloud',
+      description: 'Design identity, governance, and monitoring solutions. Design data storage and business continuity solutions for Azure infrastructure.',
+      duration: '120-160h',
+      tags: ['Azure', 'Architecture', 'Design'],
+      color: 'accent'
     },
     { 
       title: 'AZ-400: Designing and Implementing Microsoft DevOps Solutions',
       provider: 'Microsoft Azure',
       level: 'Expert',
-      icon: 'i-lucide-git-branch',
-      color: 'blue'
+      icon: 'GitBranch',
+      description: 'Design and implement strategies for collaboration, code, infrastructure, security, compliance, continuous integration and delivery.',
+      duration: '100-140h',
+      tags: ['DevOps', 'CI/CD', 'Azure'],
+      color: 'accent'
     },
     { 
       title: 'SC-100: Microsoft Certified: Cybersecurity Architect Expert',
       provider: 'Microsoft',
       level: 'Expert',
-      icon: 'i-lucide-shield',
-      color: 'purple'
+      icon: 'Shield',
+      description: 'Design security solutions for infrastructure, applications, data, and identity across hybrid and multi-cloud environments.',
+      duration: '80-120h',
+      tags: ['Security', 'Architecture', 'Compliance'],
+      color: 'danger'
     },
     { 
       title: 'AZ-500: Microsoft Certified: Azure Security Engineer Associate',
       provider: 'Microsoft Azure',
       level: 'Associate',
-      icon: 'i-lucide-lock',
-      color: 'blue'
+      icon: 'Lock',
+      description: 'Implement security controls and threat protection. Manage identity and access across Azure environments.',
+      duration: '60-90h',
+      tags: ['Security', 'Azure', 'Identity'],
+      color: 'accent'
     },
     { 
       title: 'Google Cloud Professional Cloud Architect',
       provider: 'Google Cloud',
       level: 'Professional',
-      icon: 'i-lucide-building-2',
-      color: 'orange'
+      icon: 'Building2',
+      description: 'Design, develop, and manage robust, secure, scalable, and dynamic solutions on Google Cloud Platform.',
+      duration: '100-140h',
+      tags: ['GCP', 'Architecture', 'Design'],
+      color: 'warning'
     },
     { 
       title: 'Google Cloud Associate Cloud Engineer',
       provider: 'Google Cloud',
       level: 'Associate',
-      icon: 'i-lucide-settings',
-      color: 'orange'
+      icon: 'Settings',
+      description: 'Deploy applications, monitor operations, and manage enterprise solutions on Google Cloud Platform.',
+      duration: '60-90h',
+      tags: ['GCP', 'Operations', 'Engineering'],
+      color: 'warning'
     },
     { 
       title: 'AWS Certified Solutions Architect - Associate',
       provider: 'Amazon Web Services',
       level: 'Associate',
-      icon: 'i-lucide-layout-grid',
-      color: 'amber'
+      icon: 'LayoutGrid',
+      description: 'Design and deploy scalable, highly available, and fault-tolerant systems on AWS.',
+      duration: '60-90h',
+      tags: ['AWS', 'Architecture', 'Cloud'],
+      color: 'warning'
     },
     { 
       title: 'AWS Certified Solutions Architect - Professional',
       provider: 'Amazon Web Services',
       level: 'Professional',
-      icon: 'i-lucide-network',
-      color: 'amber'
+      icon: 'Network',
+      description: 'Design and deploy dynamically scalable, highly available, fault-tolerant, and reliable applications on AWS.',
+      duration: '120-160h',
+      tags: ['AWS', 'Architecture', 'Advanced'],
+      color: 'warning'
     }
   ];
 
@@ -71,7 +95,7 @@ export default function BootcampsPage() {
       <BootcampsClient />
       
       {/* Certificate Tracks Section */}
-      <section className="space-y-10">
+      <section id="certificate-tracks" className="space-y-10">
         <div className="space-y-4">
           <h2 className="font-display text-3xl font-bold tracking-tight">Bootcamp Certificate Tracks</h2>
           <p className="text-fg-muted text-base leading-relaxed max-w-3xl">
@@ -79,38 +103,53 @@ export default function BootcampsPage() {
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {certificateTracks.map((cert, idx) => (
-            <div key={idx} className="group relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/70 to-bg-alt/20 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start gap-3 mb-4">
-                <span className={`h-10 w-10 inline-flex items-center justify-center rounded-xl bg-${cert.color}-500/15 text-${cert.color}-600 ${cert.icon}`} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`inline-flex items-center rounded-full bg-${cert.color}-500/15 text-${cert.color}-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-${cert.color}-500/40`}>
-                      {cert.level}
-                    </span>
+          {certificateTracks.map((cert, idx) => {
+            const levelColors: Record<string, string> = {
+              'Expert': 'bg-danger/15 text-danger',
+              'Professional': 'bg-warning/15 text-warning',
+              'Associate': 'bg-accent/15 text-accent'
+            };
+            return (
+              <div key={idx} className="relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/20 p-6 shadow-sm group min-h-[320px]">
+                <div className="flex flex-col w-full">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className={`h-10 w-10 rounded-lg bg-${cert.color}/15 text-${cert.color} grid place-items-center`}>
+                        <span className={`i-lucide-${cert.icon.toLowerCase()} h-5 w-5`} />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-base font-semibold tracking-tight leading-snug">{cert.title}</h3>
+                        <p className="mt-1 text-[10px] uppercase tracking-wide text-fg-muted">{cert.provider}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`inline-block rounded-md px-2 py-1 text-[10px] font-medium tracking-wide ${levelColors[cert.level]}`}>
+                        {cert.level}
+                      </span>
+                    </div>
                   </div>
-                  <h3 className="font-semibold tracking-tight text-base leading-snug">{cert.title}</h3>
-                  <p className="text-xs text-fg-muted mt-1">{cert.provider}</p>
+                  <p className="text-fg-muted leading-relaxed text-sm line-clamp-3">{cert.description}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {cert.tags.map(tag => (
+                      <span key={tag} className="rounded-md bg-bg-alt/60 border border-border/50 px-2 py-0.5 text-[10px] tracking-wide text-fg-muted">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-auto pt-4 flex items-center justify-between text-xs">
+                    <span className="text-fg-muted">≈ {cert.duration}</span>
+                    <a 
+                      href={`/bootcamps/register?track=${encodeURIComponent(cert.title)}`}
+                      className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent ring-1 ring-accent/40 hover:bg-accent/25 transition"
+                    >
+                      Register →
+                    </a>
+                  </div>
                 </div>
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-accent/0 group-hover:ring-2 group-hover:ring-accent/30 transition" />
               </div>
-              <div className="mt-auto pt-4 flex items-center gap-4">
-                <a 
-                  href={`/bootcamps/register?track=${encodeURIComponent(cert.title)}`}
-                  className="text-xs font-medium text-accent hover:text-accent-alt transition"
-                >
-                  Learn more →
-                </a>
-                <a
-                  href={`/bootcamps/register?track=${encodeURIComponent(cert.title)}`}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-accent/15 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-accent ring-1 ring-accent/30 hover:bg-accent/25 hover:ring-accent/50 transition"
-                >
-                  Register
-                  <span className="i-lucide-arrow-right text-[12px]" />
-                </a>
-              </div>
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-accent/0 group-hover:ring-2 group-hover:ring-accent/30 transition" />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
