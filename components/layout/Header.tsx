@@ -20,30 +20,27 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Smooth Liquid Glass Effect - more transparent with glass visibility */}
-      <div className="relative">
-        {/* Transparent base allowing background to show through */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/50 to-white/60 dark:from-bg/70 dark:via-bg/60 dark:to-bg/70" />
-        
-        {/* Massive blur for liquid glass effect */}
-        <div className="absolute inset-0 backdrop-blur-[100px] backdrop-saturate-[2.5]" />
-        
-        {/* Liquid color tint - visible through transparency */}
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-100/40 via-teal-50/30 to-green-100/40 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-green-950/30" />
-        
-        {/* Gentle flowing shimmer */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-200/40 to-transparent -translate-x-full animate-[shimmer_3s_ease-in-out_infinite]" />
-        
-        {/* Soft glass reflection */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent" />
-        
-        {/* Subtle edge highlights */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-300/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-green-400/50 dark:via-green-500/40 to-transparent" />
-        
+      {/* Transparent background - no full liquid glass */}
+      <div className="relative bg-transparent">
         {/* Content */}
         <div className="relative mx-auto max-w-7xl px-6">
           <div className="flex h-20 items-center justify-between gap-6">
+            
+            {/* Liquid Glass Bar - Centered portion only */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-16 rounded-full overflow-hidden pointer-events-none">
+              {/* Frosted glass effect */}
+              <div className="absolute inset-0 bg-white/60 dark:bg-bg/70" />
+              <div className="absolute inset-0 backdrop-blur-[60px] backdrop-saturate-[2]" />
+              {/* Liquid color tint */}
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-100/30 via-teal-50/20 to-green-100/30 dark:from-emerald-950/25 dark:via-teal-950/15 dark:to-green-950/25" />
+              {/* Flowing shimmer */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-200/30 to-transparent -translate-x-full animate-[shimmer_3s_ease-in-out_infinite]" />
+              {/* Glass reflection */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-transparent" />
+              {/* Subtle borders */}
+              <div className="absolute inset-0 border border-emerald-300/20 dark:border-emerald-500/20 rounded-full" />
+            </div>
+
             {/* Brand with refined glass badges */}
             <Link 
               href={'/' as any} 
