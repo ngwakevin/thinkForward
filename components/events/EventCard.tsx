@@ -32,8 +32,8 @@ export function EventCard({ evt }: { evt: EventRecord }) {
   };
   
   return (
-    <div className="relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/20 p-6 shadow-sm group min-h-[320px]">
-      <div className="flex flex-col w-full">
+    <div className="relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/20 p-6 shadow-sm group min-h-[420px]">
+      <div className="flex flex-col w-full h-full">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 rounded-lg bg-accent/15 text-accent grid place-items-center">
@@ -61,6 +61,22 @@ export function EventCard({ evt }: { evt: EventRecord }) {
           </div>
         </div>
         <p className="text-fg-muted leading-relaxed text-sm line-clamp-3">{evt.summary}</p>
+        
+        {/* Curriculum Section - show first 3 module titles or outcomes */}
+        {evt.modules && evt.modules.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg">Curriculum</h4>
+            <ul className="space-y-1.5">
+              {evt.modules.slice(0, 3).map((module, i) => (
+                <li key={i} className="flex items-start gap-2 text-[11px] text-fg-muted">
+                  <span className="mt-1 h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                  <span>{module.title}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
         <div className="mt-4 flex flex-wrap gap-2">
           {evt.tags.slice(0, 5).map(tag => (
             <span key={tag} className="rounded-md bg-bg-alt/60 border border-border/50 px-2 py-0.5 text-[10px] tracking-wide text-fg-muted">
@@ -74,7 +90,7 @@ export function EventCard({ evt }: { evt: EventRecord }) {
             href={`/events/${evt.slug}`}
             className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent ring-1 ring-accent/40 hover:bg-accent/25 transition"
           >
-            View Details →
+            Register Now
           </a>
         </div>
       </div>
