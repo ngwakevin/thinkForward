@@ -13,7 +13,7 @@ export default function BootcampsPage() {
       provider: 'Microsoft Azure',
       level: 'Expert',
       icon: 'Cloud',
-      description: 'Design identity, governance, and monitoring solutions. Design data storage and business continuity solutions for Azure infrastructure.',
+      description: 'Design identity, governance, and monitoring solutions. Design data storage solutions. Design business continuity solutions. Design infrastructure solutions.',
       duration: '120-160h',
       tags: ['Azure', 'Architecture', 'Design'],
       color: 'accent'
@@ -23,7 +23,7 @@ export default function BootcampsPage() {
       provider: 'Microsoft Azure',
       level: 'Expert',
       icon: 'GitBranch',
-      description: 'Design and implement strategies for collaboration, code, infrastructure, security, compliance, continuous integration and delivery.',
+      description: 'Design and implement processes and communications. Design and implement a source control strategy. Design and implement build and release pipelines. Develop a security and compliance plan. Implement an instrumentation strategy.',
       duration: '100-140h',
       tags: ['DevOps', 'CI/CD', 'Azure'],
       color: 'accent'
@@ -33,7 +33,7 @@ export default function BootcampsPage() {
       provider: 'Microsoft',
       level: 'Expert',
       icon: 'Shield',
-      description: 'Design security solutions for infrastructure, applications, data, and identity across hybrid and multi-cloud environments.',
+      description: 'Design solutions that align with security best practices and priorities. Design security operations, identity, and compliance capabilities. Design security solutions for infrastructure. Design security solutions for applications and data.',
       duration: '80-120h',
       tags: ['Security', 'Architecture', 'Compliance'],
       color: 'danger'
@@ -43,7 +43,7 @@ export default function BootcampsPage() {
       provider: 'Microsoft Azure',
       level: 'Associate',
       icon: 'Lock',
-      description: 'Implement security controls and threat protection. Manage identity and access across Azure environments.',
+      description: 'Secure identity and access. Secure networking. Secure compute, storage, and databases. Secure Azure using Microsoft Defender for Cloud and Microsoft Sentinel.',
       duration: '60-90h',
       tags: ['Security', 'Azure', 'Identity'],
       color: 'accent'
@@ -53,7 +53,7 @@ export default function BootcampsPage() {
       provider: 'Google Cloud',
       level: 'Professional',
       icon: 'Building2',
-      description: 'Design, develop, and manage robust, secure, scalable, and dynamic solutions on Google Cloud Platform.',
+      description: 'Design and plan a cloud solution architecture. Manage and provision the cloud solution infrastructure. Design for security and compliance. Analyze and optimize technical and business processes. Manage implementations of cloud architecture. Ensure solution and operations reliability.',
       duration: '100-140h',
       tags: ['GCP', 'Architecture', 'Design'],
       color: 'warning'
@@ -63,7 +63,7 @@ export default function BootcampsPage() {
       provider: 'Google Cloud',
       level: 'Associate',
       icon: 'Settings',
-      description: 'Deploy applications, monitor operations, and manage enterprise solutions on Google Cloud Platform.',
+      description: 'Set up a cloud solution environment. Plan and implement a cloud solution. Ensure successful operation of a cloud solution. Configure access and security.',
       duration: '60-90h',
       tags: ['GCP', 'Operations', 'Engineering'],
       color: 'warning'
@@ -73,7 +73,7 @@ export default function BootcampsPage() {
       provider: 'Amazon Web Services',
       level: 'Associate',
       icon: 'LayoutGrid',
-      description: 'Design and deploy scalable, highly available, and fault-tolerant systems on AWS.',
+      description: 'Design Secure Architectures. Design Resilient Architectures. Design High-Performing Architectures. Design Cost-Optimized Architectures.',
       duration: '60-90h',
       tags: ['AWS', 'Architecture', 'Cloud'],
       color: 'warning'
@@ -83,7 +83,7 @@ export default function BootcampsPage() {
       provider: 'Amazon Web Services',
       level: 'Professional',
       icon: 'Network',
-      description: 'Design and deploy dynamically scalable, highly available, fault-tolerant, and reliable applications on AWS.',
+      description: 'Design for organizational complexity. Design for new solutions. Continuously improve existing solutions. Accelerate workload migration and modernization.',
       duration: '120-160h',
       tags: ['AWS', 'Architecture', 'Advanced'],
       color: 'warning'
