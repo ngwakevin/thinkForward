@@ -5,7 +5,7 @@ import React from 'react';
 import AttachedLogo from '../brand/AttachedLogo';
 import { useSession, signOut } from 'next-auth/react';
 
-export function Header() {
+export function HeaderLiquidGlass() {
   const { status, data: session } = useSession();
   const aboutMenuRef = React.useRef<HTMLDetailsElement | null>(null);
   const closeAboutMenu = () => aboutMenuRef.current?.removeAttribute('open');

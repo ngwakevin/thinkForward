@@ -21,14 +21,14 @@ export function HeaderModern() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 backdrop-blur-xl bg-bg/90 supports-[backdrop-filter]:bg-bg/60">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="flex h-16 items-center justify-between gap-8">
-          {/* Modern Brand - Clean horizontal layout */}
+        <div className="flex h-24 items-center justify-between gap-6">
+          {/* Modern Brand - Vertical layout with badges under logo */}
           <Link 
             href={'/' as any} 
             aria-label="Cloudegree home" 
-            className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg inline-flex items-center gap-3 transition-all hover:scale-[1.02]"
+            className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg inline-flex items-center py-3 transition-all hover:scale-[1.02]"
           >
-            <span className="hidden md:flex items-center gap-3">
+            <span className="hidden md:flex flex-col items-start gap-2">
               <AttachedLogo className="text-xl font-bold tracking-tight" text="Cloudegree" />
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider bg-gradient-to-r from-amber-500/15 to-orange-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20">
@@ -46,13 +46,13 @@ export function HeaderModern() {
             </span>
           </Link>
 
-          {/* Center Navigation - Modern pills */}
+          {/* Center Navigation */}
           <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center" aria-label="Main navigation">
             {nav.map(item => (
               <Link
                 key={item.href}
                 href={item.href as any}
-                className="relative px-4 py-2 text-sm font-medium text-fg-muted hover:text-fg hover:bg-bg-alt rounded-lg transition-all inline-flex items-center gap-2 group"
+                className="relative px-4 py-2 text-sm font-medium text-fg-muted hover:text-fg hover:bg-bg-alt rounded-lg transition-all inline-flex items-center gap-2"
               >
                 {item.label}
                 {item.badge && (

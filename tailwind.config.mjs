@@ -29,6 +29,12 @@ export default {
         sm: '0 1px 2px 0 rgba(0,0,0,0.05)',
         md: '0 4px 12px -2px rgba(0,0,0,0.15)',
         glow: '0 0 0 3px var(--color-accent-soft)'
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' }
+        }
       }
     }
   },
