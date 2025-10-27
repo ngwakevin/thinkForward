@@ -152,7 +152,7 @@ export default function HeaderPreviewPage() {
               <ul className="space-y-2 text-sm text-fg-muted">
                 <li className="flex gap-2">
                   <span className="text-accent">✓</span>
-                  <span>Simplified to "Book Session"</span>
+                  <span>Simplified to &ldquo;Book Session&rdquo;</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-accent">✓</span>
