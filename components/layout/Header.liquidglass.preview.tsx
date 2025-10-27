@@ -66,14 +66,20 @@ export function HeaderLiquidGlass() {
           {/* Center: Liquid Glass Navigation */}
           <div className="hidden lg:flex flex-1 justify-center items-center">
             <nav className="relative inline-flex items-center gap-2 px-5 py-3 rounded-full overflow-hidden">
-              {/* Liquid glass background layers */}
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-700/50 via-gray-600/40 to-gray-700/50" />
-              <div className="absolute inset-0 backdrop-blur-[40px] backdrop-saturate-[1.5]" />
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent" />
-              {/* Shimmer animation */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_4s_ease-in-out_infinite]" />
-              {/* Border */}
-              <div className="absolute inset-0 border border-gray-500/30 rounded-full shadow-xl" />
+              {/* Enhanced liquid glass background layers */}
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-600/60 via-gray-500/50 to-gray-600/60" />
+              <div className="absolute inset-0 backdrop-blur-[50px] backdrop-saturate-[1.8]" />
+              {/* Multiple glass reflection layers */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-white/8 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10" />
+              {/* Subtle color tint */}
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5" />
+              {/* Enhanced shimmer animation */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_4s_ease-in-out_infinite]" />
+              {/* Inner glow */}
+              <div className="absolute inset-0 shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)]" />
+              {/* Border with shadow */}
+              <div className="absolute inset-0 border border-gray-400/40 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.3)]" />
               
               {/* Navigation Links */}
               {nav.map(item => (
