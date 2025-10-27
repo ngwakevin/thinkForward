@@ -16,7 +16,12 @@ export default function BootcampsPage() {
       description: 'Design identity, governance, and monitoring solutions. Design data storage solutions. Design business continuity solutions. Design infrastructure solutions.',
       duration: '120-160h',
       tags: ['Azure', 'Architecture', 'Design'],
-      color: 'accent'
+      color: 'accent',
+      curriculum: [
+        'Identity, governance, and monitoring solutions',
+        'Data storage and business continuity',
+        'Infrastructure and network architecture'
+      ]
     },
     { 
       title: 'AZ-400: Designing and Implementing Microsoft DevOps Solutions',
@@ -26,7 +31,12 @@ export default function BootcampsPage() {
       description: 'Design and implement processes and communications. Design and implement a source control strategy. Design and implement build and release pipelines. Develop a security and compliance plan. Implement an instrumentation strategy.',
       duration: '100-140h',
       tags: ['DevOps', 'CI/CD', 'Azure'],
-      color: 'accent'
+      color: 'accent',
+      curriculum: [
+        'Source control and processes',
+        'Build and release pipelines',
+        'Security, compliance, and instrumentation'
+      ]
     },
     { 
       title: 'SC-100: Microsoft Certified: Cybersecurity Architect Expert',
@@ -36,7 +46,12 @@ export default function BootcampsPage() {
       description: 'Design solutions that align with security best practices and priorities. Design security operations, identity, and compliance capabilities. Design security solutions for infrastructure. Design security solutions for applications and data.',
       duration: '80-120h',
       tags: ['Security', 'Architecture', 'Compliance'],
-      color: 'danger'
+      color: 'danger',
+      curriculum: [
+        'Security best practices and priorities',
+        'Identity and compliance capabilities',
+        'Infrastructure and application security'
+      ]
     },
     { 
       title: 'AZ-500: Microsoft Certified: Azure Security Engineer Associate',
@@ -46,7 +61,12 @@ export default function BootcampsPage() {
       description: 'Secure identity and access. Secure networking. Secure compute, storage, and databases. Secure Azure using Microsoft Defender for Cloud and Microsoft Sentinel.',
       duration: '60-90h',
       tags: ['Security', 'Azure', 'Identity'],
-      color: 'accent'
+      color: 'accent',
+      curriculum: [
+        'Identity, access, and networking security',
+        'Compute, storage, and database protection',
+        'Microsoft Defender and Sentinel'
+      ]
     },
     { 
       title: 'Google Cloud Professional Cloud Architect',
@@ -56,7 +76,12 @@ export default function BootcampsPage() {
       description: 'Design and plan a cloud solution architecture. Manage and provision the cloud solution infrastructure. Design for security and compliance. Analyze and optimize technical and business processes. Manage implementations of cloud architecture. Ensure solution and operations reliability.',
       duration: '100-140h',
       tags: ['GCP', 'Architecture', 'Design'],
-      color: 'warning'
+      color: 'warning',
+      curriculum: [
+        'Cloud solution architecture and planning',
+        'Infrastructure and security design',
+        'Implementation and reliability'
+      ]
     },
     { 
       title: 'Google Cloud Associate Cloud Engineer',
@@ -66,7 +91,12 @@ export default function BootcampsPage() {
       description: 'Set up a cloud solution environment. Plan and implement a cloud solution. Ensure successful operation of a cloud solution. Configure access and security.',
       duration: '60-90h',
       tags: ['GCP', 'Operations', 'Engineering'],
-      color: 'warning'
+      color: 'warning',
+      curriculum: [
+        'Cloud environment setup',
+        'Solution planning and implementation',
+        'Operations and security configuration'
+      ]
     },
     { 
       title: 'AWS Certified Solutions Architect - Associate',
@@ -76,7 +106,12 @@ export default function BootcampsPage() {
       description: 'Design Secure Architectures. Design Resilient Architectures. Design High-Performing Architectures. Design Cost-Optimized Architectures.',
       duration: '60-90h',
       tags: ['AWS', 'Architecture', 'Cloud'],
-      color: 'warning'
+      color: 'warning',
+      curriculum: [
+        'Secure and resilient architectures',
+        'High-performing solutions',
+        'Cost optimization strategies'
+      ]
     },
     { 
       title: 'AWS Certified Solutions Architect - Professional',
@@ -86,7 +121,12 @@ export default function BootcampsPage() {
       description: 'Design for organizational complexity. Design for new solutions. Continuously improve existing solutions. Accelerate workload migration and modernization.',
       duration: '120-160h',
       tags: ['AWS', 'Architecture', 'Advanced'],
-      color: 'warning'
+      color: 'warning',
+      curriculum: [
+        'Organizational complexity design',
+        'New solutions and improvements',
+        'Migration and modernization'
+      ]
     }
   ];
 
@@ -110,8 +150,8 @@ export default function BootcampsPage() {
               'Associate': 'bg-accent/15 text-accent'
             };
             return (
-              <div key={idx} className="relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/20 p-6 shadow-sm group min-h-[320px]">
-                <div className="flex flex-col w-full">
+              <div key={idx} className="relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/20 p-6 shadow-sm group min-h-[420px]">
+                <div className="flex flex-col w-full h-full">
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div className={`h-10 w-10 rounded-lg bg-${cert.color}/15 text-${cert.color} grid place-items-center`}>
@@ -129,6 +169,20 @@ export default function BootcampsPage() {
                     </div>
                   </div>
                   <p className="text-fg-muted leading-relaxed text-sm line-clamp-3">{cert.description}</p>
+                  
+                  {/* Curriculum Section */}
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg">Curriculum</h4>
+                    <ul className="space-y-1.5">
+                      {cert.curriculum.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-[11px] text-fg-muted">
+                          <span className="mt-1 h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
                   <div className="mt-4 flex flex-wrap gap-2">
                     {cert.tags.map(tag => (
                       <span key={tag} className="rounded-md bg-bg-alt/60 border border-border/50 px-2 py-0.5 text-[10px] tracking-wide text-fg-muted">
@@ -142,7 +196,7 @@ export default function BootcampsPage() {
                       href={`/bootcamps/register?track=${encodeURIComponent(cert.title)}`}
                       className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent ring-1 ring-accent/40 hover:bg-accent/25 transition"
                     >
-                      Register →
+                      Register Now
                     </a>
                   </div>
                 </div>
