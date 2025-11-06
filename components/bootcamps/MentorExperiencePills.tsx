@@ -139,116 +139,98 @@ export function MentorExperiencePills() {
   );
 
   const contentFoundational = (
-    <div className="space-y-6">
-      <p className="text-lg sm:text-xl leading-relaxed">
-        Build core cloud skills, then focus on the certification pathway that fits your destination
-        role in 3-6 months.
+    <div className="space-y-5">
+      <p className="text-base sm:text-lg leading-relaxed">
+        Build core cloud skills, then focus on the certification pathway that fits your destination role in 3-6 months.
       </p>
-      <div className="grid gap-4 sm:grid-cols-2 text-base sm:text-lg">
-        <div
-          className="flex items-start gap-4 rounded-3xl border border-emerald-500/50 px-5 py-4 shadow-[0_18px_35px_rgba(21,128,61,0.28)]"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(20,83,45,0.95) 0%, rgba(21,128,61,0.88) 45%, rgba(22,163,74,0.82) 100%)',
-          }}
-        >
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-yellow-300 ring-2 ring-emerald-300/40" aria-hidden="true">
-            <span className="i-lucide-sparkles text-xl" />
-          </span>
-          <p className="text-emerald-50/95 leading-relaxed">For beginners building complete cloud skills.</p>
+      
+      {/* Two-step process - compact side by side */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        {/* Step 1 */}
+        <div className="rounded-2xl bg-emerald-700/30 border border-emerald-500/40 px-4 py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-slate-900">1</div>
+            <p className="text-base font-semibold text-emerald-50">Cloud Foundation</p>
+          </div>
+          <Link
+            href="/bootcamps/register?track=Cloud%20Foundation"
+            className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-yellow-300 ring-1 ring-yellow-300/50 transition hover:bg-white/25"
+          >
+            Register
+            <span className="i-lucide-arrow-up-right text-sm" aria-hidden="true" />
+          </Link>
         </div>
-        <div
-          className="flex items-start gap-4 rounded-3xl border border-emerald-500/50 px-5 py-4 shadow-[0_18px_35px_rgba(21,128,61,0.28)]"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(20,83,45,0.95) 0%, rgba(21,128,61,0.88) 45%, rgba(22,163,74,0.82) 100%)',
-          }}
-        >
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-yellow-300 ring-2 ring-emerald-300/40" aria-hidden="true">
-            <span className="i-lucide-compass text-xl" />
-          </span>
-          <p className="text-emerald-50/95 leading-relaxed">
-            Guided by mentors through foundation and certification sprints.
-          </p>
+
+        {/* Step 2 */}
+        <div className="rounded-2xl bg-emerald-700/30 border border-emerald-500/40 px-4 py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-sm font-bold text-slate-900">2</div>
+            <p className="text-base font-semibold text-emerald-50">Certificate Track</p>
+          </div>
+          <Link
+            href="/bootcamps#certificate-tracks"
+            className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-yellow-300 ring-1 ring-yellow-300/50 transition hover:bg-white/25"
+          >
+            View Tracks
+            <span className="i-lucide-arrow-up-right text-sm" aria-hidden="true" />
+          </Link>
         </div>
       </div>
-      <div className="relative rounded-3xl bg-white/80 px-6 py-8 border border-yellow-300/60 shadow-[0_25px_55px_rgba(250,204,21,0.25)]">
-        <div className="space-y-10">
-          <div className="grid gap-4 md:grid-cols-[auto,1fr] items-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-2xl font-bold text-slate-900 shadow-inner">1</div>
-            <div className="space-y-3">
-              <p className="text-xl font-semibold text-slate-900">Cloud Foundation</p>
-              <div className="flex flex-wrap items-center gap-3 text-lg text-slate-900/90">
-                <span className="font-medium">Cloud Foundation</span>
-                <span className="i-lucide-arrow-right text-2xl" aria-hidden="true" />
-                <Link
-                  href="/bootcamps/register?track=Cloud%20Foundation"
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-emerald-600 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25 hover:text-emerald-700"
-                >
-                  Register for Bootcamp
-                  <span className="i-lucide-arrow-up-right" aria-hidden="true" />
-                </Link>
-              </div>
+
+      {/* Compact white info box */}
+      <div className="rounded-2xl bg-white/90 border border-yellow-300/50 px-5 py-4 shadow-lg">
+        <div className="space-y-4">
+          {/* Popular paths - inline */}
+          <div>
+            <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Popular Certificate Paths</h5>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-700">
+              <span className="flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                AWS Solutions Architect
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                GCP Cloud Engineer
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                Azure Administrator
+              </span>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-[auto,1fr]">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-300 text-2xl font-bold text-slate-900 shadow-inner">2</div>
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3 text-xl font-semibold text-slate-900">
-                Choose Your Certificate Track
-                <span className="i-lucide-arrow-right text-2xl" aria-hidden="true" />
-                <Link
-                  href="/bootcamps#certificate-tracks"
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-emerald-600 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25 hover:text-emerald-700"
-                >
-                  View Tracks
-                  <span className="i-lucide-arrow-up-right" aria-hidden="true" />
-                </Link>
-              </div>
-              <div className="relative pl-6">
-                <div className="absolute left-0 top-1 bottom-1 border-l-2 border-dashed border-slate-500/40" aria-hidden="true" />
-                <ul className="space-y-3 text-base sm:text-lg text-slate-800">
-                  <li className="flex items-center gap-3">
-                    <span className="i-lucide-corner-right-down text-lg text-slate-500" aria-hidden="true" />
-                    <span>AWS Associate Solution Architect</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="i-lucide-corner-right-down text-lg text-slate-500" aria-hidden="true" />
-                    <span>GCP Associate Cloud Engineer</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="i-lucide-corner-right-down text-lg text-slate-500" aria-hidden="true" />
-                    <span>Microsoft Certified: Azure Administrator Associate</span>
-                  </li>
-                </ul>
-              </div>
+          {/* Quick highlight cards */}
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="flex items-center gap-3 rounded-xl bg-emerald-50/70 border border-emerald-200/60 px-3 py-2.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+                <span className="i-lucide-sparkles text-base" />
+              </span>
+              <p className="text-xs text-slate-700 leading-snug">For beginners building complete cloud skills</p>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl bg-emerald-50/70 border border-emerald-200/60 px-3 py-2.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+                <span className="i-lucide-compass text-base" />
+              </span>
+              <p className="text-xs text-slate-700 leading-snug">Guided through foundation & certification</p>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-emerald-200/70 bg-white/90 px-6 py-6 shadow-[0_20px_50px_rgba(16,185,129,0.25)]">
-              <h5 className="text-lg font-semibold text-slate-900">Ready to commit?</h5>
-              <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                Register for the full program to unlock accountability, expert coaching, and a tailored roadmap for the next 3-6 months.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href="/bootcamps/register?track=Long-Term%20Path"
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold uppercase tracking-wide text-white shadow hover:bg-emerald-600 transition"
-                >
-                  <span className="i-lucide-rocket" aria-hidden="true" />
-                  Register for Program
-                </Link>
-                <Link
-                  href="/mentoring?type=one-on-one"
-                  className="inline-flex items-center gap-2 rounded-full border border-emerald-400/70 px-5 py-2 text-sm font-semibold uppercase tracking-wide text-emerald-600 hover:bg-emerald-100 transition"
-                >
-                  <span className="i-lucide-user-round" aria-hidden="true" />
-                  Book 1-on-1 Mentorship
-                </Link>
-              </div>
-            </div>
+          {/* CTA inline */}
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-200">
+            <Link
+              href="/bootcamps/register?track=Long-Term%20Path"
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-sm hover:bg-emerald-600 transition"
+            >
+              <span className="i-lucide-rocket text-sm" />
+              Register Program
+            </Link>
+            <Link
+              href="/mentoring?type=one-on-one"
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-600 hover:bg-emerald-50 transition"
+            >
+              <span className="i-lucide-user-round text-sm" />
+              Book Mentorship
+            </Link>
           </div>
         </div>
       </div>
