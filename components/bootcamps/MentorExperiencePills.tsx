@@ -32,10 +32,16 @@ export function MentorExperiencePills() {
     panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [activeCard]);
 
-  // Collapse when clicking outside
+  // Collapse when clicking outside (but not inside the panel)
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      // Don't close if clicking inside the panel or container
+      if (
+        containerRef.current && 
+        !containerRef.current.contains(event.target as Node) &&
+        panelRef.current &&
+        !panelRef.current.contains(event.target as Node)
+      ) {
         setActiveCard(null);
       }
     };
