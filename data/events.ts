@@ -71,6 +71,35 @@ export const events: EventRecord[] = [
     waitlistEnabled: true,
   },
   {
+    slug: 'ai-foundation-bootcamp-cohort-1',
+    title: 'AI Foundation (Cohort 1)',
+    summary: '4‑week beginner cohort covering AI/ML fundamentals, Python, and practical cloud AI workflows.',
+    description:
+      'A beginner-friendly cohort to build core AI literacy: Python for data, essential ML concepts, prompt engineering, and deploying simple AI workflows in the cloud with accountability and feedback.',
+    type: 'bootcamp',
+    category: 'ai',
+    startDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 21).toISOString(), // 3 weeks from now
+    endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 21 + 1000 * 60 * 60 * 24 * 28).toISOString(), // +4w
+    level: 'beginner',
+    capacity: 50,
+    registered: 12,
+    price: '$399',
+    location: 'Online',
+    timezone: 'UTC',
+    tags: ['ai', 'ml', 'python', 'cloud'],
+    registrationUrl: '#',
+    modules: [
+      { week: 1, title: 'Python & Data Fundamentals', outcomes: ['Python basics', 'Data wrangling'], hours: 5 },
+      { week: 2, title: 'Core ML Concepts', outcomes: ['Supervised vs unsupervised', 'Model evaluation'], hours: 6 },
+      { week: 3, title: 'Prompt Engineering & LLM Basics', outcomes: ['Prompt patterns', 'Evaluation basics'], hours: 6 },
+      { week: 4, title: 'Cloud AI Workflow', outcomes: ['Deploy simple AI app', 'Measure and iterate'], hours: 6 },
+    ],
+    commitmentHoursPerWeek: 6,
+    cohort: 1,
+    prerequisites: ['Basic computer literacy'],
+    waitlistEnabled: true,
+  },
+  {
     slug: 'devops-foundations-bootcamp-cohort-1',
     title: 'DevOps Foundations Bootcamp (Cohort 1)',
     summary: '4‑week intensive cohort building CI/CD, Infra as Code, and monitoring foundation.',
@@ -96,6 +125,35 @@ export const events: EventRecord[] = [
     commitmentHoursPerWeek: 6,
     cohort: 1,
     prerequisites: ['Basic Git', 'Command line', 'Linux fundamentals'],
+    waitlistEnabled: true,
+  },
+  {
+    slug: 'cloud-networking-bootcamp-cohort-1',
+    title: 'Cloud Networking Bootcamp (Cohort 1)',
+    summary: '4‑week practical cohort on VPC/VNet design, routing, connectivity, and security baselines.',
+    description:
+      'Hands-on cohort focused on cloud networking fundamentals across major providers: build and secure VPC/VNet topologies, connect environments, and instrument traffic for reliability.',
+    type: 'bootcamp',
+    category: 'networking',
+    startDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), // 1 week out
+    endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 + 1000 * 60 * 60 * 24 * 28).toISOString(), // +4w
+    level: 'intermediate',
+    capacity: 40,
+    registered: 22,
+    price: '$449',
+    location: 'Online',
+    timezone: 'UTC',
+    tags: ['networking', 'vpc', 'security', 'connectivity'],
+    registrationUrl: '#',
+    modules: [
+      { week: 1, title: 'VPC/VNet Foundations', outcomes: ['Subnetting', 'Routing tables'], hours: 6 },
+      { week: 2, title: 'Connectivity Patterns', outcomes: ['Peering', 'Site-to-site VPN'], hours: 6 },
+      { week: 3, title: 'Network Security', outcomes: ['NACLs/Security Groups', 'Zero-trust basics'], hours: 6 },
+      { week: 4, title: 'Observability & HA', outcomes: ['Flow logs', 'HA design patterns'], hours: 5 },
+    ],
+    commitmentHoursPerWeek: 6,
+    cohort: 1,
+    prerequisites: ['Basic cloud networking concepts'],
     waitlistEnabled: true,
   },
   {

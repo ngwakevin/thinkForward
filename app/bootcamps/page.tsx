@@ -2,6 +2,7 @@ import { events } from '../../data/events';
 import { computeStatus } from '../../components/events/StatusBadge';
 import { EventCard } from '../../components/events/EventCard';
 import { BootcampsClient } from './BootcampsClient';
+import { MentorExperiencePills } from '../../components/bootcamps/MentorExperiencePills';
 
 export const metadata = { title: 'Live Bootcamps' };
 
@@ -131,10 +132,12 @@ export default function BootcampsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-24 space-y-20">
-      <BootcampsClient />
+    <>
+      <MentorExperiencePills />
+      <div className="mx-auto max-w-7xl px-6 pt-16 pb-24 space-y-20">
+        <BootcampsClient />
       
-      {/* Certificate Tracks Section */}
+        {/* Certificate Tracks Section */}
       <section id="certificate-tracks" className="space-y-10">
         <div className="space-y-4">
           <h2 className="font-display text-3xl font-bold tracking-tight">Bootcamp Certificate Tracks</h2>
@@ -234,6 +237,7 @@ export default function BootcampsPage() {
           </ul>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
