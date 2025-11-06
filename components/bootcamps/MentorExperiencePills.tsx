@@ -144,94 +144,89 @@ export function MentorExperiencePills() {
         Build core cloud skills, then focus on the certification pathway that fits your destination role in 3-6 months.
       </p>
       
-      {/* Two-step process - compact side by side */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* Step 1 */}
-        <div className="rounded-2xl bg-emerald-700/30 border border-emerald-500/40 px-4 py-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-sm font-bold text-slate-900">1</div>
-            <p className="text-base font-semibold text-emerald-50">Cloud Foundation</p>
+      {/* Compact two-column layout */}
+      <div className="grid md:grid-cols-[1fr,1px,1fr] gap-5 items-start">
+        {/* Left: Foundation Path */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 pb-2 border-b border-slate-300/60">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-base font-bold text-slate-900 shadow-sm">1</div>
+            <h4 className="text-base font-semibold text-slate-900">Start: Cloud Foundation</h4>
           </div>
+          
+          <div className="flex items-start gap-3 rounded-xl bg-emerald-50/80 border border-emerald-200/60 px-4 py-3">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600" aria-hidden="true">
+              <span className="i-lucide-sparkles text-base" />
+            </span>
+            <p className="text-sm text-slate-700 leading-relaxed">For beginners building complete cloud skills with mentor guidance.</p>
+          </div>
+
           <Link
             href="/bootcamps/register?track=Cloud%20Foundation"
-            className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-yellow-300 ring-1 ring-yellow-300/50 transition hover:bg-white/25"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-sm hover:bg-emerald-600 transition"
           >
-            Register
-            <span className="i-lucide-arrow-up-right text-sm" aria-hidden="true" />
+            Register Foundation Bootcamp
+            <span className="i-lucide-arrow-right" aria-hidden="true" />
           </Link>
         </div>
 
-        {/* Step 2 */}
-        <div className="rounded-2xl bg-emerald-700/30 border border-emerald-500/40 px-4 py-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-sm font-bold text-slate-900">2</div>
-            <p className="text-base font-semibold text-emerald-50">Certificate Track</p>
+        {/* Divider */}
+        <div className="hidden md:block bg-gradient-to-b from-slate-200/0 via-slate-300/60 to-slate-200/0 h-full" />
+
+        {/* Right: Certificate Path */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 pb-2 border-b border-slate-300/60">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-base font-bold text-slate-900 shadow-sm">2</div>
+            <h4 className="text-base font-semibold text-slate-900">Then: Pick Certificate</h4>
           </div>
+
+          <div className="rounded-xl bg-slate-50/90 border border-slate-200/60 px-4 py-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-slate-700">
+                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                <span>AWS Solutions Architect</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-700">
+                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                <span>GCP Cloud Engineer</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-700">
+                <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                <span>Azure Administrator</span>
+              </div>
+            </div>
+          </div>
+
           <Link
             href="/bootcamps#certificate-tracks"
-            className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-yellow-300 ring-1 ring-yellow-300/50 transition hover:bg-white/25"
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-500/60 bg-emerald-50/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-700 hover:bg-emerald-100 transition"
           >
-            View Tracks
-            <span className="i-lucide-arrow-up-right text-sm" aria-hidden="true" />
+            View All Tracks
+            <span className="i-lucide-arrow-right" aria-hidden="true" />
           </Link>
         </div>
       </div>
 
-      {/* Compact white info box */}
-      <div className="rounded-2xl bg-white/90 border border-yellow-300/50 px-5 py-4 shadow-lg">
-        <div className="space-y-4">
-          {/* Popular paths - inline */}
-          <div>
-            <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">Popular Certificate Paths</h5>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-700">
-              <span className="flex items-center gap-1.5">
-                <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                AWS Solutions Architect
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                GCP Cloud Engineer
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                Azure Administrator
-              </span>
-            </div>
-          </div>
-
-          {/* Quick highlight cards */}
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="flex items-center gap-3 rounded-xl bg-emerald-50/70 border border-emerald-200/60 px-3 py-2.5">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
-                <span className="i-lucide-sparkles text-base" />
-              </span>
-              <p className="text-xs text-slate-700 leading-snug">For beginners building complete cloud skills</p>
-            </div>
-            <div className="flex items-center gap-3 rounded-xl bg-emerald-50/70 border border-emerald-200/60 px-3 py-2.5">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
-                <span className="i-lucide-compass text-base" />
-              </span>
-              <p className="text-xs text-slate-700 leading-snug">Guided through foundation & certification</p>
-            </div>
-          </div>
-
-          {/* CTA inline */}
-          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-200">
-            <Link
-              href="/bootcamps/register?track=Long-Term%20Path"
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-sm hover:bg-emerald-600 transition"
-            >
-              <span className="i-lucide-rocket text-sm" />
-              Register Program
-            </Link>
-            <Link
-              href="/mentoring?type=one-on-one"
-              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-600 hover:bg-emerald-50 transition"
-            >
-              <span className="i-lucide-user-round text-sm" />
-              Book Mentorship
-            </Link>
-          </div>
+      {/* Compact CTA footer */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-emerald-200/70 bg-emerald-50/40 px-5 py-3 mt-4">
+        <div className="flex-1 min-w-[200px]">
+          <p className="text-sm font-medium text-slate-900">Ready to start your journey?</p>
+          <p className="text-xs text-slate-600 mt-1">Get accountability, coaching & a tailored roadmap.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/bootcamps/register?track=Foundational%20Path"
+            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-sm hover:bg-emerald-600 transition"
+          >
+            <span className="i-lucide-rocket text-sm" />
+            Register
+          </Link>
+          <Link
+            href="/mentoring?type=one-on-one"
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700 hover:bg-emerald-100 transition"
+          >
+            <span className="i-lucide-user-round text-sm" />
+            Mentorship
+          </Link>
         </div>
       </div>
     </div>

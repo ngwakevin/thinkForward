@@ -21,7 +21,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-gray-800/50">
       <div className="relative mx-auto max-w-7xl px-6">
-        <div className="flex h-[72px] items-center gap-8">
+        <div className="flex h-[72px] items-center justify-between gap-4">
           
           {/* Logo Section - LEFT */}
           <Link 
@@ -63,8 +63,11 @@ export function Header() {
             </div>
           </Link>
 
+          {/* Spacer to push navigation far right */}
+          <div className="flex-1" />
+
           {/* Center: Liquid Glass Navigation */}
-          <div className="hidden lg:flex flex-1 justify-center items-center">
+          <div className="hidden lg:flex items-center">
             <nav className="relative inline-flex items-center gap-2 px-5 py-3 rounded-full overflow-hidden">
               {/* Enhanced liquid glass background layers */}
               <div className="absolute inset-0 bg-gradient-to-br from-gray-600/60 via-gray-500/50 to-gray-600/60" />
