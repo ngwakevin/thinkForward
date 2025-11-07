@@ -83,7 +83,7 @@ const featuredResources = [
   },
 ];
 
-export default function DocsIndex() {
+export default function ResourcesPreviewPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-bg to-bg-alt">
       {/* Hero Section */}

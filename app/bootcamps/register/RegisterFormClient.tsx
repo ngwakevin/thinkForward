@@ -153,7 +153,7 @@ export function RegisterFormClient({ track }: Props) {
   }
 
   if (success) {
-    const mailtoHref = `mailto:hello@thinkforward.academy?subject=Bootcamp%20Payment%20Reference%20${encodeURIComponent(success.paymentReference)}`;
+    const mailtoHref = `mailto:hello@cloudegree.academy?subject=Bootcamp%20Payment%20Reference%20${encodeURIComponent(success.paymentReference)}`;
     return (
       <div className="space-y-8 rounded-3xl border border-success/30 bg-success/10 p-8 text-sm text-white/90">
         <div className="space-y-3">
@@ -360,7 +360,7 @@ export function RegisterFormClient({ track }: Props) {
               disabled={submitting}
             />
             <label htmlFor="createAccount" className="text-sm text-fg-muted">
-              Create a ThinkForward account for future access to bootcamp materials and progress tracking
+              Create a Cloudegree account for future access to bootcamp materials and progress tracking
             </label>
           </div>
         </div>

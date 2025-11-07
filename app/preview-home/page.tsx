@@ -10,7 +10,7 @@ import { SupportEcosystemPreview } from "@/components/sections/preview/SupportEc
 import { BottomSplitPreview } from "@/components/sections/preview/BottomSplit.preview";
 import { FinalCTAPreview } from "@/components/sections/preview/FinalCTA.preview";
 
-export default function HomePage() {
+export default function PreviewHomePage() {
   return (
     <main className="min-h-screen bg-bg">
       <HeroPreview />

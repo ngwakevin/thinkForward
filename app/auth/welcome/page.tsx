@@ -8,7 +8,7 @@ export const metadata = {
 export default function WelcomePage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">Welcome to ThinkForward</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">Welcome to Cloudegree</h1>
       <p className="mt-3 text-sm text-fg-muted">
         Your account is ready. You can jump into your dashboard or finish setting up your profile.
       </p>

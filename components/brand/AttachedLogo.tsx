@@ -2,7 +2,7 @@ import React from 'react';
 
 interface AttachedLogoProps {
   className?: string; // control font size, e.g. 'text-4xl'
-  text?: string; // default to 'thinkForward' per attachment
+  text?: string; // default to 'Cloudegree' per attachment
   showDot?: boolean;
   bracketChar?: '>' | '›' | '»';
 }
@@ -13,7 +13,7 @@ interface AttachedLogoProps {
 // - Amber angle bracket at the end
 export function AttachedLogo({
   className = 'text-4xl',
-  text = 'thinkForward',
+  text = 'Cloudegree',
   showDot = true,
   bracketChar = '›',
 }: AttachedLogoProps) {

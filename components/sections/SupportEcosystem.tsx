@@ -28,7 +28,7 @@ export function SupportEcosystem() {
                 We’ve Got Your Back
               </h2>
               <p className="text-fg-muted text-base leading-relaxed">
-                thinkForward isn’t just a platform — it’s an execution partner. Guidance, systems, and reinforcement designed
+                Cloudegree isn't just a platform — it's an execution partner. Guidance, systems, and reinforcement designed
                 to keep you moving from clarity → momentum → role readiness.
               </p>
             </div>
