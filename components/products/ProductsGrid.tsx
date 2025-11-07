@@ -41,22 +41,31 @@ function DeliveryBadge({ delivery }: { delivery: 'live' | 'self-paced' }) {
 }
 
 function Card({ p, onOpenSyllabus, onWaitlist }: { p: ProductDefinition; onOpenSyllabus: (p: ProductDefinition) => void; onWaitlist: (p: ProductDefinition, email: string) => void }) {
-  const base = 'relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br p-6 shadow-sm';
+  const base =
+    'relative flex flex-col rounded-[32px] border p-6 shadow-[12px_18px_0_rgba(35,56,22,0.08)] backdrop-blur-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-[20px_28px_0_rgba(35,56,22,0.12)]';
   const variants: Record<string, string> = {
-    primary: `${base} from-bg-alt/60 to-bg-alt/20`,
-    secondary: `${base} from-bg-alt/40 to-bg-alt/10`,
-    tertiary: `${base} from-bg-alt/30 to-bg-alt/5`
+    primary: `${base} border-[#f3a264] bg-[linear-gradient(135deg,#fff3d8_0%,#ffdca7_45%,#ffc88b_100%)] text-[#3d2410]`,
+    secondary: `${base} border-[#7dd3ae] bg-[linear-gradient(135deg,#e4fbf2_0%,#c7f3e3_55%,#9fe8ce_100%)] text-[#123a2c]`,
+    tertiary: `${base} border-[#f4d766] bg-[linear-gradient(135deg,#fff9d6_0%,#fff0a8_55%,#ffe37e_100%)] text-[#3c320c]`
   };
   const IconComp = (Icons as any)[p.icon] || Icons.Box;
   return (
-    <div className={variants[p.variant || 'secondary'] + ' group min-h-[300px] flex'} aria-label={`${p.title} ${p.difficulty} track`}>
+    <div className={variants[p.variant || 'secondary'] + ' group min-h-[320px] flex'} aria-label={`${p.title} ${p.difficulty} track`}>
       <div className="flex flex-col w-full">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-accent/15 text-accent grid place-items-center"><IconComp className="h-5 w-5" /></div>
+            <div className="h-10 w-10 rounded-xl bg-white/70 text-[#233816] shadow-[6px_6px_0_rgba(35,56,22,0.1)] grid place-items-center">
+              <IconComp className="h-5 w-5" />
+            </div>
             <div>
-              <h3 className="font-display text-lg font-semibold tracking-tight flex items-center gap-2">{p.title}</h3>
-              {p.subtitle && <p className="mt-1 text-[10px] uppercase tracking-wide text-fg-muted">{p.subtitle}</p>}
+              <h3 className="font-display text-xl font-semibold tracking-tight flex items-center gap-2 text-[#1b2c1b]">
+                {p.title}
+              </h3>
+              {p.subtitle && (
+                <p className="mt-1 text-[10px] uppercase tracking-[0.28em] text-[#5b6f5a]">
+                  {p.subtitle}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -64,15 +73,27 @@ function Card({ p, onOpenSyllabus, onWaitlist }: { p: ProductDefinition; onOpenS
             <StatusBadge status={p.enrollmentStatus} />
           </div>
         </div>
-        <p className="text-fg-muted leading-relaxed text-sm line-clamp-4">{p.body}</p>
-        <ul className="mt-4 space-y-1 text-[11px] text-fg-muted/90">
-          {p.outcomes.slice(0,3).map(o => <li key={o} className="flex gap-1"><span className="text-accent">•</span><span>{o}</span></li>)}
+        <p className="text-sm leading-relaxed text-[#1f241f]/82 line-clamp-4">{p.body}</p>
+        <ul className="mt-4 space-y-1 text-[11px] text-[#2c2c1c]/78">
+          {p.outcomes.slice(0, 3).map((o) => (
+            <li key={o} className="flex gap-2">
+              <span className="mt-1 inline-flex h-1.5 w-1.5 rounded-full bg-[#233816]/60" />
+              <span>{o}</span>
+            </li>
+          ))}
         </ul>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {p.tags.map(t => <span key={t} className="rounded-md bg-bg-alt/60 border border-border/50 px-2 py-0.5 text-[10px] tracking-wide text-fg-muted">{t}</span>)}
+        <div className="mt-5 flex flex-wrap gap-2">
+          {p.tags.map((t) => (
+            <span
+              key={t}
+              className="inline-flex items-center gap-1 rounded-full bg-white/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#3a3320] shadow-[4px_4px_0_rgba(35,56,22,0.08)]"
+            >
+              {t}
+            </span>
+          ))}
         </div>
         <div className="mt-auto pt-4 flex items-center justify-between text-xs">
-          <span className="text-fg-muted">≈ {p.durationHours}h</span>
+          <span className="text-[#4a6247]/80">≈ {p.durationHours}h</span>
           {p.delivery === 'live' && p.enrollmentStatus === 'open' ? (
             <a href={`/bootcamps/register?track=${encodeURIComponent(p.title)}`} className="inline-flex items-center gap-1 rounded-md bg-warning/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-warning ring-1 ring-warning/40 hover:bg-warning/25 transition">Register →</a>
           ) : p.enrollmentStatus === 'coming-soon' ? (
@@ -175,6 +196,40 @@ export default function ProductsGrid({ initialProducts, formatSelectorPosition =
   const showBottomSelector = formatSelectorPosition === 'bottom';
   const showSelector = formatSelectorPosition !== 'none';
 
+  const difficultyStyles: Record<string, { active: string; inactive: string }> = {
+    all: {
+      active: 'border-[#bcd0c1] bg-white text-[#264026] shadow-[6px_6px_0_rgba(35,56,22,0.08)]',
+      inactive: 'border-[#dce6da] text-[#5a6a58] hover:bg-white/70 hover:border-[#c5d6c5]'
+    },
+    beginner: {
+      active: 'border-transparent bg-[linear-gradient(135deg,#e8f9ef_0%,#c7f0d8_55%,#9fe7c0_100%)] text-[#135033] shadow-[6px_6px_0_rgba(46,107,68,0.25)]',
+      inactive: 'border-[#ccebd7] text-[#2b5b3d] hover:bg-[linear-gradient(135deg,#eefbf3_0%,#d8f5e2_55%,#b9edcd_100%)] hover:border-transparent'
+    },
+    intermediate: {
+      active: 'border-transparent bg-[linear-gradient(135deg,#fff7e4_0%,#fde6b8_55%,#f9cf82_100%)] text-[#6f430e] shadow-[6px_6px_0_rgba(160,101,26,0.25)]',
+      inactive: 'border-[#f2dcb1] text-[#6c4b1d] hover:bg-[linear-gradient(135deg,#fff8eb_0%,#fcecc7_55%,#f7dba2_100%)] hover:border-transparent'
+    },
+    advanced: {
+      active: 'border-transparent bg-[linear-gradient(135deg,#fef3f8_0%,#f9c9dc_55%,#f59ac1_100%)] text-[#6d1435] shadow-[6px_6px_0_rgba(173,55,104,0.25)]',
+      inactive: 'border-[#f3cfe0] text-[#7c2947] hover:bg-[linear-gradient(135deg,#fef5f9_0%,#fbd6e6_55%,#f6aecb_100%)] hover:border-transparent'
+    }
+  };
+
+  const deliveryStyles: Record<'all' | 'live' | 'self-paced', { active: string; inactive: string }> = {
+    all: {
+      active: 'border-[#bcd0c1] bg-white text-[#264026] shadow-[6px_6px_0_rgba(35,56,22,0.08)]',
+      inactive: 'border-[#dce6da] text-[#5a6a58] hover:bg-white/70 hover:border-[#c5d6c5]'
+    },
+    live: {
+      active: 'border-transparent bg-[linear-gradient(135deg,#fff6e5_0%,#ffd9a0_55%,#ffbf63_100%)] text-[#7c4110] shadow-[6px_6px_0_rgba(187,120,32,0.28)]',
+      inactive: 'border-[#f4d1a1] text-[#8a561e] hover:bg-[linear-gradient(135deg,#fff7ea_0%,#ffe1b9_55%,#ffc37b_100%)] hover:border-transparent'
+    },
+    'self-paced': {
+      active: 'border-transparent bg-[linear-gradient(135deg,#ecf9ff_0%,#cfeffe_55%,#aee4fc_100%)] text-[#15476b] shadow-[6px_6px_0_rgba(36,91,129,0.22)]',
+      inactive: 'border-[#c8e3f3] text-[#2a5673] hover:bg-[linear-gradient(135deg,#f2fbff_0%,#d9f3fe_55%,#bfe8fc_100%)] hover:border-transparent'
+    }
+  };
+
   return (
     <div className="space-y-10">
       {showTopSelector && showSelector && <FormatSelector />}
@@ -183,12 +238,30 @@ export default function ProductsGrid({ initialProducts, formatSelectorPosition =
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex gap-2 flex-wrap">
             {diffs.map(d => (
-              <button key={d} onClick={() => setDifficulty(d)} className={`px-3 py-1.5 rounded-md text-xs font-medium border transition ${difficulty===d ? 'bg-accent text-white border-accent' : 'border-border/60 hover:border-accent/60 text-fg-muted'}`}>{d}</button>
+              <button
+                key={d}
+                onClick={() => setDifficulty(d)}
+                className={`px-4 py-2 rounded-full text-[10px] font-semibold uppercase tracking-[0.28em] transition-all ${
+                  difficulty === d
+                    ? (difficultyStyles[d]?.active ?? difficultyStyles.all.active)
+                    : (difficultyStyles[d]?.inactive ?? difficultyStyles.all.inactive)
+                }`}
+              >
+                {d}
+              </button>
             ))}
           </div>
           <div className="flex gap-2 flex-wrap items-center">
             {deliveries.map(dv => (
-              <button key={dv} onClick={() => setDelivery(dv)} className={`px-3 py-1.5 rounded-md text-xs font-medium border transition ${delivery===dv ? 'bg-warning text-fg border-warning' : 'border-border/60 hover:border-warning/60 text-fg-muted'}`}>{dv}</button>
+              <button
+                key={dv}
+                onClick={() => setDelivery(dv)}
+                className={`px-4 py-2 rounded-full text-[10px] font-semibold uppercase tracking-[0.28em] transition-all ${
+                  delivery === dv ? deliveryStyles[dv].active : deliveryStyles[dv].inactive
+                }`}
+              >
+                {dv}
+              </button>
             ))}
             <input
       placeholder="Search courses"

@@ -71,7 +71,7 @@ export function MentorExperiencePills() {
       case 'white':
         return '#ffffff';
       case 'yellow':
-        return '#FFB347';
+        return '#8569FF';
       default:
         return 'transparent';
     }
@@ -84,7 +84,7 @@ export function MentorExperiencePills() {
       case 'white':
         return '0 25px 80px rgba(0,0,0,0.1)';
       case 'yellow':
-        return '0 25px 80px rgba(255,179,71,0.4)';
+        return '0 25px 80px rgba(133,105,255,0.5)';
       default:
         return 'none';
     }
@@ -366,7 +366,7 @@ export function MentorExperiencePills() {
           id="pill-yellow"
           aria-expanded={activeCard === 'yellow'}
           aria-controls="mentor-panel"
-          className={`relative rotate-2 flex min-w-[220px] items-center gap-4 rounded-[6rem] bg-[#FFB347] px-12 py-8 text-black shadow-[0_15px_40px_rgba(255,179,71,0.5)] focus:outline-none focus:ring-4 focus:ring-[#FFB347]/40 ${
+          className={`relative rotate-2 flex min-w-[220px] items-center gap-4 rounded-[6rem] bg-[#8569FF] px-12 py-8 text-white shadow-[0_15px_40px_rgba(133,105,255,0.45)] focus:outline-none focus:ring-4 focus:ring-[#8569FF]/35 ${
             activeCard === 'yellow' ? 'z-30 ring-4 ring-white' : ''
           }`}
           whileHover={{ scale: 1.03, rotate: 0 }}

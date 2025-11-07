@@ -5,10 +5,48 @@ import React from 'react';
 import AttachedLogo from '../brand/AttachedLogo';
 import { useSession, signOut } from 'next-auth/react';
 
+const aboutCards = [
+  {
+    href: '/about',
+    title: 'Our story',
+    description: 'Meet the mentors, mission, and operating principles guiding Cloudegree.',
+  },
+  {
+    href: '/contact',
+    title: 'Contact team',
+    description: 'Partnerships, press, or support—get routed to the right inbox quickly.',
+  },
+  {
+    href: '/careers',
+    title: 'Careers',
+    description: 'Join the distributed faculty shaping modern cloud apprenticeships.',
+  },
+] as const;
+
+const communityCards = [
+  {
+    href: '/community',
+    title: 'Community Hub',
+    description: 'Ship together inside curated cohorts, async prompts, and AMAs.',
+  },
+  {
+    href: '/community/profile',
+    title: 'Profiles',
+    description: 'Spotlight alumni journeys and connect with mentor partners.',
+  },
+  {
+    href: '/community/events',
+    title: 'Live sessions',
+    description: 'Weekly build-alongs, office hours, and lightning talks with mentors.',
+  },
+] as const;
+
 export function Header() {
   const { status, data: session } = useSession();
   const aboutMenuRef = React.useRef<HTMLDetailsElement | null>(null);
+  const communityMenuRef = React.useRef<HTMLDetailsElement | null>(null);
   const closeAboutMenu = () => aboutMenuRef.current?.removeAttribute('open');
+  const closeCommunityMenu = () => communityMenuRef.current?.removeAttribute('open');
   
   const nav = [
     { href: '/courses', label: 'Courses' },
@@ -19,7 +57,7 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-gray-800/50">
+    <header className="sticky top-0 z-[120] bg-[#0a1628]/95 backdrop-blur-md border-b border-gray-800/50">
       <div className="relative mx-auto max-w-7xl px-6">
         <div className="flex h-[72px] items-center justify-between gap-4">
           
@@ -105,17 +143,58 @@ export function Header() {
           {/* Right Actions */}
           <div className="flex-shrink-0 flex items-center gap-3">
             {/* About Dropdown */}
-            <details ref={aboutMenuRef} className="relative group">
+            <details ref={aboutMenuRef} className="relative group z-[130]">
               <summary className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-green-500 hover:text-green-400 rounded-lg transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 About
                 <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 transition-transform group-open:rotate-180" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
                 </svg>
               </summary>
-              <div className="absolute right-0 mt-2 w-44 rounded-xl shadow-2xl p-1.5 z-50 bg-gray-800/95 backdrop-blur-xl border border-gray-700">
-                <Link onClick={closeAboutMenu} href={'/about' as any} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-green-400 hover:bg-gray-700/50 transition-colors">About us</Link>
-                <Link onClick={closeAboutMenu} href={'/contact' as any} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-green-400 hover:bg-gray-700/50 transition-colors">Contact</Link>
-                <Link onClick={closeAboutMenu} href={'/careers' as any} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-green-400 hover:bg-gray-700/50 transition-colors">Careers</Link>
+              <div className="absolute right-0 mt-3 w-[360px] rounded-2xl shadow-[0_30px_70px_rgba(0,0,0,0.45)] z-[140] border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-900/60 backdrop-blur-2xl p-4 space-y-3">
+                <div className="grid gap-3">
+                  {aboutCards.map(card => (
+                    <Link
+                      key={card.href}
+                      onClick={closeAboutMenu}
+                      href={card.href as any}
+                      className="group/card relative rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-emerald-400/60 hover:bg-white/10"
+                    >
+                      <p className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 group-hover/card:scale-125 transition" />
+                        {card.title}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-200/80 leading-relaxed">{card.description}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </details>
+
+            {/* Community Dropdown */}
+            <details ref={communityMenuRef} className="relative group z-[130]">
+              <summary className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-green-500 hover:text-green-400 rounded-lg transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                Community
+                <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 transition-transform group-open:rotate-180" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
+                </svg>
+              </summary>
+              <div className="absolute right-0 mt-3 w-[360px] rounded-2xl shadow-[0_30px_70px_rgba(0,0,0,0.45)] z-[140] border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-900/60 backdrop-blur-2xl p-4 space-y-3">
+                <div className="grid gap-3">
+                  {communityCards.map(card => (
+                    <Link
+                      key={card.href}
+                      onClick={closeCommunityMenu}
+                      href={card.href as any}
+                      className="group/card relative rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-emerald-400/60 hover:bg-white/10"
+                    >
+                      <p className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 group-hover/card:scale-125 transition" />
+                        {card.title}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-200/80 leading-relaxed">{card.description}</p>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </details>
 
@@ -137,7 +216,7 @@ export function Header() {
             )}
 
             {status === 'authenticated' && (
-              <details className="relative group">
+              <details className="relative group z-[130]">
                 <summary className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden bg-gray-700/50 hover:bg-gray-700 border border-gray-600">
                   {((session?.user as any)?.avatarUrl || (session?.user as any)?.image) ? (
                     <Image
@@ -157,7 +236,7 @@ export function Header() {
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
                   </svg>
                 </summary>
-                <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-2xl p-1.5 z-50 bg-gray-800/95 backdrop-blur-xl border border-gray-700">
+                <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-2xl p-1.5 z-[140] bg-gray-800/95 backdrop-blur-xl border border-gray-700">
                   <Link href={'/profile' as any} className="block rounded-lg px-3 py-2 text-sm text-gray-300 hover:text-green-400 hover:bg-gray-700/50 transition-colors">Profile</Link>
                   <div className="my-1 h-px bg-gray-700" />
                   <button

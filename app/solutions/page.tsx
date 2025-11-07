@@ -1,415 +1,335 @@
-import { testimonials, faqs } from '../../data/solutions';
+import {
+  orderedSolutions,
+  SOLUTION_STATUS_META,
+  testimonials,
+  faqs
+} from '../../data/solutions';
+import * as Icons from 'lucide-react';
 import { SolutionsWizard } from '../../components/sections/SolutionsWizard';
 
 export const metadata = { title: 'Solutions' };
 
+const gradientBg =
+  'linear-gradient(140deg, #d9e3d5 0%, #cfe0d2 40%, #bed4c6 100%)';
+
 export default function SolutionsPage() {
   return (
-    <div className="mx-auto max-w-7xl px-6 py-28 space-y-32">
-      {/* Solutions Overview (new, placed before Path Planning) */}
-      <section aria-labelledby="solutions-overview-heading" className="space-y-8">
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-accent">Solutions</p>
-          <h2 id="solutions-overview-heading" className="font-display text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Choose Your Path</h2>
-          <p className="text-fg-muted text-sm md:text-base leading-relaxed">Three ways to build momentum in Cloud & DevOps—pick what fits your schedule and goals.</p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Bootcamps Training */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Bootcamps Training</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">Live • Cohort-based • Outcome-focused</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">Live</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Structured sprints, expert feedback, and portfolio-ready deliverables with peers.</p>
-            <ul className="mt-4 space-y-2 text-xs text-fg/90">
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Weekly checkpoints & accountability</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Hands-on labs and simulations</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Cohort support and momentum</li>
-            </ul>
-            <footer className="mt-5 pt-4 border-t border-border/50 flex items-center gap-3">
-              <a href="/bootcamps" className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-[11px] font-semibold tracking-wide text-white shadow-sm hover:bg-accent-alt transition">
-                Explore Bootcamps <span className="ml-1.5 text-white/70 group-hover:translate-x-0.5 transition">→</span>
-              </a>
-              <a href="#bootcamps-details" className="inline-flex items-center rounded-md px-3 py-2 text-[11px] font-semibold tracking-wide text-fg hover:text-accent transition">
-                Learn more <span className="ml-1.5">→</span>
-              </a>
-            </footer>
-          </article>
-
-          {/* Self-paced Training */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Self‑paced Training</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">On‑demand • Structured tracks</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-fg-muted/10 text-fg-muted ring-1 ring-fg-muted/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">Coming Soon</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Learn on your schedule with clear modules, checkpoints, and practice scenarios.</p>
-            <ul className="mt-4 space-y-2 text-xs text-fg/90">
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Role‑aligned roadmaps</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Progress tracking & milestones</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Practical, evidence‑building work</li>
-            </ul>
-            <footer className="mt-5 pt-4 border-t border-border/50 flex items-center gap-3">
-              <a href="/courses" className="inline-flex items-center rounded-md border border-border/70 px-4 py-2 text-[11px] font-semibold tracking-wide text-fg hover:border-accent hover:text-accent transition">
-                Browse Courses <span className="ml-1.5 group-hover:translate-x-0.5 transition">→</span>
-              </a>
-              <a href="#self-paced-details" className="inline-flex items-center rounded-md px-3 py-2 text-[11px] font-semibold tracking-wide text-fg hover:text-accent transition">
-                Learn more <span className="ml-1.5">→</span>
-              </a>
-            </footer>
-          </article>
-
-          {/* Career Mentorship */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Career Mentorship</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">1‑on‑1 • Personalized • Practical</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">Available</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Targeted sessions to remove blockers, refine roadmaps, and accelerate outcomes.</p>
-            <ul className="mt-4 space-y-2 text-xs text-fg/90">
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Personalized growth plan</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Portfolio & interview prep</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Clear next steps each week</li>
-            </ul>
-            <footer className="mt-5 pt-4 border-t border-border/50 flex items-center gap-3">
-              <a href="/mentoring" className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-[11px] font-semibold tracking-wide text-white shadow-sm hover:bg-accent-alt transition">
-                Book Mentoring <span className="ml-1.5 text-white/70 group-hover:translate-x-0.5 transition">→</span>
-              </a>
-              <a href="#mentorship-details" className="inline-flex items-center rounded-md px-3 py-2 text-[11px] font-semibold tracking-wide text-fg hover:text-accent transition">
-                Learn more <span className="ml-1.5">→</span>
-              </a>
-            </footer>
-          </article>
+    <div className="relative isolate overflow-hidden">
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.65),rgba(255,255,255,0)),radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),rgba(255,255,255,0))]"
+        style={{ backgroundColor: '#d9e3d5' }}
+        aria-hidden
+      />
+      <div className="relative space-y-24 pb-28">
+      <section
+        className="relative isolate overflow-hidden rounded-[48px] border border-[#bcd0c1] bg-white px-6 pb-20 pt-24 shadow-[0_45px_120px_rgba(29,43,29,0.18)] sm:px-10"
+        style={{ background: gradientBg }}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.7),rgba(255,255,255,0)),radial-gradient(circle_at_82%_22%,rgba(255,255,255,0.55),rgba(255,255,255,0))]" />
+        <div className="relative mx-auto max-w-4xl text-center space-y-6">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-[#375037] shadow-[8px_8px_0_rgba(35,56,35,0.08)]">
+            Solutions
+          </span>
+          <h1 className="font-display text-4xl font-bold tracking-tight text-[#1f331f] sm:text-5xl">
+            Cloud &amp; DevOps acceleration that adapts to how you learn.
+          </h1>
+          <p className="mx-auto max-w-3xl text-base leading-relaxed text-[#243624]/85 sm:text-lg">
+            Pick the path that fits your bandwidth today—cohort bootcamps,
+            adaptive self-paced tracks, or high-touch mentorship. Each route
+            blends deliberate practice, feedback loops, and proof you can ship.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#355035]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-[#355035] shadow-[6px_6px_0_rgba(35,56,35,0.08)]">
+              Guided roadmaps
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-[#355035] shadow-[6px_6px_0_rgba(35,56,35,0.06)]">
+              1:1 mentorship
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/55 px-4 py-2 text-[#355035] shadow-[6px_6px_0_rgba(35,56,35,0.05)]">
+              Momentum systems
+            </span>
+          </div>
         </div>
       </section>
 
-      
-
-      {/* Details for each solution */}
-      <section aria-labelledby="solutions-details-heading" className="space-y-12">
-        <h2 id="solutions-details-heading" className="sr-only">Solution Details</h2>
-
-        {/* Bootcamps detail */}
-        <article id="bootcamps-details" className="grid gap-8 lg:grid-cols-3 items-start">
-          <div className="lg:col-span-2 rounded-2xl border border-border/70 bg-gradient-to-br from-bg-alt/80 via-bg-alt/50 to-bg p-6 md:p-8 shadow-sm">
-            <h3 className="font-display text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Bootcamps Training</h3>
-            <p className="mt-3 text-sm md:text-base leading-relaxed text-fg-muted">Cohort-based live sprints that combine expert guidance, hands-on labs, and weekly accountability to get you role-ready faster.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">What you get</h4>
-                <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Weekly live sessions + checkpoints</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Scenario labs and code reviews</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Portfolio‑ready artifacts</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Best for</h4>
-                <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Learners who want structure + peers</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Deadline‑driven momentum</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="/bootcamps" className="inline-flex items-center rounded-md bg-accent px-5 py-2.5 text-[11px] font-semibold tracking-wide text-white shadow-sm hover:bg-accent-alt transition">Explore Bootcamps <span className="ml-1.5 text-white/70">→</span></a>
-              <a href="/events" className="inline-flex items-center rounded-md border border-border/70 px-5 py-2.5 text-[11px] font-semibold tracking-wide hover:border-accent hover:text-accent transition">Upcoming Cohorts</a>
-            </div>
-          </div>
-          <aside className="rounded-2xl border border-border/70 bg-bg-alt/50 p-6">
-            <dl className="space-y-3 text-sm">
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Format</dt><dd>Live, cohort‑based</dd></div>
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Cadence</dt><dd>1–2 sessions/week + labs</dd></div>
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Outcome</dt><dd>Projects, confidence, momentum</dd></div>
-            </dl>
-          </aside>
-        </article>
-
-        {/* Self‑paced detail */}
-        <article id="self-paced-details" className="grid gap-8 lg:grid-cols-3 items-start">
-          <div className="lg:col-span-2 rounded-2xl border border-border/70 bg-gradient-to-br from-bg-alt/80 via-bg-alt/50 to-bg p-6 md:p-8 shadow-sm">
-            <h3 className="font-display text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Self‑paced Training</h3>
-            <p className="mt-3 text-sm md:text-base leading-relaxed text-fg-muted">On‑demand modules and role‑aligned roadmaps so you can learn consistently—whenever you have time.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">What you get</h4>
-                <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Role‑based roadmaps & milestones</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Checkpoints and practice tasks</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Progress tracking</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Best for</h4>
-                <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Flexible schedules</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Independent learners</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="/courses#courses-list" className="inline-flex items-center rounded-md border border-border/70 px-5 py-2.5 text-[11px] font-semibold tracking-wide hover:border-accent hover:text-accent transition">Browse Courses</a>
-              <span className="inline-flex items-center rounded-md bg-fg-muted/10 px-5 py-2.5 text-[11px] font-semibold tracking-wide text-fg-muted">Coming Soon</span>
-            </div>
-          </div>
-          <aside className="rounded-2xl border border-border/70 bg-bg-alt/50 p-6">
-            <dl className="space-y-3 text-sm">
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Format</dt><dd>On‑demand, self‑paced</dd></div>
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Cadence</dt><dd>Your schedule</dd></div>
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Outcome</dt><dd>Consistent progress</dd></div>
-            </dl>
-          </aside>
-        </article>
-
-        {/* Mentorship detail */}
-        <article id="mentorship-details" className="grid gap-8 lg:grid-cols-3 items-start">
-          <div className="lg:col-span-2 rounded-2xl border border-border/70 bg-gradient-to-br from-bg-alt/80 via-bg-alt/50 to-bg p-6 md:p-8 shadow-sm">
-            <h3 className="font-display text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Career Mentorship</h3>
-            <p className="mt-3 text-sm md:text-base leading-relaxed text-fg-muted">1‑on‑1 sessions to remove blockers, refine your plan, and keep execution steady week after week.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">What you get</h4>
-                <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Personalized growth plan</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Targeted feedback & resources</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Clear next steps each week</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Best for</h4>
-                <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Fast course‑corrections</li>
-                  <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Focus + accountability</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="/mentoring" className="inline-flex items-center rounded-md bg-accent px-5 py-2.5 text-[11px] font-semibold tracking-wide text-white shadow-sm hover:bg-accent-alt transition">Book Mentoring <span className="ml-1.5 text-white/70">→</span></a>
-              <a href="/contact" className="inline-flex items-center rounded-md border border-border/70 px-5 py-2.5 text-[11px] font-semibold tracking-wide hover:border-accent hover:text-accent transition">Questions? Contact</a>
-            </div>
-          </div>
-          <aside className="rounded-2xl border border-border/70 bg-bg-alt/50 p-6">
-            <dl className="space-y-3 text-sm">
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Format</dt><dd>1‑on‑1 sessions</dd></div>
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Cadence</dt><dd>As needed or weekly</dd></div>
-              <div className="flex gap-3"><dt className="w-28 text-[11px] font-semibold uppercase tracking-wide text-fg-muted/70">Outcome</dt><dd>Clarity, velocity</dd></div>
-            </dl>
-          </aside>
-        </article>
-
-        {/* Hero (moved here under Career Mentorship) */}
-        <section className="text-center max-w-3xl mx-auto space-y-6">
-          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Mentorship & Momentum</h1>
-          <p className="text-fg-muted text-base md:text-lg leading-relaxed">Structured guidance, adaptive roadmaps, and motivational systems that turn intention into consistent execution for your cloud & DevOps career.</p>
-        </section>
-
-        {/* Feature cards immediately under mentorship */}
-  <div className="grid gap-6 md:grid-cols-2">
-          {/* Accelerate role readiness */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight">Accelerate role readiness with targeted 1:1 guidance</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">Live</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">live</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Structured senior-level guidance, calibrated quarterly goals, and rapid feedback loops so progression is intentional, visible, and compounding.</p>
-            <ul className="mt-4 space-y-2 text-sm text-fg/90">
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> 90‑day execution plan with measurable checkpoints</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Faster skill depth through focused correction</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Reduced stall time via rapid unblock support</li>
-            </ul>
-            <dl className="mt-6 space-y-3 text-[11px]">
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Strategic Alignment</dt><dd>Quarterly deep‑dive to define focus, risks, and success metrics.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Async Reviews</dt><dd>Code / architecture feedback turnaround under 48h.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Weekly Momentum</dt><dd>Light cadence check‑ins to de‑risk drift early.</dd></div>
-            </dl>
-            <footer className="mt-5 pt-4 border-t border-border/50">
-              <a href="/mentoring" className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-[11px] font-semibold tracking-wide text-white shadow-sm hover:bg-accent-alt transition">Start Mentorship <span className="ml-1.5 text-white/70">→</span></a>
-            </footer>
-          </article>
-          {/* Guided Learning Roadmaps */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight">Guided Learning Roadmaps</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">Live</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">live</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Adaptive learning sequences that rebalance depth and delivery based on assessment signals—eliminating noise while accelerating portfolio credibility.</p>
-            <ul className="mt-4 space-y-2 text-sm text-fg/90">
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Remove unfocused curriculum overhead</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Concentrate on high‑leverage repetitions</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Maintain consistent forward velocity</li>
-            </ul>
-            <dl className="mt-6 space-y-3 text-[11px]">
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Adaptive Sequencing</dt><dd>Path reshapes using completion + retention signal checkpoints.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Milestone Validation</dt><dd>Retention & application gates before unlocking next phase.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Deliverable Artifacts</dt><dd>Each phase produces a tangible portfolio asset.</dd></div>
-            </dl>
-            <footer className="mt-5 pt-4 border-t border-border/50">
-              <a href="/roadmaps" className="inline-flex items-center rounded-md border border-border/70 px-4 py-2 text-[11px] font-semibold tracking-wide hover:border-accent hover:text-accent transition">View Roadmaps <span className="ml-1.5">→</span></a>
-            </footer>
-          </article>
-
-          {/* Motivation & Accountability */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight">Motivation & Accountability</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">Beta</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-warning/15 text-warning ring-1 ring-warning/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">beta</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Lightweight gamification, peer micro‑cohorts, and progress surfacing that convert intention into durable execution habits.</p>
-            <ul className="mt-4 space-y-2 text-sm text-fg/90">
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Protect learning streak integrity</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Lower disengagement & dropout risk</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Continuous reinforcement via visible progress</li>
-            </ul>
-            <dl className="mt-6 space-y-3 text:[11px]">
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Streak Intelligence</dt><dd>Grace buffers + recovery logic to prevent momentum collapse.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Peer Squads</dt><dd>Small cohort loops for accountability & morale lift.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Progress Feed</dt><dd>Milestones surfaced to reinforce identity & cadence.</dd></div>
-            </dl>
-            <footer className="mt-5 pt-4 border-t border-border/50">
-              <a href="/contact" className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-[11px] font-semibold tracking-wide text-white shadow-sm hover:bg-accent-alt transition">Join Beta <span className="ml-1.5 text-white/70">→</span></a>
-            </footer>
-          </article>
-
-          {/* Interview & Certification Prep */}
-          <article className="group relative flex flex-col rounded-2xl bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-border/80 group-hover:ring-border" />
-            <header className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold tracking-tight">Interview & Certification Prep</h3>
-                <p className="text-xs font-medium uppercase tracking-wide text-fg-muted/70">Coming soon</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-fg-muted/10 text-fg-muted ring-1 ring-fg-muted/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">coming soon</span>
-            </header>
-            <p className="mt-4 text-sm leading-relaxed text-fg-muted/90">Scenario drills, rubric‑based mock sessions, and readiness scoring that expose gaps early—so performance on the day is a calibrated repeat, not a first attempt.</p>
-            <ul className="mt-4 space-y-2 text-sm text-fg/90">
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Surface competency gaps earlier</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Increase narrative clarity & depth</li>
-              <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" /> Improve pass & offer probability</li>
-            </ul>
-            <dl className="mt-6 space-y-3 text-[11px]">
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Scenario Bank</dt><dd>Architecture, incident, behavioral, and systems prompts.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Structured Mocks</dt><dd>Rubric scoring + actionable debrief with priority fixes.</dd></div>
-              <div className="flex gap-4"><dt className="w-28 font-semibold text-fg-muted/70 uppercase tracking-wide">Readiness Index</dt><dd>Weighted coverage & confidence scoring model.</dd></div>
-            </dl>
-            <footer className="mt-5 pt-4 border-t border-border/50">
-              <a href="/contact" className="inline-flex items-center rounded-md border border-border/70 px-4 py-2 text-[11px] font-semibold tracking-wide hover:border-accent hover:text-accent transition">Join Waitlist <span className="ml-1.5">→</span></a>
-            </footer>
-          </article>
+      <section className="mx-auto space-y-12 px-6 sm:px-10 lg:max-w-6xl">
+        <div className="space-y-3 text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-[#1f331f] sm:text-4xl">
+            Pick the solution that meets you where you are.
+          </h2>
+          <p className="text-sm leading-relaxed text-[#2b3f2b]/80 sm:text-base">
+            Every offer keeps the same principles: portfolio-ready output,
+            deliberate feedback, and momentum support. Choose live, hybrid, or
+            async cadence—then layer more as your needs evolve.
+          </p>
         </div>
 
+        <div className="grid gap-6 lg:grid-cols-2">
+          <a
+            href="/bootcamps"
+            className="group relative overflow-hidden rounded-[32px] border border-[#f5c48a] bg-[linear-gradient(135deg,#fffdf7_0%,#fff1db_55%,#ffd4a6_100%)] p-6 text-left shadow-[0_26px_60px_rgba(191,128,55,0.22)] transition hover:-translate-y-1 hover:shadow-[0_34px_80px_rgba(191,128,55,0.28)]"
+          >
+            <div className="flex items-start gap-4">
+              <span className="rounded-2xl bg-white/70 p-3 text-[#8a4d15] shadow-[6px_6px_0_rgba(191,128,55,0.28)]">
+                <Icons.Rocket className="h-5 w-5" />
+              </span>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#9c5a1f]">
+                  Live Bootcamps
+                </p>
+                <p className="text-sm leading-relaxed text-[#5a3620]/90">
+                  Six-week cohort rhythm, mentor cadences, and shipping
+                  commitments for high accountability.
+                </p>
+              </div>
+            </div>
+            <span className="mt-6 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#8a4d15]">
+              Join a bootcamp →
+            </span>
+          </a>
+
+          <a
+            href="/courses#courses-list"
+            className="group relative overflow-hidden rounded-[32px] border border-[#a7c4ae] bg-[linear-gradient(135deg,#f3fbf4_0%,#e0f4e4_55%,#c6ebd2_100%)] p-6 text-left shadow-[0_26px_60px_rgba(69,120,89,0.18)] transition hover:-translate-y-1 hover:shadow-[0_34px_80px_rgba(69,120,89,0.24)]"
+          >
+            <div className="flex items-start gap-4">
+              <span className="rounded-2xl bg-white/75 p-3 text-[#1f4f37] shadow-[6px_6px_0_rgba(69,120,89,0.22)]">
+                <Icons.GraduationCap className="h-5 w-5" />
+              </span>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#275a3f]">
+                  Self-Paced Tracks
+                </p>
+                <p className="text-sm leading-relaxed text-[#204431]/90">
+                  Modular playlists with async support, ideal for layering core
+                  mastery or bridging to bootcamps.
+                </p>
+              </div>
+            </div>
+            <span className="mt-6 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#1f4f37]">
+              Explore courses →
+            </span>
+          </a>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          {orderedSolutions.map((solution) => {
+            const statusMeta = SOLUTION_STATUS_META[solution.status];
+            return (
+              <article
+                key={solution.key}
+                className="group relative flex h-full flex-col overflow-hidden rounded-[34px] border border-[#c4d6c3] bg-white/90 p-8 shadow-[0_30px_70px_rgba(22,36,24,0.12)] backdrop-blur transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_40px_90px_rgba(22,36,24,0.18)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/65 to-white/30 opacity-0 transition group-hover:opacity-100" />
+                <header className="relative flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#2d452d]">
+                      {solution.icon && (
+                        <span className="text-xl">{solution.icon}</span>
+                      )}
+                      {solution.highlight && (
+                        <span className="inline-flex items-center rounded-full bg-[#e6f0e4] px-3 py-1 text-[11px] uppercase tracking-[0.32em] text-[#476147]">
+                          {solution.highlight}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-display text-2xl font-semibold tracking-tight text-[#1f331f]">
+                      {solution.title}
+                    </h3>
+                    <p className="text-sm font-semibold uppercase tracking-[0.32em] text-[#4c654c]">
+                      {solution.tagline}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] ring-1 ${
+                      statusMeta.badgeClass
+                    }`}
+                  >
+                    {statusMeta.label}
+                  </span>
+                </header>
+
+                <p className="relative mt-4 text-sm leading-relaxed text-[#263826]/85 sm:text-base">
+                  {solution.description}
+                </p>
+
+                <div className="relative mt-6 grid gap-6 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#557055]">
+                      You&apos;ll achieve
+                    </p>
+                    <ul className="space-y-2 text-sm text-[#1f331f]">
+                      {solution.outcomes.map((item) => (
+                        <li key={item} className="flex gap-3">
+                          <span className="mt-1 h-2 w-2 rounded-full bg-[#355035]" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#557055]">
+                      What makes it work
+                    </p>
+                    <ul className="space-y-2 text-sm text-[#1f331f]">
+                      {solution.features.map((feature) => (
+                        <li key={feature.label}>
+                          <span className="font-semibold text-[#2b3f2b]">
+                            {feature.label}:{' '}
+                          </span>
+                          <span className="text-[#293c29]/80">
+                            {feature.detail}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <footer className="relative mt-8 flex flex-wrap items-center gap-3">
+                  <a
+                    href={solution.cta.href}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#355035] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-white shadow-[0_12px_24px_rgba(28,44,28,0.25)] transition hover:bg-[#2a442a]"
+                  >
+                    {solution.cta.label}
+                    <span className="text-white/70">→</span>
+                  </a>
+                  <p className="text-[11px] uppercase tracking-[0.32em] text-[#4a624a]/80">
+                    {statusMeta.tone === 'pending'
+                      ? 'Launching soon—secure early access.'
+                      : 'Ready when you are.'}
+                  </p>
+                </footer>
+              </article>
+            );
+          })}
+        </div>
       </section>
-  {/* Growth Roadmap (added) */}
-    <section className="space-y-10" aria-labelledby="roadmap-heading">
-        <div className="max-w-4xl space-y-6">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-accent">Path Planning</p>
-      <h1 id="roadmap-heading" className="font-display text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Sample 1/3/6/12‑month roadmap</h1>
-          <p className="text-fg-muted text-base md:text-lg leading-relaxed">Whether you can commit just a few hours per week or dedicate intensive time, our training adapts to your schedule. Here’s how your journey can unfold over 1, 3, 6, and 12 months.</p>
-        </div>
-        {/* Timeline / grid (restored) */}
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            { label: '1-Month', title: 'Quick Wins', bullets: ['Focus on fundamentals', 'Hands-on intro exercises', 'First small achievement'] },
-            { label: '3-Month', title: 'Foundation', bullets: ['Build core knowledge', 'Apply skills in practice tasks', 'Complete first real project'] },
-            { label: '6-Month', title: 'Systemization', bullets: ['Advanced modules', 'Case studies & simulations', 'Capstone or portfolio work'] },
-            { label: '12-Month', title: 'Mastery', bullets: ['Specialization tracks', 'Real-world application', 'Professional differentiation'] }
-          ].map(stage => (
-            <div key={stage.label} className="group relative flex flex-col rounded-2xl border border-border/70 bg-gradient-to-br from-bg-alt/80 via-bg-alt/60 to-bg/60 p-6 shadow-sm overflow-hidden">
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition pointer-events-none bg-[radial-gradient(circle_at_20%_15%,hsla(165,70%,45%,0.15),transparent_60%)]" />
-              <header className="flex items-center justify-between mb-4 relative z-10">
-                <span className="inline-flex items-center rounded-full bg-accent/15 text-accent px-3 py-1 text-[11px] font-semibold tracking-wide">{stage.label}</span>
-                <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_0_4px] shadow-accent/20" />
-              </header>
-              <h3 className="font-display text-lg font-semibold tracking-tight relative z-10">{stage.title}</h3>
-              <ul className="mt-4 space-y-2 text-sm text-fg-muted relative z-10">
-                {stage.bullets.map(b => (
-                  <li key={b} className="flex gap-2 items-start">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
-                    <span>{b}</span>
-                  </li>
-                ))}
+
+      <section className="mx-auto max-w-6xl px-6 sm:px-10">
+        <div className="relative overflow-hidden rounded-[40px] border border-[#cbdac9] bg-white/90 p-10 shadow-[0_32px_80px_rgba(24,38,28,0.18)]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(14,49,34,0.08),rgba(14,49,34,0)),radial-gradient(circle_at_80%_15%,rgba(14,49,34,0.08),rgba(14,49,34,0))]" />
+          <div className="relative grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+            <div className="space-y-5">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-[#1f331f] sm:text-4xl">
+                Not sure where to begin? Build your stack in minutes.
+              </h2>
+              <p className="text-sm leading-relaxed text-[#2b3f2b]/80 sm:text-base">
+                Answer a few quick questions and the Solutions Wizard assembles
+                a recommended mix of bootcamps, guided roadmaps, and mentorship
+                cadence so you can start with confidence.
+              </p>
+              <ul className="space-y-2 text-sm text-[#1f331f]">
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-[#355035]" />
+                  <span>Adaptive suggestions based on your role target.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-[#355035]" />
+                  <span>
+                    Built-in guardrails to prevent taking on too much at once.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-[#355035]" />
+                  <span>Downloadable action plan with next steps and links.</span>
+                </li>
               </ul>
             </div>
-          ))}
-        </div>
-        <div className="pt-4 flex flex-wrap gap-4">
-          <a href="/products" className="inline-flex items-center rounded-md bg-accent px-6 py-3 text-sm font-semibold tracking-wide text-white shadow hover:bg-accent-alt transition">Start Training</a>
-          <a href="/roadmaps" className="inline-flex items-center rounded-md border border-border/70 px-6 py-3 text-sm font-semibold tracking-wide text-fg hover:border-accent hover:text-accent transition">Explore Roadmaps</a>
+            <div className="relative rounded-[28px] border border-[#d6e3d5] bg-white/90 p-6 shadow-[0_22px_50px_rgba(28,44,28,0.15)]">
+              <SolutionsWizard />
+            </div>
+          </div>
         </div>
       </section>
 
-      
-
-
-      {/* Wizard */}
-      <section className="space-y-10">
-        <SolutionsWizard />
-      </section>
-
-      {/* Testimonials */}
-      <section className="space-y-10" aria-labelledby="stories-heading">
-        <h2 id="stories-heading" className="font-display text-3xl font-bold tracking-tight">Success Stories</h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          {testimonials.map(t => (
-            <figure key={t.name} className="relative rounded-2xl border border-border/70 bg-bg-alt/60 p-6 text-sm leading-relaxed shadow-sm ring-1 ring-bg-alt/40 transition hover:shadow-md">
-              <blockquote className="text-fg-muted">“{t.quote}”</blockquote>
-              <figcaption className="mt-5 text-xs font-medium text-fg">{t.name} · <span className="text-fg-muted">{t.role}</span></figcaption>
+      <section className="mx-auto max-w-6xl px-6 sm:px-10">
+        <div className="space-y-8 text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-[#1f331f] sm:text-4xl">
+            Evidence it works in practice
+          </h2>
+          <p className="mx-auto max-w-3xl text-sm leading-relaxed text-[#2b3f2b]/80 sm:text-base">
+            Every story started with uncertainty and uneven progress. The common
+            thread? Clarity, deliberate repetitions, and a feedback loop they
+            could trust.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+          {testimonials.map((item) => (
+            <figure
+              key={item.name}
+              className="relative flex h-full flex-col rounded-[28px] border border-[#cbdac9] bg-white p-6 text-left shadow-[0_24px_60px_rgba(28,44,28,0.12)]"
+            >
+              <blockquote className="text-sm leading-relaxed text-[#1f331f]/85">
+                “{item.quote}”
+              </blockquote>
+              <figcaption className="mt-auto pt-5 text-sm font-semibold text-[#1f331f]">
+                {item.name}
+                <p className="text-xs font-medium uppercase tracking-[0.32em] text-[#4a624a]">
+                  {item.role}
+                </p>
+              </figcaption>
             </figure>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="space-y-8" aria-labelledby="faq-heading">
-        <h2 id="faq-heading" className="font-display text-3xl font-bold tracking-tight">FAQ</h2>
-        <div className="divide-y divide-border/60 rounded-2xl border border-border/70 overflow-hidden bg-bg-alt/40">
-          {faqs.map(f => (
-            <details key={f.q} className="group">
-              <summary className="cursor-pointer list-none px-6 py-4 flex items-center justify-between font-medium text-sm hover:bg-bg-alt/50 focus:outline-none focus:bg-bg-alt/60">
-                <span>{f.q}</span>
-                <span className="text-accent group-open:rotate-45 transition">+</span>
-              </summary>
-              <div className="px-6 pb-5 text-sm text-fg-muted leading-relaxed">{f.a}</div>
-            </details>
-          ))}
+      <section className="mx-auto max-w-5xl px-6 sm:px-10">
+        <div className="rounded-[32px] border border-[#cbdac9] bg-white/90 p-8 shadow-[0_28px_72px_rgba(28,44,28,0.16)]">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-[#1f331f] sm:text-4xl">
+            Frequently asked questions
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[#2b3f2b]/80 sm:text-base">
+            Still unsure how each solution fits? Start here or reach out—we’ll
+            help map the route that matches your pace.
+          </p>
+          <div className="mt-8 space-y-4">
+            {faqs.map((faq) => (
+              <details
+                key={faq.q}
+                className="group rounded-[22px] border border-[#d6e3d5] bg-white px-6 py-4 shadow-sm"
+              >
+                <summary className="flex cursor-pointer items-center justify-between text-left text-sm font-semibold text-[#1f331f]">
+                  {faq.q}
+                  <span className="text-accent transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-[#263826]/80">
+                  {faq.a}
+                </p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="text-center">
-        <a href="/contact" className="inline-flex items-center rounded-md bg-accent px-7 py-3.5 font-semibold tracking-wide text-white shadow-md hover:bg-accent-alt transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent/70 focus:ring-offset-bg">Start Your Path</a>
-        <div className="mt-4">
-          <a href="/roadmaps" className="inline-flex items-center gap-2 text-sm font-semibold text-fg hover:text-accent transition">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="12" cy="12" r="9" />
-              <path d="M14.5 9.5l-3 1-1 3 3-1 1-3z" fill="currentColor" stroke="none" />
-            </svg>
-            Explore Roadmaps
-          </a>
+      <section className="mx-auto max-w-4xl px-6 text-center sm:px-10">
+        <div className="space-y-6 rounded-[36px] border border-[#bcd0c1] bg-white/90 px-8 py-10 shadow-[0_30px_80px_rgba(24,38,28,0.14)]">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-[#1f331f] sm:text-4xl">
+            Ready to pick your launch point?
+          </h2>
+          <p className="text-sm leading-relaxed text-[#2b3f2b]/80 sm:text-base">
+            Book a quick fit call and we’ll co-design the mix of bootcamps,
+            roadmaps, and mentorship that matches your goals and bandwidth.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em]">
+            <a
+              href="/contact"
+              className="inline-flex items-center gap-2 rounded-full bg-[#355035] px-5 py-2 text-white shadow-[0_18px_30px_rgba(24,38,28,0.2)] transition hover:bg-[#2a442a]"
+            >
+              Talk to us <span className="text-white/70">→</span>
+            </a>
+            <a
+              href="/courses#courses-list"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-[#355035] shadow-[0_12px_22px_rgba(28,44,28,0.12)] transition hover:bg-[#f1f6ef]"
+            >
+              Browse options
+            </a>
+          </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }

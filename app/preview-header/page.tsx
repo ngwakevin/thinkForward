@@ -1,6 +1,6 @@
 'use client';
 import { Header } from '@/components/layout/Header';
-import { HeaderLiquidGlass } from '@/components/layout/Header.liquidglass.preview';
+import { HeaderPreview } from '@/components/layout/Header.preview';
 
 export default function HeaderPreviewPage() {
   return (
@@ -8,7 +8,7 @@ export default function HeaderPreviewPage() {
       <div className="mx-auto max-w-7xl px-6 py-12 space-y-16">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold tracking-tight">Header Design Comparison</h1>
-          <p className="text-lg text-fg-muted">Compare current header with liquid glass redesign</p>
+          <p className="text-lg text-fg-muted">Contrast the production header with the hero-aligned gradient preview.</p>
         </div>
 
         {/* Current Header */}
@@ -33,23 +33,25 @@ export default function HeaderPreviewPage() {
           </div>
         </section>
 
-        {/* Liquid Glass Header */}
+        {/* Hero gradient preview */}
         <section className="space-y-6">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              Complete Liquid Glass Redesign 
-              <span className="text-2xl">💚✨</span>
+              Hero Gradient Header Preview
+              <span className="text-2xl">✨</span>
             </h2>
-            <p className="text-sm text-fg-muted">Ultra-premium complete liquid glass effect with vibrant green theme and flowing shimmer</p>
+            <p className="text-sm text-fg-muted">
+              Same header structure restyled to sit on the hero&apos;s green gradient while keeping the refreshed nav and CTA layout.
+            </p>
           </div>
-          <div className="relative rounded-2xl border-2 border-emerald-500/60 overflow-visible shadow-2xl bg-bg">
-            <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
-              <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-              Complete Liquid Glass 💚✨
+          <div className="relative rounded-2xl border-2 border-[#bcd2b2] overflow-visible shadow-2xl bg-bg">
+            <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-2 rounded-lg bg-[#d9e3d5] px-3 py-1.5 text-xs font-semibold text-[#2f4522] shadow-lg">
+              <span className="h-2 w-2 rounded-full bg-[#f1b81b] animate-pulse" />
+              Hero gradient preview
             </div>
             <div className="overflow-hidden rounded-2xl">
-              <HeaderLiquidGlass />
-              <div className="h-64 bg-gradient-to-br from-emerald-50/60 via-green-50/40 to-teal-50/60 dark:from-emerald-950/30 dark:via-green-950/20 dark:to-teal-950/30 flex items-center justify-center">
+              <HeaderPreview />
+              <div className="h-64 bg-gradient-to-br from-[#f3f7ef] via-[#e3eed8] to-[#cfe0c5] flex items-center justify-center">
                 <div className="text-center space-y-2">
                   <p className="text-sm font-medium text-fg-muted">Page Content Area</p>
                 </div>

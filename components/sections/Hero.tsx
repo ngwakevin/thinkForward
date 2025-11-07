@@ -1,20 +1,70 @@
+const heroWords = [
+  { text: 'Train.', hasStub: false },
+  { text: 'Build.', hasStub: true },
+  { text: 'Elevate.', hasStub: true },
+] as const;
+
 export function Hero() {
   return (
-  <section className="relative overflow-hidden bg-gradient-to-b from-bg to-bg-alt pt-24 pb-20">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#d9e3d5] via-[#cfe0d2] to-[#bed4c6] pt-24 pb-20">
       {/* Subtle global glow */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[620px] w-[1100px] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" aria-hidden />
+      <div
+        className="pointer-events-none absolute -top-40 left-1/2 h-[620px] w-[1100px] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl"
+        aria-hidden
+      />
 
       <div className="relative mx-auto max-w-7xl px-6">
-  <div className="grid gap-10 lg:grid-cols-2 items-center">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
           {/* Text Column */}
-          <div className="text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
-            <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-tight bg-gradient-to-r from-accent to-accent-alt text-transparent bg-clip-text">Train. Build. Elevate.</h1>
-            <p className="mt-6 text-lg text-fg-muted">Accelerate practical cloud & DevOps mastery with deliberate learning paths, hands‑on labs, and mentor feedback loops.</p>
-            <div className="mt-8 flex flex-col sm:flex-row sm:justify-start items-center gap-4 lg:justify-start">
-              <a href="/products" className="inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 font-medium text-white shadow-md hover:bg-accent-alt transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">Get Started</a>
-              <a href="/roadmaps" className="inline-flex items-center justify-center rounded-md border border-border px-6 py-3 font-medium text-fg hover:border-accent hover:text-accent transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">View Roadmaps</a>
+          <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
+            <div className="space-y-4">
+              {heroWords.map((word, index) => (
+                <div
+                  key={word.text}
+                  className="relative inline-flex min-w-[240px] items-center rounded-[68px] px-9 py-6 text-white shadow-[18px_18px_0_rgba(0,32,20,0.22)] sm:min-w-[280px] sm:px-12 sm:py-7"
+                  style={{
+                    background:
+                      'linear-gradient(110deg, var(--color-accent), var(--color-accent-alt))',
+                    marginLeft:
+                      index === 0 ? 0 : index === 1 ? '3.5rem' : '1.5rem',
+                  }}
+                >
+                  {word.hasStub && (
+                    <span
+                      className="absolute left-[-3rem] top-0 hidden h-full w-12 rounded-[68px] shadow-[18px_18px_0_rgba(0,32,20,0.22)] sm:inline-block"
+                      style={{
+                        background:
+                          'linear-gradient(110deg, var(--color-accent), var(--color-accent-alt))',
+                      }}
+                    />
+                  )}
+                  <span className="font-display text-4xl leading-none tracking-tight sm:text-[3.2rem]">
+                    {word.text}
+                  </span>
+                </div>
+              ))}
             </div>
-            <p className="mt-4 text-[11px] text-fg-muted uppercase tracking-[0.2em]">No spam • Cancel anytime</p>
+
+            <p className="mt-8 text-lg text-[#2d3d2c]/80">
+              Accelerate practical cloud & DevOps mastery with deliberate learning paths, hands-on labs, and mentor feedback loops.
+            </p>
+            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-start lg:justify-start">
+              <a
+                href="/products"
+                className="inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 font-medium text-white shadow-md transition hover:bg-accent-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+              >
+                Get Started
+              </a>
+              <a
+                href="/roadmaps"
+                className="inline-flex items-center justify-center rounded-md border border-border px-6 py-3 font-medium text-fg transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+              >
+                View Roadmaps
+              </a>
+            </div>
+            <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-fg-muted">
+              No spam • Cancel anytime
+            </p>
           </div>
 
           {/* Decorative / Illustration Column (modern composition) */}

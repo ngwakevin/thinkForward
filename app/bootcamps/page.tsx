@@ -130,20 +130,58 @@ export default function BootcampsPage() {
       ]
     }
   ];
+  const certificateGradients = [
+    'linear-gradient(140deg, #fef4ff 0%, #e9d6ff 100%)',
+    'linear-gradient(140deg, #e6fbff 0%, #cdf4ff 100%)',
+    'linear-gradient(140deg, #fff3e8 0%, #ffe5f1 100%)',
+    'linear-gradient(140deg, #f1f5ff 0%, #e7f6f1 100%)',
+    'linear-gradient(140deg, #fff4ea 0%, #ffe2f2 100%)',
+    'linear-gradient(140deg, #fef4ff 0%, #e6f9ff 100%)'
+  ];
+  const colorTokens: Record<string, { tint: string; text: string; ring: string }> = {
+    accent: { tint: '#5638ff', text: '#5638ff', ring: 'rgba(86,56,255,0.32)' },
+    danger: { tint: '#f43f5e', text: '#b91c1c', ring: 'rgba(244,63,94,0.28)' },
+    warning: { tint: '#f97316', text: '#c2410c', ring: 'rgba(249,115,22,0.28)' }
+  };
 
   return (
-    <>
-      <MentorExperiencePills />
-      <div className="mx-auto max-w-7xl px-6 pt-16 pb-24 space-y-20">
-        <BootcampsClient />
+    <div className="relative isolate overflow-hidden bg-[#fef6ff]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(circle at 12% -4%, rgba(255,118,192,0.18), rgba(254,246,255,0)),' +
+            'radial-gradient(circle at 82% 8%, rgba(86,56,255,0.18), rgba(254,246,255,0)),' +
+            'radial-gradient(circle at 50% 92%, rgba(0,170,135,0.18), rgba(254,246,255,0))'
+        }}
+      />
+      <div className="relative">
+        <MentorExperiencePills />
+        <div className="mx-auto max-w-7xl px-6 pt-16 pb-24 space-y-20">
+          <BootcampsClient />
       
         {/* Certificate Tracks Section */}
-      <section id="certificate-tracks" className="space-y-10">
-        <div className="space-y-4">
-          <h2 className="font-display text-3xl font-bold tracking-tight">Bootcamp Certificate Tracks</h2>
-          <p className="text-fg-muted text-base leading-relaxed max-w-3xl">
-            Prepare for industry-recognized certifications with our structured bootcamp programs. Each track includes hands-on labs, practice exams, and expert guidance.
-          </p>
+      <section
+        id="certificate-tracks"
+        className="space-y-10 rounded-[48px] border border-white/40 bg-white/40 p-8 shadow-[0_55px_140px_rgba(49,31,73,0.22)] backdrop-blur"
+      >
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#311f49]/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.32em] text-white shadow-[0_18px_40px_rgba(49,31,73,0.3)]">
+              Certification pathways
+            </span>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-[#241639] sm:text-4xl">
+              Bootcamp Certificate Tracks
+            </h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-[#2f1f4b]/80 sm:text-base">
+              Prepare for industry-recognized certifications with our structured bootcamp programs. Each track includes
+              hands-on labs, practice exams, and expert guidance.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 self-start rounded-full bg-[#0ea5e9]/15 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#0f6290] ring-1 ring-[#0ea5e9]/30 shadow-[0_12px_32px_rgba(14,165,233,0.2)]">
+            Multi-cloud coverage
+          </span>
         </div>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {certificateTracks.map((cert, idx) => {
@@ -152,17 +190,28 @@ export default function BootcampsPage() {
               'Professional': 'bg-warning/15 text-warning',
               'Associate': 'bg-accent/15 text-accent'
             };
+            const palette = colorTokens[cert.color] || colorTokens.accent;
+            const cardBackground = certificateGradients[idx % certificateGradients.length];
             return (
-              <div key={idx} className="relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/60 to-bg-alt/20 p-6 shadow-sm group min-h-[420px]">
-                <div className="flex flex-col w-full h-full">
+              <div
+                key={idx}
+                className="relative flex min-h-[420px] flex-col overflow-hidden rounded-[32px] border border-white/60 p-6 text-[#241639] shadow-[0_32px_85px_rgba(49,31,73,0.18)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_40px_110px_rgba(49,31,73,0.26)]"
+                style={{ background: cardBackground }}
+              >
+                <div className="flex h-full w-full flex-col">
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                      <div className={`h-10 w-10 rounded-lg bg-${cert.color}/15 text-${cert.color} grid place-items-center`}>
+                      <span
+                        className="grid h-11 w-11 place-items-center rounded-2xl"
+                        style={{ backgroundColor: `${palette.tint}1a`, color: palette.tint }}
+                      >
                         <span className={`i-lucide-${cert.icon.toLowerCase()} h-5 w-5`} />
-                      </div>
+                      </span>
                       <div>
-                        <h3 className="font-display text-base font-semibold tracking-tight leading-snug">{cert.title}</h3>
-                        <p className="mt-1 text-[10px] uppercase tracking-wide text-fg-muted">{cert.provider}</p>
+                        <h3 className="font-display text-base font-semibold leading-snug tracking-tight text-[#241639]">
+                          {cert.title}
+                        </h3>
+                        <p className="mt-1 text-[10px] uppercase tracking-wide text-[#2f1f4b]/65">{cert.provider}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -171,52 +220,83 @@ export default function BootcampsPage() {
                       </span>
                     </div>
                   </div>
-                  <p className="text-fg-muted leading-relaxed text-sm line-clamp-3">{cert.description}</p>
-                  
-                  {/* Curriculum Section */}
+                  <p className="text-sm leading-relaxed text-[#2f1f4b]/80 line-clamp-3">{cert.description}</p>
+
                   <div className="mt-4 space-y-2">
-                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-fg">Curriculum</h4>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[#311f49]">Curriculum</h4>
                     <ul className="space-y-1.5">
                       {cert.curriculum.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-[11px] text-fg-muted">
-                          <span className="mt-1 h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                        <li key={i} className="flex items-start gap-2 text-[11px] text-[#2f1f4b]/70">
+                          <span
+                            className="mt-1 h-1 w-1 flex-shrink-0 rounded-full"
+                            style={{ backgroundColor: palette.tint }}
+                          />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  
+
                   <div className="mt-4 flex flex-wrap gap-2">
                     {cert.tags.map(tag => (
-                      <span key={tag} className="rounded-md bg-bg-alt/60 border border-border/50 px-2 py-0.5 text-[10px] tracking-wide text-fg-muted">
+                      <span
+                        key={tag}
+                        className="rounded-full border px-2.5 py-0.5 text-[10px] font-medium tracking-wide"
+                        style={{
+                          borderColor: `${palette.tint}33`,
+                          backgroundColor: `${palette.tint}12`,
+                          color: palette.text
+                        }}
+                      >
                         {tag}
                       </span>
                     ))}
                   </div>
                   <div className="mt-auto pt-4 flex items-center justify-between text-xs">
-                    <span className="text-fg-muted">≈ {cert.duration}</span>
+                    <span className="text-[#2f1f4b]/65">≈ {cert.duration}</span>
                     <a 
                       href={`/bootcamps/register?track=${encodeURIComponent(cert.title)}`}
-                      className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent ring-1 ring-accent/40 hover:bg-accent/25 transition"
+                      className="inline-flex items-center gap-1 rounded-full bg-[#311f49] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.32em] text-white shadow-[0_14px_36px_rgba(49,31,73,0.28)] transition hover:bg-[#5638ff]"
                     >
                       Register Now
+                      <span className="i-lucide-arrow-up-right text-[12px]" />
                     </a>
                   </div>
                 </div>
-                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 ring-accent/0 group-hover:ring-2 group-hover:ring-accent/30 transition" />
               </div>
             );
           })}
         </div>
       </section>
 
-      <section id="upcoming" className="space-y-10">
-        <h2 className="font-display text-2xl font-semibold tracking-tight">Upcoming Cohorts</h2>
+      <section
+        id="upcoming"
+        className="space-y-10 rounded-[48px] border border-white/40 bg-white/40 p-8 shadow-[0_55px_140px_rgba(49,31,73,0.22)] backdrop-blur"
+      >
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#311f49]/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.32em] text-white shadow-[0_18px_40px_rgba(49,31,73,0.3)]">
+              Cohort schedule
+            </span>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-[#241639] sm:text-4xl">
+              Upcoming Cohorts
+            </h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-[#2f1f4b]/80 sm:text-base">
+              Reserve your seat in the next live rotation. Every cohort includes weekly labs, mentor checkpoints,
+              and personalized feedback loops to keep you shipping.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 self-start rounded-full bg-[#f97316]/15 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#c2410c] ring-1 ring-[#f97316]/30 shadow-[0_12px_32px_rgba(249,115,22,0.22)]">
+            Rolling admissions
+          </span>
+        </div>
         {bootcamps.length === 0 && (
           <div className="rounded-2xl border border-border/60 bg-bg-alt/40 p-8 text-sm text-fg-muted">No bootcamps open right now. Join the waitlist via any event page.</div>
         )}
         <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-3">
-          {bootcamps.map(b => <EventCard key={b.slug} evt={b} />)}
+          {bootcamps.map((b, idx) => (
+            <EventCard key={b.slug} evt={b} variant="pastel" toneIndex={idx} />
+          ))}
         </div>
       </section>
       <section className="space-y-8">
@@ -237,7 +317,8 @@ export default function BootcampsPage() {
           </ul>
         </div>
       </section>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
