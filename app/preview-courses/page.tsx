@@ -188,22 +188,22 @@ export default function CoursesPreviewPage() {
               >
                 {/* Badge */}
                 <div className="inline-block px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-xs font-semibold text-accent uppercase">
-                  {course.level || 'Intermediate'}
+                  {course.difficulty || 'intermediate'}
                 </div>
 
                 {/* Title */}
                 <h3 className="font-display text-xl font-bold text-white">
-                  {course.name}
+                  {course.title}
                 </h3>
 
                 {/* Description */}
                 <p className="text-sm text-fg-muted leading-relaxed line-clamp-3">
-                  {course.description}
+                  {course.body}
                 </p>
 
                 {/* CTA */}
                 <a 
-                  href={`/courses/${course.slug}`}
+                  href={`/courses/${course.key}`}
                   className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent-alt transition-colors group"
                 >
                   Learn More
