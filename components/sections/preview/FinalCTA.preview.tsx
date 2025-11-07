@@ -28,7 +28,7 @@ export function FinalCTAPreview() {
 
             {/* Description */}
             <p className="text-lg md:text-xl text-fg-muted leading-relaxed max-w-2xl mx-auto">
-              Join us for an interactive session where you'll learn about our programs, meet our mentors, and get your questions answered live.
+              Join us for an interactive session where you&apos;ll learn about our programs, meet our mentors, and get your questions answered live.
             </p>
 
             {/* CTA Buttons */}

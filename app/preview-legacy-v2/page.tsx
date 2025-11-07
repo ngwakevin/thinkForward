@@ -68,7 +68,7 @@ export default function PreviewLegacyV2() {
             style={{ backgroundColor: '#400307' }}
           >
             <p className="text-center text-[1.5rem] font-medium leading-[1.8] text-white sm:text-2xl">
-              Gain experience working collaboratively with a professional designer through 1:1 mentor sessions. Incorporate your mentor's written and verbal feedback into your work, and hear an insider's perspective on the field of UX/ product designer.
+              Gain experience working collaboratively with a professional designer through 1:1 mentor sessions. Incorporate your mentor&apos;s written and verbal feedback into your work, and hear an insider&apos;s perspective on the field of UX/ product designer.
             </p>
           </div>
         </div>

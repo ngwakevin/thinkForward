@@ -58,7 +58,7 @@ export function TestimonialsPreview() {
 
               {/* Content */}
               <p className="text-base text-fg-muted leading-relaxed">
-                "{testimonial.content}"
+                &ldquo;{testimonial.content}&rdquo;
               </p>
             </div>
           ))}

@@ -13,7 +13,7 @@ export function HumanConnectionPreview() {
             Online Cloud Education With a Heavy Dose of Human Connection
           </h2>
           <p className="text-lg md:text-xl text-fg-muted leading-relaxed">
-            We believe that the best way to really learn cloud is from other people. That's why we've put mentorship, feedback, and community at the center of all of our programs and courses.
+            We believe that the best way to really learn cloud is from other people. That&apos;s why we&apos;ve put mentorship, feedback, and community at the center of all of our programs and courses.
           </p>
         </div>
 
@@ -25,7 +25,7 @@ export function HumanConnectionPreview() {
               REAL MENTORSHIP
             </h3>
             <p className="text-base md:text-lg text-fg-muted leading-relaxed">
-              Learn with an expert. Our rigorously vetted cloud mentors provide personalized feedback, encouragement, and an insider's perspective on the cloud industry.
+              Learn with an expert. Our rigorously vetted cloud mentors provide personalized feedback, encouragement, and an insider&apos;s perspective on the cloud industry.
             </p>
             <a 
               href="/mentoring" 
@@ -44,7 +44,7 @@ export function HumanConnectionPreview() {
               CREATIVE COMMUNITY
             </h3>
             <p className="text-base md:text-lg text-fg-muted leading-relaxed">
-              Just because our courses are online, doesn't mean you'll go it alone. Our online community gives plenty of opportunity for collaboration, networking, and making new friends.
+              Just because our courses are online, doesn&apos;t mean you&apos;ll go it alone. Our online community gives plenty of opportunity for collaboration, networking, and making new friends.
             </p>
             <a 
               href="/community" 

@@ -165,7 +165,7 @@ export default function CommunityPreviewPage() {
         <div className="mx-auto max-w-6xl px-6">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
             <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white">
-              What You'll Find Here
+              What You&apos;ll Find Here
             </h2>
             <p className="text-lg md:text-xl text-fg-muted leading-relaxed">
               Everything you need to connect, learn, and grow with fellow cloud professionals
@@ -238,7 +238,7 @@ export default function CommunityPreviewPage() {
 
                 {/* Quote */}
                 <p className="text-base text-fg-muted leading-relaxed">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </p>
               </div>
             ))}

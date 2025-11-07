@@ -260,7 +260,7 @@ export default function DocsIndex() {
             
             <div className="relative space-y-8 text-center">
               <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white max-w-3xl mx-auto">
-                Can't Find What You're Looking For?
+                Can&apos;t Find What You&apos;re Looking For?
               </h2>
 
               <p className="text-lg md:text-xl text-fg-muted leading-relaxed max-w-2xl mx-auto">

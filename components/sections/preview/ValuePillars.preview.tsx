@@ -65,7 +65,7 @@ export function ValuePillarsPreview() {
             Why Choose Cloudegree
           </h2>
           <p className="text-lg md:text-xl text-fg-muted leading-relaxed">
-            We've designed our programs around the pillars that matter most for cloud career success.
+            We&apos;ve designed our programs around the pillars that matter most for cloud career success.
           </p>
         </div>
 

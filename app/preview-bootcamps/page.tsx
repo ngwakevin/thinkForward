@@ -221,7 +221,7 @@ export default function BootcampsPreviewPage() {
                     {/* Outcomes */}
                     <div>
                       <h4 className="text-sm font-semibold text-white uppercase tracking-wide mb-3">
-                        What You'll Learn
+                        What You&apos;ll Learn
                       </h4>
                       <ul className="grid sm:grid-cols-2 gap-3">
                         {track.outcomes.map((outcome, oIndex) => (

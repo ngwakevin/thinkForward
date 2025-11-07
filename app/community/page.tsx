@@ -232,7 +232,7 @@ export default async function CommunityPage() {
                     <div className="text-sm text-fg-muted">{testimonial.role}</div>
                   </div>
                 </div>
-                <p className="text-fg-muted leading-relaxed italic">"{testimonial.quote}"</p>
+                <p className="text-fg-muted leading-relaxed italic">&ldquo;{testimonial.quote}&rdquo;</p>
               </div>
             ))}
           </div>

@@ -28,7 +28,7 @@ export function SupportEcosystemPreview() {
             Comprehensive Support Ecosystem
           </h2>
           <p className="text-lg md:text-xl text-fg-muted leading-relaxed">
-            You're never alone on your cloud journey. Our multi-layered support system ensures you always have the help you need.
+            You&apos;re never alone on your cloud journey. Our multi-layered support system ensures you always have the help you need.
           </p>
         </div>
 
@@ -79,7 +79,7 @@ export function SupportEcosystemPreview() {
                   Join 5,000+ Cloud Professionals
                 </h3>
                 <p className="text-lg text-fg-muted leading-relaxed">
-                  Be part of a thriving community that supports each other's growth and celebrates wins together.
+                  Be part of a thriving community that supports each other&apos;s growth and celebrates wins together.
                 </p>
               </div>
             </div>

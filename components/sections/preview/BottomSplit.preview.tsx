@@ -30,10 +30,10 @@ export function BottomSplitPreview() {
                 </span>
               </div>
               <h3 className="font-display text-3xl md:text-4xl font-bold text-white">
-                Have Questions? Let's Talk!
+                Have Questions? Let&apos;s Talk!
               </h3>
               <p className="text-base md:text-lg text-fg-muted leading-relaxed">
-                Chat with our team on WhatsApp. We're here to help you find the right path for your cloud career.
+                Chat with our team on WhatsApp. We&apos;re here to help you find the right path for your cloud career.
               </p>
             </div>
 
@@ -58,7 +58,7 @@ export function BottomSplitPreview() {
                 className="bg-gradient-to-br from-bg-alt/60 to-bg/80 rounded-2xl p-6 md:p-8 shadow-sm border border-border/60 hover:border-accent/50 transition-all duration-200 space-y-4"
               >
                 <p className="text-base md:text-lg text-fg-muted leading-relaxed line-clamp-4">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </p>
                 <div className="pt-2 border-t border-border/40">
                   <div className="font-semibold text-white">{testimonial.author}</div>
