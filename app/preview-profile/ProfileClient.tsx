@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Session } from 'next-auth';
+import Image from 'next/image';
 
 interface ProfileClientProps {
   initialUserData: any;
@@ -284,9 +285,11 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               {/* Avatar */}
               <div className="relative">
                 {profile?.avatarUrl ? (
-                  <img
+                  <Image
                     src={profile.avatarUrl}
                     alt={userData.name}
+                    width={128}
+                    height={128}
                     className="w-32 h-32 rounded-full object-cover shadow-lg shadow-accent/30 border-4 border-accent/20"
                   />
                 ) : (
@@ -340,7 +343,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
 
             {/* Stats Grid - Overlapping style */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-white/10">
-              {userData.stats.map((stat, index) => (
+              {userData.stats.map((stat: any, index: number) => (
                 <div key={index} className="text-center">
                   <div className="text-3xl font-bold text-accent mb-1">{stat.value}</div>
                   <div className="text-sm text-fg-muted uppercase tracking-wide">{stat.label}</div>
@@ -387,7 +390,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Current Courses</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {userData.currentCourses.map((course, index) => (
+                  {userData.currentCourses.map((course: any, index: number) => (
                     <div
                       key={index}
                       className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-2xl p-6 border border-white/5 hover:border-accent/30 transition-all space-y-4"
@@ -436,7 +439,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Completed Courses</h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {userData.completedCourses.map((course, index) => (
+                  {userData.completedCourses.map((course: any, index: number) => (
                     <div
                       key={index}
                       className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-2xl p-6 border border-white/5 hover:border-accent/30 transition-all"
@@ -477,8 +480,8 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                 <h3 className="text-xl font-bold text-white">Active Certifications</h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   {userData.certifications
-                    .filter((cert) => cert.status === 'active')
-                    .map((cert, index) => (
+                    .filter((cert: any) => cert.status === 'active')
+                    .map((cert: any, index: number) => (
                       <div
                         key={index}
                         className="bg-gradient-to-br from-accent/10 to-accent-alt/5 rounded-2xl p-8 border border-accent/20 hover:border-accent/40 transition-all space-y-4"
@@ -525,8 +528,8 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                 <h3 className="text-xl font-bold text-white">In Progress</h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   {userData.certifications
-                    .filter((cert) => cert.status === 'in-progress')
-                    .map((cert, index) => (
+                    .filter((cert: any) => cert.status === 'in-progress')
+                    .map((cert: any, index: number) => (
                       <div
                         key={index}
                         className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-2xl p-8 border border-white/5 hover:border-accent/30 transition-all space-y-4"
@@ -560,8 +563,8 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                 <h3 className="text-xl font-bold text-white">Planned</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {userData.certifications
-                    .filter((cert) => cert.status === 'planned')
-                    .map((cert, index) => (
+                    .filter((cert: any) => cert.status === 'planned')
+                    .map((cert: any, index: number) => (
                       <div
                         key={index}
                         className="bg-gradient-to-br from-bg/60 to-bg-alt/40 rounded-2xl p-6 border border-white/5 hover:border-accent/30 transition-all space-y-3"
@@ -592,7 +595,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               </div>
 
               <div className="space-y-6">
-                {userData.learningPaths.map((path, index) => (
+                {userData.learningPaths.map((path: any, index: number) => (
                   <div
                     key={index}
                     className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-3xl p-8 border border-white/5 hover:border-accent/30 transition-all space-y-6"
@@ -631,7 +634,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
 
                     {/* Skills Tags */}
                     <div className="flex flex-wrap gap-2">
-                      {path.skills.map((skill, skillIndex) => (
+                      {path.skills.map((skill: any, skillIndex: number) => (
                         <span
                           key={skillIndex}
                           className="px-3 py-1 bg-accent/10 text-accent text-xs font-semibold rounded-full border border-accent/20"
@@ -645,7 +648,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                     <div className="space-y-3 pt-4 border-t border-white/5">
                       <h4 className="text-sm font-bold text-white uppercase tracking-wide">Milestones</h4>
                       <div className="grid md:grid-cols-2 gap-3">
-                        {path.milestones.map((milestone, mIndex) => (
+                        {path.milestones.map((milestone: any, mIndex: number) => (
                           <div
                             key={mIndex}
                             className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
@@ -706,7 +709,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
 
                       {/* Specialties */}
                       <div className="flex flex-wrap gap-2">
-                        {userData.mentorship.mentor.specialties.map((specialty, index) => (
+                        {userData.mentorship.mentor.specialties.map((specialty: any, index: number) => (
                           <span
                             key={index}
                             className="px-3 py-1 bg-accent/20 text-accent text-xs font-semibold rounded-full border border-accent/30"
@@ -741,7 +744,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Upcoming Sessions</h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {userData.mentorship.upcomingSessions.map((session, index) => (
+                  {userData.mentorship.upcomingSessions.map((session: any, index: number) => (
                     <div
                       key={index}
                       className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-2xl p-6 border border-white/5 hover:border-accent/30 transition-all space-y-3"
@@ -773,7 +776,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Past Sessions</h3>
                 <div className="space-y-3">
-                  {userData.mentorship.pastSessions.map((session, index) => (
+                  {userData.mentorship.pastSessions.map((session: any, index: number) => (
                     <div
                       key={index}
                       className="bg-gradient-to-br from-bg/60 to-bg-alt/40 rounded-xl p-6 border border-white/5 hover:border-accent/30 transition-all"
@@ -805,7 +808,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                   </button>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {userData.mentorship.mentoringOthers.map((mentee, index) => (
+                  {userData.mentorship.mentoringOthers.map((mentee: any, index: number) => (
                     <div
                       key={index}
                       className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-2xl p-6 border border-white/5 hover:border-accent/30 transition-all space-y-4"
@@ -843,7 +846,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               <h2 className="text-3xl font-bold text-white mb-6">Achievements</h2>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userData.achievements.map((achievement, index) => (
+                {userData.achievements.map((achievement: any, index: number) => (
                   <div
                     key={index}
                     className="bg-gradient-to-br from-accent/10 to-accent-alt/5 rounded-2xl p-8 border border-accent/20 hover:border-accent/40 transition-all text-center space-y-4"
@@ -866,7 +869,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
               <h2 className="text-3xl font-bold text-white mb-6">Recent Activity</h2>
               
               <div className="space-y-4">
-                {userData.recentActivity.map((activity, index) => (
+                {userData.recentActivity.map((activity: any, index: number) => (
                   <div
                     key={index}
                     className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-2xl p-6 border border-white/5 hover:border-accent/30 transition-all"
