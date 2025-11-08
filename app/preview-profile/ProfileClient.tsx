@@ -23,7 +23,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
   const learningData = initialUserData?.learningData;
   const stats = learningData?.stats;
   
-  // Real user data with fallbacks
+  // Real user data with empty fallbacks (no mock data)
   const userData = {
     name: fullName || displayName,
     email: email,
@@ -33,7 +33,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
     location: profile?.location || "Not specified",
     bio: profile?.bio || "Passionate about cloud technologies and continuous learning.",
     
-    // Use real stats if available, otherwise show mock
+    // Use real stats if available, otherwise show 0
     stats: [
       { label: "Courses Completed", value: stats?.coursesCompleted?.toString() || "0" },
       { label: "Hours Learned", value: stats?.hoursLearned?.toString() || "0" },
@@ -41,259 +41,30 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
       { label: "Streak Days", value: stats?.streakDays?.toString() || "0" },
     ],
     
-    // Use real course data if available
-    currentCourses: learningData?.currentCourses || [
-      {
-        title: "AWS Solutions Architect Professional",
-        progress: 67,
-        nextLesson: "Advanced VPC Design Patterns",
-        difficulty: "advanced",
-      },
-      {
-        title: "Kubernetes Administration",
-        progress: 45,
-        nextLesson: "Storage & StatefulSets",
-        difficulty: "intermediate",
-      },
-      {
-        title: "Terraform Deep Dive",
-        progress: 82,
-        nextLesson: "Module Development",
-        difficulty: "intermediate",
-      },
-    ],
+    // Use real course data only
+    currentCourses: learningData?.currentCourses || [],
     
-    // Use real completed courses if available
-    completedCourses: learningData?.completedCourses || [
-      {
-        title: "AWS Solutions Architect Associate",
-        completedDate: "March 2024",
-        certificate: true,
-      },
-      {
-        title: "Azure Fundamentals",
-        completedDate: "February 2024",
-        certificate: true,
-      },
-      {
-        title: "Docker & Containers",
-        completedDate: "January 2024",
-        certificate: false,
-      },
-    ],
+    // Use real completed courses only
+    completedCourses: learningData?.completedCourses || [],
     
-    // Use real achievements if available
-    achievements: learningData?.achievements || [
-      {
-        id: "first-cert",
-        icon: "🏆",
-        title: "First Certification",
-        description: "Earned your first cloud certification",
-        date: "February 2024",
-      },
-      {
-        id: "20-day-streak",
-        icon: "🔥",
-        title: "20 Day Streak",
-        description: "Maintained a 20-day learning streak",
-        date: "March 2024",
-      },
-      {
-        id: "community-helper",
-        icon: "⭐",
-        title: "Community Helper",
-        description: "Answered 10+ community questions",
-        date: "March 2024",
-      },
-    ],
+    // Use real achievements only
+    achievements: learningData?.achievements || [],
     
-    // Use real activity if available
-    recentActivity: learningData?.recentActivity || [
-      {
-        id: "1",
-        type: "course",
-        action: "Completed lesson",
-        title: "VPC Peering & Transit Gateway",
-        time: "2 hours ago",
-      },
-      {
-        type: "achievement",
-        action: "Unlocked achievement",
-        title: "20 Day Streak",
-        time: "1 day ago",
-      },
-      {
-        type: "community",
-        action: "Posted in community",
-        title: "Best practices for multi-region deployments?",
-        time: "3 days ago",
-      },
-      {
-        type: "course",
-        action: "Started new course",
-        title: "Kubernetes Administration",
-        time: "1 week ago",
-      },
-    ],
+    // Use real activity only
+    recentActivity: learningData?.recentActivity || [],
     
-    // Use real certifications if available
-    certifications: learningData?.certifications || [
-      {
-        id: "aws-saa",
-        name: "AWS Certified Solutions Architect - Associate",
-        issuer: "Amazon Web Services",
-        issueDate: "March 2024",
-        expiryDate: "March 2027",
-        credentialId: "AWS-ASA-12345",
-        status: "active",
-        logo: "☁️",
-      },
-      {
-        name: "Microsoft Azure Fundamentals",
-        issuer: "Microsoft",
-        issueDate: "February 2024",
-        expiryDate: "Does not expire",
-        credentialId: "MS-AZ900-67890",
-        status: "active",
-        logo: "🔷",
-      },
-      {
-        name: "Certified Kubernetes Administrator",
-        issuer: "Cloud Native Computing Foundation",
-        issueDate: "In Progress",
-        expiryDate: "Expected May 2024",
-        credentialId: "—",
-        status: "in-progress",
-        logo: "⚓",
-      },
-      {
-        name: "HashiCorp Terraform Associate",
-        issuer: "HashiCorp",
-        issueDate: "Planned",
-        expiryDate: "—",
-        credentialId: "—",
-        status: "planned",
-        logo: "🔧",
-      },
-    ],
+    // Use real certifications only
+    certifications: learningData?.certifications || [],
     
-    // Use real learning paths if available
-    learningPaths: learningData?.learningPaths || [
-      {
-        id: "cloud-architect",
-        title: "Cloud Solutions Architect Track",
-        description: "Master cloud architecture patterns across AWS, Azure, and GCP",
-        progress: 68,
-        totalCourses: 12,
-        completedCourses: 8,
-        difficulty: "advanced",
-        estimatedTime: "240 hours",
-        skills: ["Architecture Design", "Multi-Cloud", "Cost Optimization", "Security"],
-        milestones: [
-          { title: "AWS Solutions Architect Associate", completed: true },
-          { title: "Azure Architecture", completed: true },
-          { title: "AWS Solutions Architect Professional", completed: false },
-          { title: "Cloud Security Specialist", completed: false },
-        ],
-      },
-      {
-        title: "DevOps Engineering Mastery",
-        description: "End-to-end DevOps practices, CI/CD, and infrastructure automation",
-        progress: 45,
-        totalCourses: 10,
-        completedCourses: 4,
-        difficulty: "intermediate",
-        estimatedTime: "180 hours",
-        skills: ["CI/CD", "Docker", "Kubernetes", "Terraform", "Monitoring"],
-        milestones: [
-          { title: "Docker & Containers", completed: true },
-          { title: "Kubernetes Fundamentals", completed: true },
-          { title: "CI/CD Pipelines", completed: false },
-          { title: "Infrastructure as Code", completed: false },
-        ],
-      },
-      {
-        title: "Security & Compliance Specialist",
-        description: "Cloud security best practices and compliance frameworks",
-        progress: 20,
-        totalCourses: 8,
-        completedCourses: 2,
-        difficulty: "advanced",
-        estimatedTime: "160 hours",
-        skills: ["Cloud Security", "IAM", "Compliance", "Threat Detection"],
-        milestones: [
-          { title: "Cloud Security Fundamentals", completed: true },
-          { title: "Identity & Access Management", completed: false },
-          { title: "Compliance & Governance", completed: false },
-          { title: "Advanced Threat Protection", completed: false },
-        ],
-      },
-    ],
+    // Use real learning paths only
+    learningPaths: learningData?.learningPaths || [],
     
-    // Use real mentorship data if available
+    // Use real mentorship data only
     mentorship: learningData?.mentorship || {
-      role: "mentee",
-      mentor: {
-        name: "Michael Rodriguez",
-        role: "Senior Cloud Architect at AWS",
-        avatar: "MR",
-        experience: "12+ years",
-        specialties: ["AWS", "Microservices", "System Design"],
-        nextSession: "Friday, Nov 10 at 2:00 PM PST",
-        totalSessions: 6,
-      },
-      upcomingSessions: [
-        {
-          date: "Friday, Nov 10",
-          time: "2:00 PM - 3:00 PM PST",
-          topic: "Multi-region Architecture Review",
-          type: "1-on-1",
-        },
-        {
-          date: "Friday, Nov 17",
-          time: "2:00 PM - 3:00 PM PST",
-          topic: "Career Path Discussion",
-          type: "1-on-1",
-        },
-      ],
-      pastSessions: [
-        {
-          date: "Nov 3, 2024",
-          topic: "AWS Well-Architected Framework",
-          duration: "60 min",
-          notes: "Reviewed the 5 pillars and how to apply them to my current project",
-        },
-        {
-          date: "Oct 27, 2024",
-          topic: "Resume & Interview Preparation",
-          duration: "60 min",
-          notes: "Practiced technical interviews and updated my resume",
-        },
-        {
-          date: "Oct 20, 2024",
-          topic: "Kubernetes Best Practices",
-          duration: "60 min",
-          notes: "Deep dive into StatefulSets and persistent storage",
-        },
-      ],
-      mentoringOthers: [
-        {
-          name: "Alex Thompson",
-          avatar: "AT",
-          role: "Aspiring Cloud Engineer",
-          startDate: "October 2024",
-          sessions: 3,
-          nextSession: "Tuesday, Nov 8 at 5:00 PM PST",
-        },
-        {
-          name: "Jamie Lee",
-          avatar: "JL",
-          role: "Junior DevOps Engineer",
-          startDate: "September 2024",
-          sessions: 5,
-          nextSession: "Thursday, Nov 9 at 4:00 PM PST",
-        },
-      ],
+      role: "none",
+      upcomingSessions: [],
+      pastSessions: [],
+      mentoringOthers: [],
     },
   };
 
