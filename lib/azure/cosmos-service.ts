@@ -110,6 +110,23 @@ export interface Mentorship {
   mentoringOthers?: Mentee[];
 }
 
+export interface Bootcamp {
+  id: string;
+  title: string;
+  description: string;
+  status: 'enrolled' | 'in-progress' | 'completed' | 'upcoming';
+  startDate: string;
+  endDate: string;
+  progress: number;
+  cohort?: string;
+  instructors?: string[];
+  schedule?: string;
+  location?: 'online' | 'hybrid' | 'in-person';
+  topics?: string[];
+  completionCertificate?: boolean;
+  enrolledAt?: string;
+}
+
 export interface LearningData {
   stats?: {
     coursesCompleted: number;
@@ -125,6 +142,7 @@ export interface LearningData {
   achievements?: Achievement[];
   recentActivity?: Activity[];
   mentorship?: Mentorship;
+  bootcamps?: Bootcamp[];
 }
 
 // Define a User interface that matches our schema

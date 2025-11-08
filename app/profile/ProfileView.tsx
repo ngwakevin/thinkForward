@@ -10,7 +10,7 @@ interface ProfileClientProps {
 }
 
 export default function ProfileClient({ initialUserData, session }: ProfileClientProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'achievements' | 'activity' | 'certifications' | 'learning-paths' | 'mentorship'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'achievements' | 'activity' | 'certifications' | 'learning-paths' | 'bootcamps' | 'mentorship'>('overview');
 
   // Extract real user data or use defaults
   const profile = initialUserData?.profile || {};
@@ -58,6 +58,9 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
     
     // Use real learning paths only
     learningPaths: learningData?.learningPaths || [],
+    
+    // Use real bootcamp data only
+    bootcamps: learningData?.bootcamps || [],
     
     // Use real mentorship data only
     mentorship: learningData?.mentorship || {
@@ -155,7 +158,7 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
       <section className="relative bg-bg-alt py-8 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-            {(['overview', 'courses', 'certifications', 'learning-paths', 'mentorship', 'achievements', 'activity'] as const).map((tab) => (
+            {(['overview', 'courses', 'certifications', 'learning-paths', 'bootcamps', 'mentorship', 'achievements', 'activity'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -631,6 +634,161 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Bootcamps Tab */}
+          {activeTab === 'bootcamps' && (
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold text-white">My Bootcamps</h2>
+                <button className="px-6 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                  Browse Bootcamps
+                </button>
+              </div>
+
+              {userData.bootcamps.length === 0 ? (
+                <div className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-3xl p-12 border border-white/10 text-center">
+                  <div className="text-6xl mb-4">🎓</div>
+                  <h3 className="text-xl font-bold text-white mb-2">No Bootcamps Yet</h3>
+                  <p className="text-fg-muted mb-6">Enroll in a bootcamp to accelerate your cloud journey</p>
+                  <button className="px-6 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                    Explore Bootcamps
+                  </button>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {userData.bootcamps.map((bootcamp: any, index: number) => (
+                    <div
+                      key={bootcamp.id || index}
+                      className="bg-gradient-to-br from-bg/80 to-bg-alt/60 rounded-3xl p-8 border border-white/5 hover:border-accent/30 transition-all space-y-6"
+                    >
+                      {/* Status Badge */}
+                      <div className="flex items-start justify-between">
+                        <div className={`inline-block px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide ${
+                          bootcamp.status === 'completed' 
+                            ? 'bg-green-500/20 border border-green-500/40 text-green-400'
+                            : bootcamp.status === 'in-progress'
+                            ? 'bg-accent/20 border border-accent/40 text-accent'
+                            : bootcamp.status === 'upcoming'
+                            ? 'bg-blue-500/20 border border-blue-500/40 text-blue-400'
+                            : 'bg-purple-500/20 border border-purple-500/40 text-purple-400'
+                        }`}>
+                          {bootcamp.status.replace('-', ' ')}
+                        </div>
+                        {bootcamp.completionCertificate && bootcamp.status === 'completed' && (
+                          <div className="text-2xl">🏆</div>
+                        )}
+                      </div>
+
+                      {/* Bootcamp Info */}
+                      <div className="space-y-3">
+                        <h3 className="text-2xl font-bold text-white">{bootcamp.title}</h3>
+                        <p className="text-sm text-fg-muted leading-relaxed">{bootcamp.description}</p>
+                      </div>
+
+                      {/* Progress Bar (for enrolled, in-progress, or completed) */}
+                      {(bootcamp.status !== 'upcoming') && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-fg-muted font-semibold">Progress</span>
+                            <span className="text-accent font-bold">{bootcamp.progress}%</span>
+                          </div>
+                          <div className="h-3 bg-bg/60 rounded-full overflow-hidden border border-white/5">
+                            <div
+                              className="h-full bg-gradient-to-r from-accent to-accent-alt rounded-full transition-all duration-500"
+                              style={{ width: `${bootcamp.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bootcamp Details Grid */}
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                        {bootcamp.cohort && (
+                          <div>
+                            <div className="text-xs text-fg-muted uppercase tracking-wide mb-1">Cohort</div>
+                            <div className="text-sm text-white font-semibold">{bootcamp.cohort}</div>
+                          </div>
+                        )}
+                        {bootcamp.location && (
+                          <div>
+                            <div className="text-xs text-fg-muted uppercase tracking-wide mb-1">Format</div>
+                            <div className="text-sm text-white font-semibold capitalize">{bootcamp.location}</div>
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-xs text-fg-muted uppercase tracking-wide mb-1">Start Date</div>
+                          <div className="text-sm text-white font-semibold">{bootcamp.startDate}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-fg-muted uppercase tracking-wide mb-1">End Date</div>
+                          <div className="text-sm text-white font-semibold">{bootcamp.endDate}</div>
+                        </div>
+                      </div>
+
+                      {/* Schedule */}
+                      {bootcamp.schedule && (
+                        <div className="pt-4 border-t border-white/5">
+                          <div className="text-xs text-fg-muted uppercase tracking-wide mb-2">Schedule</div>
+                          <div className="text-sm text-white">{bootcamp.schedule}</div>
+                        </div>
+                      )}
+
+                      {/* Topics/Skills */}
+                      {bootcamp.topics && bootcamp.topics.length > 0 && (
+                        <div className="pt-4 border-t border-white/5">
+                          <div className="text-xs text-fg-muted uppercase tracking-wide mb-3">Topics Covered</div>
+                          <div className="flex flex-wrap gap-2">
+                            {bootcamp.topics.map((topic: string, topicIndex: number) => (
+                              <span
+                                key={topicIndex}
+                                className="px-3 py-1 bg-accent/10 text-accent text-xs font-semibold rounded-full border border-accent/20"
+                              >
+                                {topic}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Instructors */}
+                      {bootcamp.instructors && bootcamp.instructors.length > 0 && (
+                        <div className="pt-4 border-t border-white/5">
+                          <div className="text-xs text-fg-muted uppercase tracking-wide mb-2">Instructors</div>
+                          <div className="text-sm text-white font-semibold">
+                            {bootcamp.instructors.join(', ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-4">
+                        {bootcamp.status === 'in-progress' && (
+                          <button className="flex-1 px-4 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                            Continue Learning
+                          </button>
+                        )}
+                        {bootcamp.status === 'upcoming' && (
+                          <button className="flex-1 px-4 py-3 bg-accent/10 text-accent font-bold rounded-lg hover:bg-accent/20 transition-colors text-sm uppercase tracking-wide border border-accent/20">
+                            View Details
+                          </button>
+                        )}
+                        {bootcamp.status === 'completed' && bootcamp.completionCertificate && (
+                          <button className="flex-1 px-4 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                            View Certificate
+                          </button>
+                        )}
+                        {bootcamp.status === 'enrolled' && (
+                          <button className="flex-1 px-4 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                            Start Bootcamp
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
