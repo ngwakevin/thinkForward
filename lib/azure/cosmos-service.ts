@@ -1,6 +1,132 @@
 // Azure Cosmos DB service for user operations
 import { container, database } from './cosmos-config';
 
+// Learning data types
+export interface Course {
+  id: string;
+  title: string;
+  progress: number;
+  nextLesson: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  enrolledAt?: string;
+  lastAccessedAt?: string;
+}
+
+export interface CompletedCourse {
+  id: string;
+  title: string;
+  completedDate: string;
+  certificate: boolean;
+  certificateUrl?: string;
+  finalScore?: number;
+}
+
+export interface Certification {
+  id?: string;
+  name: string;
+  issuer: string;
+  issueDate: string;
+  expiryDate: string;
+  credentialId: string;
+  status: 'active' | 'in-progress' | 'planned' | 'expired';
+  logo?: string;
+  verificationUrl?: string;
+}
+
+export interface Milestone {
+  title: string;
+  completed: boolean;
+  completedDate?: string;
+}
+
+export interface LearningPath {
+  id: string;
+  title: string;
+  description: string;
+  progress: number;
+  totalCourses: number;
+  completedCourses: number;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  estimatedTime: string;
+  skills: string[];
+  milestones: Milestone[];
+  enrolledAt?: string;
+}
+
+export interface Achievement {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  date: string;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+}
+
+export interface Activity {
+  id: string;
+  type: 'course' | 'achievement' | 'community' | 'certification';
+  action: string;
+  title: string;
+  time: string;
+  metadata?: any;
+}
+
+export interface MentorInfo {
+  userId: string;
+  name: string;
+  role: string;
+  avatar: string;
+  experience: string;
+  specialties: string[];
+  nextSession?: string;
+  totalSessions: number;
+}
+
+export interface MentorshipSession {
+  id: string;
+  date: string;
+  time?: string;
+  topic: string;
+  duration?: string;
+  type?: '1-on-1' | 'group';
+  notes?: string;
+}
+
+export interface Mentee {
+  userId: string;
+  name: string;
+  role: string;
+  avatar: string;
+  since: string;
+  totalSessions: number;
+  progress: string;
+}
+
+export interface Mentorship {
+  role: 'mentor' | 'mentee' | 'both';
+  mentor?: MentorInfo;
+  upcomingSessions?: MentorshipSession[];
+  pastSessions?: MentorshipSession[];
+  mentoringOthers?: Mentee[];
+}
+
+export interface LearningData {
+  stats?: {
+    coursesCompleted: number;
+    hoursLearned: number;
+    certificationsCount: number;
+    streakDays: number;
+    lastActivityDate?: string;
+  };
+  currentCourses?: Course[];
+  completedCourses?: CompletedCourse[];
+  certifications?: Certification[];
+  learningPaths?: LearningPath[];
+  achievements?: Achievement[];
+  recentActivity?: Activity[];
+  mentorship?: Mentorship;
+}
+
 // Define a User interface that matches our schema
 export interface User {
   id: string;
@@ -49,6 +175,7 @@ export interface User {
     experience?: any | null;
     showProfilePublic?: boolean | null;
   } | null;
+  learningData?: LearningData | null;
 }
 
 // Define interfaces to match our database schema

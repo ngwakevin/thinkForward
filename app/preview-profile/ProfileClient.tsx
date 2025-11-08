@@ -19,6 +19,10 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
   const email = initialUserData?.email || session.user?.email || '';
   const avatar = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   
+  // Extract learning data with fallbacks
+  const learningData = initialUserData?.learningData;
+  const stats = learningData?.stats;
+  
   // Real user data with fallbacks
   const userData = {
     name: fullName || displayName,
@@ -28,13 +32,17 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
     avatar: avatar,
     location: profile?.location || "Not specified",
     bio: profile?.bio || "Passionate about cloud technologies and continuous learning.",
+    
+    // Use real stats if available, otherwise show mock
     stats: [
-      { label: "Courses Completed", value: initialUserData?.coursesCompleted || "0" },
-      { label: "Hours Learned", value: initialUserData?.hoursLearned || "0" },
-      { label: "Certifications", value: initialUserData?.certificationsCount || "0" },
-      { label: "Streak Days", value: initialUserData?.streakDays || "0" },
+      { label: "Courses Completed", value: stats?.coursesCompleted?.toString() || "0" },
+      { label: "Hours Learned", value: stats?.hoursLearned?.toString() || "0" },
+      { label: "Certifications", value: stats?.certificationsCount?.toString() || "0" },
+      { label: "Streak Days", value: stats?.streakDays?.toString() || "0" },
     ],
-    currentCourses: initialUserData?.currentCourses || [
+    
+    // Use real course data if available
+    currentCourses: learningData?.currentCourses || [
       {
         title: "AWS Solutions Architect Professional",
         progress: 67,
@@ -54,7 +62,9 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
         difficulty: "intermediate",
       },
     ],
-    completedCourses: initialUserData?.completedCourses || [
+    
+    // Use real completed courses if available
+    completedCourses: learningData?.completedCourses || [
       {
         title: "AWS Solutions Architect Associate",
         completedDate: "March 2024",
@@ -71,28 +81,36 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
         certificate: false,
       },
     ],
-    achievements: initialUserData?.achievements || [
+    
+    // Use real achievements if available
+    achievements: learningData?.achievements || [
       {
+        id: "first-cert",
         icon: "🏆",
         title: "First Certification",
         description: "Earned your first cloud certification",
         date: "February 2024",
       },
       {
+        id: "20-day-streak",
         icon: "🔥",
         title: "20 Day Streak",
         description: "Maintained a 20-day learning streak",
         date: "March 2024",
       },
       {
+        id: "community-helper",
         icon: "⭐",
         title: "Community Helper",
         description: "Answered 10+ community questions",
         date: "March 2024",
       },
     ],
-    recentActivity: initialUserData?.recentActivity || [
+    
+    // Use real activity if available
+    recentActivity: learningData?.recentActivity || [
       {
+        id: "1",
         type: "course",
         action: "Completed lesson",
         title: "VPC Peering & Transit Gateway",
@@ -117,8 +135,11 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
         time: "1 week ago",
       },
     ],
-    certifications: initialUserData?.certifications || [
+    
+    // Use real certifications if available
+    certifications: learningData?.certifications || [
       {
+        id: "aws-saa",
         name: "AWS Certified Solutions Architect - Associate",
         issuer: "Amazon Web Services",
         issueDate: "March 2024",
@@ -155,8 +176,11 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
         logo: "🔧",
       },
     ],
-    learningPaths: initialUserData?.learningPaths || [
+    
+    // Use real learning paths if available
+    learningPaths: learningData?.learningPaths || [
       {
+        id: "cloud-architect",
         title: "Cloud Solutions Architect Track",
         description: "Master cloud architecture patterns across AWS, Azure, and GCP",
         progress: 68,
@@ -205,7 +229,9 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
         ],
       },
     ],
-    mentorship: initialUserData?.mentorship || {
+    
+    // Use real mentorship data if available
+    mentorship: learningData?.mentorship || {
       role: "mentee",
       mentor: {
         name: "Michael Rodriguez",
