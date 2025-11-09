@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import type { Session } from 'next-auth';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface ProfileClientProps {
   initialUserData: any;
@@ -12,6 +12,7 @@ interface ProfileClientProps {
 
 export default function ProfileClient({ initialUserData, session }: ProfileClientProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const tabParam = searchParams?.get('tab');
   
   // Set initial tab from URL parameter if valid
@@ -655,7 +656,10 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
             <div className="space-y-8">
               <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold text-white">My Bootcamps</h2>
-                <button className="px-6 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                <button 
+                  onClick={() => router.push('/bootcamps')}
+                  className="px-6 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide"
+                >
                   Browse Bootcamps
                 </button>
               </div>
@@ -665,7 +669,10 @@ export default function ProfileClient({ initialUserData, session }: ProfileClien
                   <div className="text-6xl mb-4">🎓</div>
                   <h3 className="text-xl font-bold text-white mb-2">No Bootcamps Yet</h3>
                   <p className="text-fg-muted mb-6">Enroll in a bootcamp to accelerate your cloud journey</p>
-                  <button className="px-6 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide">
+                  <button 
+                    onClick={() => router.push('/bootcamps')}
+                    className="px-6 py-3 bg-accent text-bg font-bold rounded-lg hover:bg-accent/90 transition-colors text-sm uppercase tracking-wide"
+                  >
                     Explore Bootcamps
                   </button>
                 </div>
