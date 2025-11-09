@@ -72,6 +72,7 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
     throw new Error('Valid email format is required for bootcamp registration');
   }
   
+  const normalizedEmail = input.email.toLowerCase().trim();
   const now = new Date().toISOString();
   const id = uuidv4();
   
@@ -113,7 +114,7 @@ export async function createBootcampRegistration(input: BootcampRegistrationInpu
     updatedAt: now,
     // Include user information fields
     name: input.name,
-    email: input.email,
+    email: normalizedEmail,
     phone: input.phone,
     provider: input.provider,
     inIt: input.inIt,
@@ -204,6 +205,54 @@ export async function getBootcampRegistrationsByUserId(userId: string): Promise<
   } catch (error) {
     console.error('Failed to fetch bootcamp registrations by user, returning memory results:', error);
     return Array.from(memoryRegistrationStore.values()).filter((reg) => reg.userId === userId);
+  }
+}
+
+export async function getBootcampRegistrationsByEmail(email: string): Promise<BootcampRegistration[]> {
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) return [];
+
+  if (!isCosmosAvailable()) {
+    return Array.from(memoryRegistrationStore.values()).filter(
+      (reg) => (reg.email || '').toLowerCase() === normalizedEmail
+    );
+  }
+
+  try {
+    const container = await getWritableContainer();
+    if (!('items' in container)) {
+      return Array.from(memoryRegistrationStore.values()).filter(
+        (reg) => (reg.email || '').toLowerCase() === normalizedEmail
+      );
+    }
+
+    const query = {
+      query: "SELECT * FROM c WHERE c.type = 'bootcamp-registration' AND IS_DEFINED(c.email) AND LOWER(c.email) = @email ORDER BY c.createdAt DESC",
+      parameters: [{ name: '@email', value: normalizedEmail }],
+    };
+
+    const { resources } = await container.items.query(query).fetchAll();
+    const registrations =
+      (resources as BootcampRegistration[])?.map((reg) => ({
+        ...reg,
+        type: reg.type || 'bootcamp-registration',
+        email: reg.email?.toLowerCase() || normalizedEmail,
+        bootcampId: reg.bootcampId || reg.track || 'cloud-foundation',
+        bootcampName: reg.bootcampName
+          ? reg.bootcampName
+          : reg.bootcampId
+          ? `${reg.bootcampId}`.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+          : 'Cloud Foundation',
+        paymentStatus: reg.paymentStatus || 'Pending',
+        completionStatus: reg.completionStatus || 'Not Started',
+      })) ?? [];
+
+    return registrations;
+  } catch (error) {
+    console.error('Failed to fetch bootcamp registrations by email, returning memory results:', error);
+    return Array.from(memoryRegistrationStore.values()).filter(
+      (reg) => (reg.email || '').toLowerCase() === normalizedEmail
+    );
   }
 }
 

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { NextResponse, NextRequest } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getBootcampRegistrationsContainer } from '@/lib/cosmos';
+import { getBootcampRegistrationsByUserId, getBootcampRegistrationsByEmail } from '@/lib/db/bootcamps';
 
 // Mark route as dynamic since it uses server session and headers
 export const dynamic = 'force-dynamic';
@@ -28,46 +29,36 @@ export async function GET(req: NextRequest) {
 
     const email = hintEmail || baseEmail;
 
-    // Use the bootcamp registrations container (not users)
-    const container = await getBootcampRegistrationsContainer();
-
-    // Gather results from multiple targeted queries
     const results: any[] = [];
 
-    // 1) By email
-    try {
-      const { resources } = await (container as any).items.query({
-        query: `SELECT * FROM c WHERE IS_DEFINED(c.email) AND LOWER(c.email) = @email`,
-        parameters: [{ name: '@email', value: email }],
-      }).fetchAll();
-      results.push(...(resources || []));
-    } catch (e) {
-      console.warn('Query by email failed:', e);
-    }
-
-    // 2) By userId (if present) and type
+    // Helper-backed lookups ensure we hit Cosmos or memory fallback consistently
     if (hintUserId) {
-      try {
-        const { resources } = await (container as any).items.query({
-          query: `SELECT * FROM c WHERE IS_DEFINED(c.userId) AND c.userId = @userId`,
-          parameters: [{ name: '@userId', value: hintUserId }],
-        }).fetchAll();
-        results.push(...(resources || []));
-      } catch (e) {
-        console.warn('Query by userId failed:', e);
-      }
+      results.push(...(await getBootcampRegistrationsByUserId(hintUserId)));
+    } else if ((session.user as any)?.id) {
+      results.push(...(await getBootcampRegistrationsByUserId((session.user as any).id)));
     }
 
-    // 3) By specific registration id (if provided)
+    if (email) {
+      results.push(...(await getBootcampRegistrationsByEmail(email)));
+    }
+
+    const container = await getBootcampRegistrationsContainer();
+
+    // Optional targeted lookup by registration id if it's not already included
     if (registrationId) {
-      try {
-        const { resources } = await (container as any).items.query({
-          query: `SELECT * FROM c WHERE c.id = @id`,
-          parameters: [{ name: '@id', value: registrationId }],
-        }).fetchAll();
-        results.push(...(resources || []));
-      } catch (e) {
-        console.warn('Query by registrationId failed:', e);
+      const exists = results.some((reg) => reg.id === registrationId);
+      if (!exists) {
+        try {
+          const { resources } = await (container as any).items
+            .query({
+              query: `SELECT * FROM c WHERE c.id = @id`,
+              parameters: [{ name: '@id', value: registrationId }],
+            })
+            .fetchAll();
+          results.push(...(resources || []));
+        } catch (e) {
+          console.warn('Query by registrationId failed:', e);
+        }
       }
     }
 
