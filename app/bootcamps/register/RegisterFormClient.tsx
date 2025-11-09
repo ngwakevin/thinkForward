@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 type RegisterResponse = {
   ok: boolean;
@@ -31,6 +32,8 @@ const BANK_DETAILS = Object.freeze({
 });
 
 export function RegisterFormClient({ track }: Props) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<RegisterResponse['registration'] | null>(null);
@@ -40,6 +43,16 @@ export function RegisterFormClient({ track }: Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const hiddenTrackValue = track ?? '';
+  const isAuthenticated = status === 'authenticated';
+
+  // If user is logged in and has a track, redirect to direct enrollment
+  useEffect(() => {
+    if (isAuthenticated && track) {
+      // Redirect to bootcamp detail page for direct enrollment
+      const bootcampSlug = track.toLowerCase().replace(/\s+/g, '-');
+      router.push(`/bootcamps/${bootcampSlug}`);
+    }
+  }, [isAuthenticated, track, router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,7 +69,38 @@ export function RegisterFormClient({ track }: Props) {
         payload[key] = value;
       });
 
-      // Validate password fields if creating an account
+      // If user is authenticated, use the simplified enrollment endpoint
+      if (isAuthenticated) {
+        // For authenticated users, use the direct enrollment API
+        const bootcampSlug = track?.toLowerCase().replace(/\s+/g, '-') || '';
+        const response = await fetch('/api/user/bootcamps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bootcampId: bootcampSlug,
+            phone: payload.phone,
+            provider: payload.provider,
+            inIt: payload.inIt,
+            current_role: payload.current_role,
+            experience: payload.experience,
+            goal: payload.goal,
+            exposure: payload.exposure,
+            notes: payload.notes
+          })
+        });
+
+        const json = await response.json();
+
+        if (!response.ok || !json.success) {
+          throw new Error(json.error || 'Failed to enroll in bootcamp.');
+        }
+
+        // Redirect to profile page on success
+        router.push('/profile?tab=bootcamps');
+        return;
+      }
+
+      // For unauthenticated users, validate password fields if creating an account
       if (createAccount) {
         if (!password) {
           setFieldErrors(prev => ({ ...prev, password: 'Password is required' }));
@@ -308,35 +352,79 @@ export function RegisterFormClient({ track }: Props) {
     );
   }
 
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="space-y-3 text-center">
+          <div className="i-lucide-loader-2 h-8 w-8 animate-spin text-accent mx-auto" />
+          <p className="text-sm text-fg-muted">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if redirecting logged-in user
+  if (isAuthenticated && track) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="space-y-3 text-center">
+          <div className="i-lucide-loader-2 h-8 w-8 animate-spin text-accent mx-auto" />
+          <p className="text-sm text-fg-muted">Redirecting to enrollment...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
+      {/* Show info banner if user is logged in */}
+      {isAuthenticated && (
+        <div className="rounded-lg border border-accent/30 bg-accent/10 p-4">
+          <div className="flex items-start gap-3">
+            <span className="i-lucide-info h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-fg">You&apos;re already logged in!</p>
+              <p className="text-xs text-fg-muted">
+                Your account information will be used automatically. Just fill out the additional details below.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="name">Full Name</label>
-          <input
-            id="name"
-            name="name"
-            required
-            className="w-full rounded-lg border border-border/60 bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-            placeholder="Jane Doe"
-            disabled={submitting}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="email">Email Address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className={`w-full rounded-lg border ${
-              fieldErrors.email ? 'border-error' : 'border-border/60'
-            } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
-            placeholder="you@example.com"
-            disabled={submitting}
-          />
-          {fieldErrors.email && <p className="text-xs text-error">{fieldErrors.email}</p>}
-        </div>
+        {!isAuthenticated && (
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="name">Full Name</label>
+              <input
+                id="name"
+                name="name"
+                required
+                className="w-full rounded-lg border border-border/60 bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                placeholder="Jane Doe"
+                disabled={submitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className={`w-full rounded-lg border ${
+                  fieldErrors.email ? 'border-error' : 'border-border/60'
+                } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
+                placeholder="you@example.com"
+                disabled={submitting}
+              />
+              {fieldErrors.email && <p className="text-xs text-error">{fieldErrors.email}</p>}
+            </div>
+          </>
+        )}
+        
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="phone">Phone Number</label>
           <input
@@ -348,61 +436,65 @@ export function RegisterFormClient({ track }: Props) {
           />
         </div>
         
-        <div className="col-span-1 md:col-span-2 mt-4 mb-2">
-          <div className="flex items-center gap-3">
-            <input
-              id="createAccount"
-              name="createAccount"
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
-              checked={createAccount}
-              onChange={(e) => setCreateAccount(e.target.checked)}
-              disabled={submitting}
-            />
-            <label htmlFor="createAccount" className="text-sm text-fg-muted">
-              Create a Cloudegree account for future access to bootcamp materials and progress tracking
-            </label>
-          </div>
-        </div>
-        
-        {createAccount && (
+        {!isAuthenticated && (
           <>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`w-full rounded-lg border ${
-                  fieldErrors.password ? 'border-error' : 'border-border/60'
-                } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
-                placeholder="Choose a secure password"
-                disabled={submitting}
-              />
-              {fieldErrors.password ? (
-                <p className="text-xs text-error">{fieldErrors.password}</p>
-              ) : (
-                <p className="text-xs text-fg-muted">Password must be at least 8 characters and include letters and numbers</p>
-              )}
+            <div className="col-span-1 md:col-span-2 mt-4 mb-2">
+              <div className="flex items-center gap-3">
+                <input
+                  id="createAccount"
+                  name="createAccount"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
+                  checked={createAccount}
+                  onChange={(e) => setCreateAccount(e.target.checked)}
+                  disabled={submitting}
+                />
+                <label htmlFor="createAccount" className="text-sm text-fg-muted">
+                  Create a Cloudegree account for future access to bootcamp materials and progress tracking
+                </label>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="confirmPassword">Confirm Password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`w-full rounded-lg border ${
-                  fieldErrors.confirmPassword ? 'border-error' : 'border-border/60'
-                } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
-                placeholder="Confirm your password"
-                disabled={submitting}
-              />
-              {fieldErrors.confirmPassword && <p className="text-xs text-error">{fieldErrors.confirmPassword}</p>}
-            </div>
+            
+            {createAccount && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={`w-full rounded-lg border ${
+                      fieldErrors.password ? 'border-error' : 'border-border/60'
+                    } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
+                    placeholder="Choose a secure password"
+                    disabled={submitting}
+                  />
+                  {fieldErrors.password ? (
+                    <p className="text-xs text-error">{fieldErrors.password}</p>
+                  ) : (
+                    <p className="text-xs text-fg-muted">Password must be at least 8 characters and include letters and numbers</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-fg-muted" htmlFor="confirmPassword">Confirm Password</label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`w-full rounded-lg border ${
+                      fieldErrors.confirmPassword ? 'border-error' : 'border-border/60'
+                    } bg-bg-alt/60 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30`}
+                    placeholder="Confirm your password"
+                    disabled={submitting}
+                  />
+                  {fieldErrors.confirmPassword && <p className="text-xs text-error">{fieldErrors.confirmPassword}</p>}
+                </div>
+              </>
+            )}
           </>
         )}
         
