@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import type { Session } from 'next-auth';
+import { useSearchParams } from 'next/navigation';
 
 interface ProfileClientProps {
   initialUserData: any;
@@ -10,7 +11,19 @@ interface ProfileClientProps {
 }
 
 export default function ProfileClient({ initialUserData, session }: ProfileClientProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'achievements' | 'activity' | 'certifications' | 'learning-paths' | 'bootcamps' | 'mentorship'>('overview');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get('tab');
+  
+  // Set initial tab from URL parameter if valid
+  const getInitialTab = () => {
+    const validTabs = ['overview', 'courses', 'achievements', 'activity', 'certifications', 'learning-paths', 'bootcamps', 'mentorship'];
+    if (tabParam && validTabs.includes(tabParam)) {
+      return tabParam as any;
+    }
+    return 'overview';
+  };
+  
+  const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'achievements' | 'activity' | 'certifications' | 'learning-paths' | 'bootcamps' | 'mentorship'>(getInitialTab());
 
   // Extract real user data or use defaults
   const profile = initialUserData?.profile || {};

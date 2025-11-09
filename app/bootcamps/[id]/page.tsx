@@ -15,6 +15,26 @@ export default function BootcampDetailPage() {
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [message, setMessage] = useState('');
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+  // Check if user is already enrolled
+  useEffect(() => {
+    if (status === 'authenticated' && bootcampId) {
+      const checkEnrollment = async () => {
+        try {
+          const res = await fetch('/api/user/bootcamps');
+          if (res.ok) {
+            const data = await res.json();
+            const enrolled = data.bootcamps?.some((b: any) => b.id === bootcampId);
+            setIsEnrolled(enrolled);
+          }
+        } catch (err) {
+          console.error('Error checking enrollment:', err);
+        }
+      };
+      checkEnrollment();
+    }
+  }, [status, bootcampId]);
 
   useEffect(() => {
     if (!bootcampId) return;
@@ -55,29 +75,42 @@ export default function BootcampDetailPage() {
 
     try {
       setRegistering(true);
-      const res = await fetch('/api/bootcamps/register', {
+      
+      // Use the new user bootcamp enrollment API
+      const res = await fetch('/api/user/bootcamps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bootcampId: bootcamp.id,
-          bootcampName: bootcamp.name,
-          startDate: bootcamp.startDate,
-          endDate: bootcamp.endDate,
-          name,
-          email,
+          id: bootcamp.id,
+          title: bootcamp.name || bootcamp.title,
+          description: bootcamp.description || `${bootcamp.name} bootcamp program`,
+          status: 'enrolled',
+          startDate: bootcamp.startDate || 'TBD',
+          endDate: bootcamp.endDate || 'TBD',
+          progress: 0,
+          cohort: bootcamp.cohort || 'Current Cohort',
+          instructors: bootcamp.instructors || [],
+          schedule: bootcamp.schedule || 'Schedule TBD',
+          location: bootcamp.format || 'online',
+          topics: bootcamp.topics || bootcamp.skills || [],
+          completionCertificate: false,
         }),
       });
 
       const data = await res.json();
-      if (res.ok && data?.ok) {
-        setMessage('🎉 Registration successful! Redirecting to your dashboard...');
-        router.push('/dashboard');
+      if (res.ok && data?.success) {
+        setMessage('🎉 Registration successful! Check your profile to view your bootcamp.');
+        setTimeout(() => {
+          router.push('/profile?tab=bootcamps');
+        }, 2000);
         return;
       }
 
       if (res.status === 200 && typeof data?.message === 'string') {
         setMessage(data.message);
-        router.push('/dashboard');
+        setTimeout(() => {
+          router.push('/profile?tab=bootcamps');
+        }, 2000);
         return;
       }
 
@@ -128,13 +161,27 @@ export default function BootcampDetailPage() {
         </p>
       )}
 
-      <Button
-        disabled={registering}
-        onClick={handleRegister}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-      >
-        {registering ? 'Registering...' : 'Register'}
-      </Button>
+      {isEnrolled ? (
+        <div className="space-y-3">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-700 font-semibold">✓ You are enrolled in this bootcamp</p>
+          </div>
+          <Button
+            onClick={() => router.push('/profile?tab=bootcamps')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full"
+          >
+            View My Bootcamps
+          </Button>
+        </div>
+      ) : (
+        <Button
+          disabled={registering}
+          onClick={handleRegister}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg w-full"
+        >
+          {registering ? 'Enrolling...' : 'Enroll Now'}
+        </Button>
+      )}
 
       <div className="mt-6">
         <Button
