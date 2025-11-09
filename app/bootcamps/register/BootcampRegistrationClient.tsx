@@ -87,11 +87,11 @@ export default function BootcampRegistrations() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to register for bootcamp');
+        throw new Error('Failed to enroll in bootcamp');
       }
       
       const data = await response.json();
-      console.log('Registration successful:', data);
+      console.log('Enrollment successful:', data);
       
       // Update user registrations
       if (data.registration) {
@@ -109,10 +109,10 @@ export default function BootcampRegistrations() {
         console.error('Error refreshing registrations:', refreshError);
       }
       
-      alert(`Successfully registered for ${bootcamp.name}!`);
+      alert(`Successfully enrolled in ${bootcamp.name}!`);
     } catch (error) {
-      console.error('Error registering for bootcamp:', error);
-      alert('Failed to register for bootcamp. Please try again.');
+      console.error('Error enrolling in bootcamp:', error);
+      alert('Failed to enroll in bootcamp. Please try again.');
     } finally {
       setRegistering(null);
     }
@@ -183,9 +183,9 @@ export default function BootcampRegistrations() {
                 <button
                   onClick={() => registerForBootcamp(bootcamp)}
                   disabled={registering === bootcamp.id}
-                  className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-xs font-semibold tracking-wide text-white shadow hover:bg-accent-alt disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-accent text-bg font-bold py-2.5 rounded-lg hover:bg-accent/90 transition-colors"
                 >
-                  {registering === bootcamp.id ? 'Registering...' : 'Register Now'}
+                  {registering === bootcamp.id ? 'Enrolling...' : 'Enroll Now'}
                 </button>
               )}
             </div>

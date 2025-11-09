@@ -27,9 +27,9 @@ export function BootcampsClient() {
         </a>
       </h1>
       <p className="text-fg-muted text-base md:text-lg leading-relaxed">Hands-on, instructor-led programs designed to build practical cloud skills in real time. Choose the path that matches your career goals:</p>
-      <div className="grid gap-8 md:gap-8 xl:gap-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 pt-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 pt-4">
     {trackCards.map((card, idx) => (
-      <div key={card.title} className="h-full overflow-hidden relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/70 to-bg-alt/20 p-6 shadow-sm hover:bg-bg-alt/30 transition-colors">
+      <div key={card.title} className="min-w-[260px] md:min-w-[300px] shrink-0 overflow-hidden relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br from-bg-alt/70 to-bg-alt/20 p-6 shadow-sm snap-start">
             <div className="flex items-center gap-3 mb-4">
               <span className={`h-10 w-10 inline-flex items-center justify-center rounded-xl bg-accent/15 text-accent ${card.icon}`} />
               <h3 className="font-semibold tracking-tight text-lg flex items-center gap-2">
@@ -50,7 +50,7 @@ export function BootcampsClient() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning/50" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
                 </span>
-                <span>Register Now</span>
+                <span>Enroll Now</span>
                 <span className="i-lucide-arrow-right text-[14px] -mr-1" />
                 <span className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-warning/20 animate-pulse" />
               </a>

@@ -99,7 +99,7 @@ export default function BootcampDetailPage() {
 
       const data = await res.json();
       if (res.ok && data?.success) {
-        setMessage('🎉 Registration successful! Check your profile to view your bootcamp.');
+        setMessage('🎉 Enrollment successful! Check your profile to view your bootcamp.');
         setTimeout(() => {
           router.push('/profile?tab=bootcamps');
         }, 2000);
@@ -117,7 +117,7 @@ export default function BootcampDetailPage() {
       setMessage(data?.error || 'Something went wrong');
     } catch (err) {
       console.error(err);
-      setMessage('Failed to register');
+      setMessage('Failed to enroll');
     } finally {
       setRegistering(false);
     }

@@ -188,7 +188,7 @@ export default function SimpleRegistrationForm({ defaultTrack = 'Cloud Foundatio
         className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
           ${loading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'}`}
       >
-        {loading ? 'Registering...' : 'Register Now'}
+        {loading ? 'Enrolling...' : 'Enroll Now'}
       </button>
     </form>
   );

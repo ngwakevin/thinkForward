@@ -199,7 +199,7 @@ export default function BootcampsPage() {
                       href={`/bootcamps/register?track=${encodeURIComponent(cert.title)}`}
                       className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent ring-1 ring-accent/40 hover:bg-accent/25 transition"
                     >
-                      Register Now
+                      Enroll Now
                     </a>
                   </div>
                 </div>
