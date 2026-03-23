@@ -4,8 +4,9 @@ import React from 'react';
 // Lightweight contact channel strip with WhatsApp CTA
 // Set NEXT_PUBLIC_WHATSAPP_NUMBER in env (digits only, e.g. 15551234567)
 // Optional: NEXT_PUBLIC_WHATSAPP_PREFILL="Hi, I'm interested in..."
-export function ContactChannels() {
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '';
+// Pass whatsappNumber prop to override the env variable for a specific page.
+export function ContactChannels({ whatsappNumber }: { whatsappNumber?: string }) {
+  const number = whatsappNumber || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '';
   const prefill = process.env.NEXT_PUBLIC_WHATSAPP_PREFILL || 'Hi – I would like to learn more about thinkForward.';
   const waHref = number ? `https://wa.me/${number}?text=${encodeURIComponent(prefill)}` : '/contact';
 
