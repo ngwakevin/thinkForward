@@ -6,6 +6,7 @@ import { siteConfig } from '../../../config/site';
 import ProgressBar from '../../../components/blog/ProgressBar';
 import { Toc } from '../../../components/blog/Toc';
 import LazyComments from '../../../components/blog/LazyComments';
+import { ShareCopyLink } from '../../../components/blog/ShareCopyLink';
 
 export function generateStaticParams() {
   return getAllPostsMeta(true).map((p: PostMeta) => ({ slug: p.slug }));
@@ -76,7 +77,7 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
           <span>Share:</span>
           <a className="hover:text-accent" href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`}>X</a>
           <a className="hover:text-accent" href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}>LinkedIn</a>
-          <button className="hover:text-accent" onClick={()=> navigator.clipboard.writeText(canonical)}>Copy Link</button>
+          <ShareCopyLink url={canonical} />
         </div>
         <div className="mt-16 rounded-lg border border-border/60 bg-bg-alt/40 p-6 text-sm">
           <p className="font-semibold mb-2">Level Up Consistently</p>

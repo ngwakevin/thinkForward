@@ -19,7 +19,7 @@ export function ContactChannels() {
             <div className="flex-1 space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">Chat With Us</p>
               <h2 id="contact-channels-heading" className="font-display text-2xl md:text-3xl font-bold tracking-tight">Questions? Instant Answers.</h2>
-              <p className="text-sm md:text-[15px] leading-relaxed text-fg-muted max-w-xl">Need clarity on mentorship, adaptive roadmaps, or fit? Reach out—fast response, no pressure. We'll help you map next best steps.</p>
+              <p className="text-sm md:text-[15px] leading-relaxed text-fg-muted max-w-xl">Need clarity on mentorship, adaptive roadmaps, or fit? Reach out—fast response, no pressure. We&apos;ll help you map next best steps.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <a

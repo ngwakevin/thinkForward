@@ -23,7 +23,7 @@ export default function ContactPage() {
 				<p className="text-[11px] font-medium tracking-[0.25em] text-accent uppercase">Let’s Chat</p>
 				<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">Contact Our Team</h1>
 				<p className="text-fg-muted max-w-2xl text-sm md:text-base leading-relaxed">
-					Discover how thinkForward accelerates cloud & DevOps capability building, reduces ramp time, and creates durable engineering momentum. Share a few details and we\'ll respond within one business day.
+					Discover how thinkForward accelerates cloud &amp; DevOps capability building, reduces ramp time, and creates durable engineering momentum. Share a few details and we&apos;ll respond within one business day.
 				</p>
 				<p className="text-fg-muted max-w-xl text-xs md:text-sm leading-relaxed">
 					Looking for help? <a href="/docs" className="text-accent hover:underline">Visit our support page</a>.
@@ -59,7 +59,7 @@ export default function ContactPage() {
 					<h2 className="sr-only">Send a Message</h2>
 					<ContactForm />
 					<p className="mt-6 text-[11px] text-fg-muted tracking-wide leading-relaxed">
-						We respect your inbox. You\'ll only hear from us regarding your inquiry or directly relevant enablement updates.
+						We respect your inbox. You&apos;ll only hear from us regarding your inquiry or directly relevant enablement updates.
 					</p>
 				</div>
 			</section>
