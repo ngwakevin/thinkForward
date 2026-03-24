@@ -64,3 +64,13 @@ a { text-decoration: none; }
 }
 @keyframes kwCycle { 0%,33% {transform: translateY(0);} 34%,66% {transform: translateY(-100%);} 67%,100% {transform: translateY(-200%);} }
 @media (prefers-reduced-motion: reduce) { .kw-cycle { animation: none; } }
+
+/* Print styles for flyer/poster download */
+@media print {
+  header, footer, nav { display: none !important; }
+  .print\:hidden { display: none !important; }
+  .print\:shadow-none { box-shadow: none !important; }
+  .print\:max-w-none { max-width: none !important; }
+  body { background: #071621 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  main { min-height: auto !important; }
+}
